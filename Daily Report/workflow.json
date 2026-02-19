@@ -1,0 +1,329 @@
+{
+  "updatedAt": "2026-01-21T00:36:19.000Z",
+  "createdAt": "2025-11-29T23:11:12.497Z",
+  "id": "l7gsbzXk2FbCtfTh",
+  "name": "Daily Report",
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "037ed99a-21d5-40c0-b285-a8362db2ffcc",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1696,
+        112
+      ],
+      "id": "0698f9b5-4276-4fed-8466-3aebd1df8b9d",
+      "name": "Webhook",
+      "webhookId": "037ed99a-21d5-40c0-b285-a8362db2ffcc"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api-alimtalk.cloud.toast.com/alimtalk/v2.0/appkeys/YuIB1lEDj8vuqME2/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json;charset=UTF-8"
+            },
+            {
+              "name": "X-Secret-Key",
+              "value": "BqbvtCkwuidB28H7cuoYGheQ8SyEWOWw"
+            },
+            {
+              "name": "X-App-Key",
+              "value": "YuIB1lEDj8vuqME2"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "senderKey",
+              "value": "\"7780249050d98477b04a1b589e4794c8ac1f7a78\""
+            },
+            {
+              "name": "templateCode",
+              "value": "\"Math4U-edu-2025002\""
+            },
+            {
+              "name": "recipientList",
+              "value": "={{ $json.finalJson }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -960,
+        112
+      ],
+      "id": "5744574b-bf8a-42f7-9d84-0eb9aec92736",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "4vyqQ4BPURG0ufgO",
+          "name": "Header Auth account"
+        },
+        "httpCustomAuth": {
+          "id": "7IkET7kvzmFP3Vr7",
+          "name": "Custom Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Webhook').item.json.body.data.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "보고서 발송|checkbox",
+              "checkboxValue": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        -480,
+        96
+      ],
+      "id": "e193be74-3a7f-4acd-8174-a88f9367d339",
+      "name": "Notion",
+      "credentials": {
+        "notionApi": {
+          "id": "ixRZwqmrU1Xxju0A",
+          "name": "Notion account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## NHN Cloud API 연결 \n**Double click** to edit me.\n카카오 알림톡 템플릿\nmath4u-edu-2025002\n\n\n\n\n\n\n\n\n[Guide](https://docs.n8n.io/workflows/sticky-notes/)",
+        "height": 420,
+        "width": 220
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1024,
+        -32
+      ],
+      "typeVersion": 1,
+      "id": "0070fb03-1bca-4e8e-a4c5-7b84a2b2556f",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Webhook \nNotion에서 학습리포트 발송버튼을 클릭하면 Webhook 발동. [Guide](https://docs.n8n.io/workflows/sticky-notes/)",
+        "height": 420,
+        "width": 220
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1760,
+        -32
+      ],
+      "typeVersion": 1,
+      "id": "ce542fa5-e423-4a06-9f56-52a359d7dbd1",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "height": 560,
+        "width": 220
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -528,
+        -176
+      ],
+      "typeVersion": 1,
+      "id": "705e463e-e4b2-4fb3-bbd1-f3d31eb77af3",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json.body.data.properties;\n\n// 📌 공통 파라미터\nconst commonParams = {\n  url_day: $json.body.data.id,\n  학생이름: data[\"학생이름(S)\"].formula.string,\n  수업날짜: data[\"수업일시(S)\"].formula.string,\n  요일: data[\"요일\"].formula.string,\n  수업회차: data[\"수업회차(S)\"].formula.string,\n  과정: data[\"과정(S)\"].formula.string,\n  수업내용: data[\"진도/수업 내용\"].rollup.array[0]?.rich_text[0]?.plain_text || \"\"\n};\n\n// 📌 수신자 배열\nconst list = [];\n\n// 연락처1 (필수)\nif (data[\"학부모연락처 1(S)\"].formula.string) {\n  list.push({\n    recipientNo: data[\"학부모연락처 1(S)\"].formula.string,\n    templateParameter: commonParams\n  });\n}\n\n// 연락처2 (있으면 추가)\nif (data[\"학부모연락처 2(S)\"].formula.string) {\n  list.push({\n    recipientNo: data[\"학부모연락처 2(S)\"].formula.string,\n    templateParameter: commonParams\n  });\n}\n\n// 📌 숫자만 추출하는 함수\nfunction extractNumber(str) {\n  const match = (str || \"\").match(/\\d+/);\n  return match ? parseInt(match[0], 10) : null;\n}\n\n// 수업회차(S) 숫자\nconst numFromSession = extractNumber(data[\"수업회차(S)\"].formula.string);\n// 과정(S) 숫자\nconst numFromCourse = extractNumber(data[\"과정(S)\"].formula.string);\n\n// 비교 결과\nlet sendPaymentNotice = false;\nif (numFromSession !== null && numFromCourse !== null && numFromSession === numFromCourse) {\n  sendPaymentNotice = true;\n}\n\n// 최종 결과 리턴\nreturn [{\n  json: {\n    recipientList: list,\n    sendPaymentNotice\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1440,
+        112
+      ],
+      "id": "e6d2154d-f869-41b3-ac29-ae77fc591f8e",
+      "name": "Code",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "height": 420,
+        "width": 220
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1504,
+        -32
+      ],
+      "typeVersion": 1,
+      "id": "a29be290-02d8-4b5e-a709-824c12b74fee",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4d236c18-3c4d-4037-ba27-d4b21d4dfa4f",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -736,
+        112
+      ],
+      "id": "3805219c-a71d-4b34-a0ef-13c846fa78a7",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fde62cf0-988f-4e3c-9b37-a458a8fc29fc",
+              "name": "finalJson",
+              "value": "={{\n  {\n  \"recipientList\": $json.recipientList,\n  \"sendPaymentNotice\": $json.sendPaymentNotice\n  }\n}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1232,
+        112
+      ],
+      "id": "43243497-19fc-4543-bcde-15b16b0c5e99",
+      "name": "Edit Fields"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Notion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "96255a3d-f9cd-46a9-a30d-c9d1f9e758c0",
+  "activeVersionId": null,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-11-29T23:11:12.501Z",
+      "createdAt": "2025-11-29T23:11:12.501Z",
+      "role": "workflow:owner",
+      "workflowId": "l7gsbzXk2FbCtfTh",
+      "projectId": "8znYa8Ca7GWeBy0m"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
