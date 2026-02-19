@@ -1,0 +1,288 @@
+{
+  "updatedAt": "2026-02-19T07:29:10.086Z",
+  "createdAt": "2025-12-01T21:37:22.774Z",
+  "id": "gRhv6ri8Nq5sE1Ol",
+  "name": "n8n_github_backup",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -256,
+        320
+      ],
+      "id": "c196462d-d5d3-48df-89bb-571f60580b8c",
+      "name": "When clicking 'Execute workflow'"
+    },
+    {
+      "parameters": {
+        "url": "https://n8n.math4u.co.kr/api/v1/workflows",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -48,
+        320
+      ],
+      "id": "e1d901d0-9ccb-4ee3-bc14-e60fdc288f32",
+      "name": "HTTP Request",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "4vyqQ4BPURG0ufgO",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        160,
+        320
+      ],
+      "id": "9ef23a84-03c7-47f0-bde9-38ea2351de75",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "value": "khai2821195",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "n8n",
+          "mode": "name"
+        },
+        "filePath": "={{ $json.name }}/workflow.json",
+        "asBinaryProperty": false,
+        "additionalParameters": {}
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        368,
+        320
+      ],
+      "id": "6e843c73-3014-4d7a-a698-eacd7256d81c",
+      "name": "Get File SHA",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "githubApi": {
+          "id": "h94Cf9O1qGqaxwYw",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "sha-check",
+              "leftValue": "={{ $json.sha }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        580,
+        320
+      ],
+      "id": "if-sha-exists",
+      "name": "File Exists?",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "edit",
+        "owner": {
+          "__rl": true,
+          "value": "khai2821195",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "n8n",
+          "mode": "name"
+        },
+        "filePath": "={{ $node['Split Out'].json.name }}/workflow.json",
+        "binaryData": false,
+        "fileContent": "={{ JSON.stringify($node['Split Out'].json, null, 2) }}",
+        "commitMessage": "={{ 'backup: ' + $node['Split Out'].json.name }}",
+        "additionalParameters": {
+          "sha": "={{ $node['Get File SHA'].json.sha }}"
+        }
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        800,
+        200
+      ],
+      "id": "edit-file-node",
+      "name": "Edit File",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "githubApi": {
+          "id": "h94Cf9O1qGqaxwYw",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "create",
+        "owner": {
+          "__rl": true,
+          "value": "khai2821195",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "n8n",
+          "mode": "name"
+        },
+        "filePath": "={{ $node['Split Out'].json.name }}/workflow.json",
+        "binaryData": false,
+        "fileContent": "={{ JSON.stringify($node['Split Out'].json, null, 2) }}",
+        "commitMessage": "={{ 'backup: ' + $node['Split Out'].json.name }}",
+        "additionalParameters": {}
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        800,
+        460
+      ],
+      "id": "create-file-node",
+      "name": "Create File",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "githubApi": {
+          "id": "h94Cf9O1qGqaxwYw",
+          "name": "GitHub account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When clicking 'Execute workflow'": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Get File SHA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get File SHA": {
+      "main": [
+        [
+          {
+            "node": "File Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "File Exists?": {
+      "main": [
+        [
+          {
+            "node": "Edit File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "9d4e0301-6a3e-4bc1-a712-c5e74f9b2382",
+  "activeVersionId": null,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-12-01T21:37:22.778Z",
+      "createdAt": "2025-12-01T21:37:22.778Z",
+      "role": "workflow:owner",
+      "workflowId": "gRhv6ri8Nq5sE1Ol",
+      "projectId": "8znYa8Ca7GWeBy0m"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
