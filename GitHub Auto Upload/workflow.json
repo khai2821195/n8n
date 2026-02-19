@@ -1,0 +1,155 @@
+{
+  "updatedAt": "2026-01-21T00:42:12.000Z",
+  "createdAt": "2025-11-29T23:12:05.435Z",
+  "id": "vsCaSW37XkRNDDsj",
+  "name": "GitHub Auto Upload",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        0
+      ],
+      "id": "651cbeb1-5503-46f3-88b2-801bcd9db3e4",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://n8n.math4u.co.kr/api/v1/workflows",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -192,
+        0
+      ],
+      "id": "540519b9-2a93-443e-a048-e3081627b912",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "7IkET7kvzmFP3Vr7",
+          "name": "Custom Auth account"
+        },
+        "httpHeaderAuth": {
+          "id": "4vyqQ4BPURG0ufgO",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        16,
+        0
+      ],
+      "id": "e846858b-9628-4254-a519-d0a3963e4239",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "owner": {
+          "__rl": true,
+          "value": "khai2821195",
+          "mode": "list",
+          "cachedResultName": "khai2821195",
+          "cachedResultUrl": "https://github.com/khai2821195"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "n8n",
+          "mode": "list",
+          "cachedResultName": "n8n",
+          "cachedResultUrl": "https://github.com/khai2821195/n8n"
+        },
+        "filePath": "={{ $json.name }}.json",
+        "fileContent": "={{ JSON.stringify($json) }}",
+        "commitMessage": "={{ $json.name }}"
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "5593465a-7733-4cc8-b4da-1671771b6336",
+      "name": "Create a file",
+      "webhookId": "5ca4e444-e672-4c5c-9fc7-3cfff1664722",
+      "credentials": {
+        "githubApi": {
+          "id": "h94Cf9O1qGqaxwYw",
+          "name": "GitHub account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Create a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "bc957246-0124-456c-93ee-7fc8023fd120",
+  "activeVersionId": null,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-11-29T23:12:05.439Z",
+      "createdAt": "2025-11-29T23:12:05.439Z",
+      "role": "workflow:owner",
+      "workflowId": "vsCaSW37XkRNDDsj",
+      "projectId": "8znYa8Ca7GWeBy0m"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
