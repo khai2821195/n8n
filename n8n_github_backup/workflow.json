@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-19T07:29:10.086Z",
+  "updatedAt": "2026-02-19T07:51:24.349Z",
   "createdAt": "2025-12-01T21:37:22.774Z",
   "id": "gRhv6ri8Nq5sE1Ol",
   "name": "n8n_github_backup",
@@ -32,13 +32,13 @@
       ],
       "id": "e1d901d0-9ccb-4ee3-bc14-e60fdc288f32",
       "name": "HTTP Request",
-      "onError": "continueRegularOutput",
       "credentials": {
         "httpHeaderAuth": {
           "id": "4vyqQ4BPURG0ufgO",
           "name": "Header Auth account"
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -80,13 +80,14 @@
       ],
       "id": "6e843c73-3014-4d7a-a698-eacd7256d81c",
       "name": "Get File SHA",
-      "onError": "continueRegularOutput",
+      "webhookId": "10a406f9-24fa-4619-80d5-c7a04ec7b2f3",
       "credentials": {
         "githubApi": {
           "id": "h94Cf9O1qGqaxwYw",
           "name": "GitHub account"
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -115,7 +116,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        580,
+        592,
         320
       ],
       "id": "if-sha-exists",
@@ -137,33 +138,29 @@
           "mode": "name"
         },
         "filePath": "={{ $node['Split Out'].json.name }}/workflow.json",
-        "binaryData": false,
         "fileContent": "={{ JSON.stringify($node['Split Out'].json, null, 2) }}",
-        "commitMessage": "={{ 'backup: ' + $node['Split Out'].json.name }}",
-        "additionalParameters": {
-          "sha": "={{ $node['Get File SHA'].json.sha }}"
-        }
+        "commitMessage": "={{ 'backup: ' + $node['Split Out'].json.name }}"
       },
       "type": "n8n-nodes-base.github",
       "typeVersion": 1.1,
       "position": [
         800,
-        200
+        208
       ],
       "id": "edit-file-node",
       "name": "Edit File",
-      "onError": "continueRegularOutput",
+      "webhookId": "1077b06d-1ec5-4518-810d-9e12bdbe4098",
       "credentials": {
         "githubApi": {
           "id": "h94Cf9O1qGqaxwYw",
           "name": "GitHub account"
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
         "resource": "file",
-        "operation": "create",
         "owner": {
           "__rl": true,
           "value": "khai2821195",
@@ -175,26 +172,232 @@
           "mode": "name"
         },
         "filePath": "={{ $node['Split Out'].json.name }}/workflow.json",
-        "binaryData": false,
         "fileContent": "={{ JSON.stringify($node['Split Out'].json, null, 2) }}",
-        "commitMessage": "={{ 'backup: ' + $node['Split Out'].json.name }}",
-        "additionalParameters": {}
+        "commitMessage": "={{ 'backup: ' + $node['Split Out'].json.name }}"
       },
       "type": "n8n-nodes-base.github",
       "typeVersion": 1.1,
       "position": [
         800,
-        460
+        464
       ],
       "id": "create-file-node",
       "name": "Create File",
-      "onError": "continueRegularOutput",
+      "webhookId": "8c8549c0-e838-444f-aa7b-3305aedcdf38",
       "credentials": {
         "githubApi": {
           "id": "h94Cf9O1qGqaxwYw",
           "name": "GitHub account"
         }
-      }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "AIzaSyDbkXrokZ61GrhjICBYdqGEdcCpi6X0LK8"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1072,
+        320
+      ],
+      "id": "claude-api-node",
+      "name": "Gemini API - Generate README",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "readme-content",
+              "name": "readmeContent",
+              "value": "={{ $json.candidates[0].content.parts[0].text }}",
+              "type": "string"
+            },
+            {
+              "id": "workflow-name",
+              "name": "workflowName",
+              "value": "={{ $node['Split Out'].json.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1280,
+        320
+      ],
+      "id": "extract-readme-node",
+      "name": "Extract README Content"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "value": "khai2821195",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "n8n",
+          "mode": "name"
+        },
+        "filePath": "={{ $json.workflowName }}/README.md",
+        "asBinaryProperty": false,
+        "additionalParameters": {}
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        1504,
+        320
+      ],
+      "id": "get-readme-sha-node",
+      "name": "Get README SHA",
+      "webhookId": "99dcff1e-0db8-4ca0-a50d-7a8ee363e716",
+      "credentials": {
+        "githubApi": {
+          "id": "h94Cf9O1qGqaxwYw",
+          "name": "GitHub account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "readme-sha-check",
+              "leftValue": "={{ $json.sha }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1712,
+        320
+      ],
+      "id": "readme-exists-node",
+      "name": "README Exists?",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "edit",
+        "owner": {
+          "__rl": true,
+          "value": "khai2821195",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "n8n",
+          "mode": "name"
+        },
+        "filePath": "={{ $node['Extract README Content'].json.workflowName }}/README.md",
+        "fileContent": "={{ $node['Extract README Content'].json.readmeContent }}",
+        "commitMessage": "={{ 'docs: update README for ' + $node['Extract README Content'].json.workflowName }}"
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        1920,
+        208
+      ],
+      "id": "edit-readme-node",
+      "name": "Edit README",
+      "webhookId": "5e21e69f-572f-413c-b01b-6042334ce0bd",
+      "credentials": {
+        "githubApi": {
+          "id": "h94Cf9O1qGqaxwYw",
+          "name": "GitHub account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "owner": {
+          "__rl": true,
+          "value": "khai2821195",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "n8n",
+          "mode": "name"
+        },
+        "filePath": "={{ $node['Extract README Content'].json.workflowName }}/README.md",
+        "fileContent": "={{ $node['Extract README Content'].json.readmeContent }}",
+        "commitMessage": "={{ 'docs: add README for ' + $node['Extract README Content'].json.workflowName }}"
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        1920,
+        464
+      ],
+      "id": "create-readme-node",
+      "name": "Create README",
+      "webhookId": "852156bb-7736-41d8-a65f-7cf6c0937b86",
+      "credentials": {
+        "githubApi": {
+          "id": "h94Cf9O1qGqaxwYw",
+          "name": "GitHub account"
+        }
+      },
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
@@ -259,6 +462,79 @@
           }
         ]
       ]
+    },
+    "Edit File": {
+      "main": [
+        [
+          {
+            "node": "Gemini API - Generate README",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create File": {
+      "main": [
+        [
+          {
+            "node": "Gemini API - Generate README",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini API - Generate README": {
+      "main": [
+        [
+          {
+            "node": "Extract README Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract README Content": {
+      "main": [
+        [
+          {
+            "node": "Get README SHA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get README SHA": {
+      "main": [
+        [
+          {
+            "node": "README Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "README Exists?": {
+      "main": [
+        [
+          {
+            "node": "Edit README",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create README",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -271,7 +547,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "9d4e0301-6a3e-4bc1-a712-c5e74f9b2382",
+  "versionId": "60bb45a0-e0c2-49fb-a5bc-52c5f47bc8e6",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
