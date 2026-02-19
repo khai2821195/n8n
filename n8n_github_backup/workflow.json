@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-19T07:51:24.349Z",
+  "updatedAt": "2026-02-19T07:57:47.645Z",
   "createdAt": "2025-12-01T21:37:22.774Z",
   "id": "gRhv6ri8Nq5sE1Ol",
   "name": "n8n_github_backup",
@@ -196,12 +196,13 @@
       "parameters": {
         "method": "POST",
         "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "authentication": "none",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
             {
               "name": "key",
-              "value": "AIzaSyDbkXrokZ61GrhjICBYdqGEdcCpi6X0LK8"
+              "value": "여기에_Gemini_API_키_입력"
             }
           ]
         },
@@ -209,17 +210,15 @@
         "headerParameters": {
           "parameters": [
             {
-              "name": "content-type",
+              "name": "Content-Type",
               "value": "application/json"
             }
           ]
         },
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {}
-          ]
-        },
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ \"system_instruction\": { \"parts\": [{ \"text\": \"당신은 n8n 워크플로우 전문가입니다. 주어진 워크플로우 JSON을 분석하여 한국어로 README.md를 작성해주세요.\\n\\n다음 형식으로 작성하세요:\\n\\n# {워크플로우 이름}\\n\\n## 📋 기능 요약\\n(워크플로우가 무엇을 하는지 2~3문장으로 설명)\\n\\n## ⚡ 실행 조건 / 트리거\\n(어떻게 실행되는지: 수동/스케줄/웹훅 등)\\n\\n## 🔧 노드 구성\\n(각 노드 이름과 역할을 목록으로)\\n\\n## ⚠️ 주의사항 / 개선 포인트\\n(설정 시 주의할 점이나 개선 가능한 부분)\\n\\n---\\n*이 문서는 자동으로 생성되었습니다.*\" }] }, \"contents\": [{ \"role\": \"user\", \"parts\": [{ \"text\": \"다음 n8n 워크플로우 JSON을 분석하여 README.md를 작성해주세요:\\n\\n\" + JSON.stringify($node['Split Out'].json, null, 2) }] }] }) }}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -547,7 +546,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "60bb45a0-e0c2-49fb-a5bc-52c5f47bc8e6",
+  "versionId": "40f2e331-152a-4d29-92fd-95590a26d54e",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
