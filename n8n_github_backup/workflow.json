@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-19T07:57:47.645Z",
+  "updatedAt": "2026-02-19T09:14:43.891Z",
   "createdAt": "2025-12-01T21:37:22.774Z",
   "id": "gRhv6ri8Nq5sE1Ol",
   "name": "n8n_github_backup",
@@ -196,13 +196,12 @@
       "parameters": {
         "method": "POST",
         "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
-        "authentication": "none",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
             {
               "name": "key",
-              "value": "여기에_Gemini_API_키_입력"
+              "value": "AIzaSyDbkXrokZ61GrhjICBYdqGEdcCpi6X0LK8"
             }
           ]
         },
@@ -546,7 +545,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "40f2e331-152a-4d29-92fd-95590a26d54e",
+  "versionId": "bf0c8269-cf97-4518-bd8f-d238327e3bb5",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
