@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-20T04:47:44.000Z",
+  "updatedAt": "2026-02-23T22:02:39.116Z",
   "createdAt": "2025-11-29T23:12:37.874Z",
   "id": "S1ObqqNJYt6Weh0b",
   "name": "Alimtalk Sangdam 251201",
@@ -291,7 +291,8 @@
     }
   },
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "availableInMCP": false
   },
   "staticData": {
     "node:Schedule Trigger": {
