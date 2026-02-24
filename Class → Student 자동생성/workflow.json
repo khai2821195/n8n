@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-01-19T21:10:55.000Z",
+  "updatedAt": "2026-02-23T22:30:22.438Z",
   "createdAt": "2025-11-29T23:09:25.703Z",
   "id": "PNn3uKuzuOyjgFbu",
   "name": "Class → Student 자동생성",
@@ -288,7 +288,8 @@
     }
   },
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "availableInMCP": false
   },
   "staticData": null,
   "meta": {
