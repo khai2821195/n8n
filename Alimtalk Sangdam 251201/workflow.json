@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-23T22:02:39.116Z",
+  "updatedAt": "2026-02-25T22:02:35.893Z",
   "createdAt": "2025-11-29T23:12:37.874Z",
   "id": "S1ObqqNJYt6Weh0b",
   "name": "Alimtalk Sangdam 251201",
@@ -104,8 +104,8 @@
       "name": "Notion 신규상담신청 확인",
       "credentials": {
         "notionApi": {
-          "id": "lDP3J5aTBwUIOktz",
-          "name": "Notion Math4U"
+          "id": "MAYBu1lbKiMiquHV",
+          "name": "Notion account"
         }
       }
     },
@@ -194,7 +194,7 @@
         "propertiesUi": {
           "propertyValues": [
             {
-              "key": "알림톡 발송|checkbox",
+              "key": "=알림톡 발송|checkbox",
               "checkboxValue": true
             }
           ]
@@ -211,8 +211,8 @@
       "name": "Notion Update",
       "credentials": {
         "notionApi": {
-          "id": "lDP3J5aTBwUIOktz",
-          "name": "Notion Math4U"
+          "id": "MAYBu1lbKiMiquHV",
+          "name": "Notion account"
         }
       }
     },
@@ -303,8 +303,8 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "dcc81a2b-38de-4ec3-bde2-5a45bc110b7e",
-  "activeVersionId": "dcc81a2b-38de-4ec3-bde2-5a45bc110b7e",
+  "versionId": "8e95704f-7093-4c8d-9ada-56905e28d8b3",
+  "activeVersionId": "8e95704f-7093-4c8d-9ada-56905e28d8b3",
   "triggerCount": 1,
   "shared": [
     {
@@ -316,9 +316,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-01-20T04:47:44.363Z",
-    "createdAt": "2026-01-20T04:47:44.363Z",
-    "versionId": "dcc81a2b-38de-4ec3-bde2-5a45bc110b7e",
+    "updatedAt": "2026-02-26T07:23:31.000Z",
+    "createdAt": "2026-02-25T22:02:35.896Z",
+    "versionId": "8e95704f-7093-4c8d-9ada-56905e28d8b3",
     "workflowId": "S1ObqqNJYt6Weh0b",
     "nodes": [
       {
@@ -419,8 +419,8 @@
         "name": "Notion 신규상담신청 확인",
         "credentials": {
           "notionApi": {
-            "id": "lDP3J5aTBwUIOktz",
-            "name": "Notion Math4U"
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "Notion account"
           }
         }
       },
@@ -509,7 +509,7 @@
           "propertiesUi": {
             "propertyValues": [
               {
-                "key": "알림톡 발송|checkbox",
+                "key": "=알림톡 발송|checkbox",
                 "checkboxValue": true
               }
             ]
@@ -526,8 +526,8 @@
         "name": "Notion Update",
         "credentials": {
           "notionApi": {
-            "id": "lDP3J5aTBwUIOktz",
-            "name": "Notion Math4U"
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "Notion account"
           }
         }
       },
@@ -606,9 +606,9 @@
       }
     },
     "authors": "Seung Hyeon Kim",
-    "name": null,
-    "description": null,
-    "autosaved": false
+    "name": "Version 8e95704f",
+    "description": "노션 인증 변경",
+    "autosaved": true
   },
   "tags": []
 }
