@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2026-01-21T00:42:16.000Z",
+  "updatedAt": "2026-02-26T07:25:41.000Z",
   "createdAt": "2025-11-29T23:09:59.705Z",
   "id": "BPOAKxbb3NnXZPKp",
   "name": "Class_Study 새 페이지 생성",
   "active": false,
-  "isArchived": false,
+  "isArchived": true,
   "nodes": [
     {
       "parameters": {
@@ -101,7 +101,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "e57f2d53-22ee-465e-83c5-381d070c4e5b",
+  "versionId": "f81ef835-1e53-463c-9b55-2291087c7c6a",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
