@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-27T17:22:58.446Z",
+  "updatedAt": "2026-02-27T18:24:31.864Z",
   "createdAt": "2025-12-01T21:37:22.774Z",
   "id": "gRhv6ri8Nq5sE1Ol",
   "name": "n8n_github_backup",
@@ -222,7 +222,7 @@
           "batching": {
             "batch": {
               "batchSize": 1,
-              "batchInterval": 3000
+              "batchInterval": 10000
             }
           }
         }
@@ -235,11 +235,13 @@
       ],
       "id": "claude-api-node",
       "name": "Gemini API - Generate README",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
       "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "options": {},
         "assignments": {
           "assignments": [
             {
@@ -255,7 +257,8 @@
               "value": "={{ $('Split Out').item.json.name }}"
             }
           ]
-        }
+        },
+        "options": {}
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -561,7 +564,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "581c1d8e-01f1-4a75-bc9a-41550a08f977",
+  "versionId": "cc97b09b-1a06-4294-beed-aed077359b40",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
