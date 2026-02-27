@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-27T18:40:32.093Z",
+  "updatedAt": "2026-02-27T18:53:44.597Z",
   "createdAt": "2025-12-01T21:37:22.774Z",
   "id": "gRhv6ri8Nq5sE1Ol",
   "name": "n8n_github_backup",
@@ -11,8 +11,8 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        -256,
-        320
+        -272,
+        -32
       ],
       "id": "c196462d-d5d3-48df-89bb-571f60580b8c",
       "name": "When clicking 'Execute workflow'"
@@ -27,8 +27,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -48,
-        320
+        -64,
+        -32
       ],
       "id": "e1d901d0-9ccb-4ee3-bc14-e60fdc288f32",
       "name": "HTTP Request",
@@ -48,8 +48,8 @@
       "type": "n8n-nodes-base.splitOut",
       "typeVersion": 1,
       "position": [
-        160,
-        320
+        144,
+        -32
       ],
       "id": "9ef23a84-03c7-47f0-bde9-38ea2351de75",
       "name": "Split Out"
@@ -75,8 +75,8 @@
       "type": "n8n-nodes-base.github",
       "typeVersion": 1.1,
       "position": [
-        400,
-        320
+        352,
+        -32
       ],
       "id": "6e843c73-3014-4d7a-a698-eacd7256d81c",
       "name": "Get File SHA",
@@ -116,8 +116,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        592,
-        320
+        560,
+        -32
       ],
       "id": "if-sha-exists",
       "name": "File Exists?",
@@ -144,8 +144,8 @@
       "type": "n8n-nodes-base.github",
       "typeVersion": 1.1,
       "position": [
-        800,
-        208
+        832,
+        -160
       ],
       "id": "edit-file-node",
       "name": "Edit File",
@@ -178,8 +178,8 @@
       "type": "n8n-nodes-base.github",
       "typeVersion": 1.1,
       "position": [
-        800,
-        464
+        832,
+        48
       ],
       "id": "create-file-node",
       "name": "Create File",
@@ -194,6 +194,30 @@
     },
     {
       "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "AIzaSyDbkXrokZ61GrhjICBYdqGEdcCpi6X0LK8"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({\"system_instruction\":{\"parts\":[{\"text\":\"당신은 n8n 워크플로우 문서화 전문가입니다. 주어진 워크플로우 JSON을 분석하여 아래 형식으로 한국어 README.md를 작성하세요.\\n\\n규칙:\\n- 각 섹션은 간결하게, 핵심만 작성\\n- 불필요한 설명 금지, 중복 내용 금지\\n- 마크다운 형식 엄수\\n\\n# {워크플로우 이름}\\n\\n> 한 줄 요약: 이 워크플로우가 하는 일을 1문장으로.\\n\\n## 🔄 플로우 다이어그램\\n아래 형식으로 노드 간 흐름을 ASCII로 표현하세요. 분기(IF)는 TRUE/FALSE로 표시.\\n```\\n[노드명] → [노드명] → [IF 노드명]\\n                              ├─ TRUE  → [노드명]\\n                              └─ FALSE → [노드명]\\n```\\n각 화살표 옆에 전달되는 핵심 데이터를 간략히 표기하세요. 예: → (workflow JSON)\\n\\n## ⚙️ 노드별 역할 & 데이터 흐름\\n| 노드 | 역할 | 입력 | 출력 |\\n|------|------|------|------|\\n(모든 노드를 표로 정리. 입력/출력은 핵심 필드명만)\\n\\n## 🔑 크리덴셜 & 환경변수\\n| 종류 | 이름/용도 | 필수 여부 |\\n|------|-----------|-----------|\\n(사용된 credential, API key, 환경변수 모두 나열. 없으면 \\\"없음\\\")\\n\\n## ⚡ 실행 조건\\n트리거 방식을 1-2줄로 설명.\\n\\n## ⚠️ 주의사항\\n- (설정 시 주의할 점만 bullet로, 최대 3개)\\n\\n---\\n*자동 생성된 문서 by Gemini*\"}]},\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"다음 n8n 워크플로우 JSON을 분석하여 한국어 README.md를 작성해주세요:\\n\\n\" + JSON.stringify($node['Split Out'].json, null, 2)}]}]}) }}",
         "options": {
           "batching": {
             "batch": {
@@ -206,8 +230,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1072,
-        320
+        144,
+        272
       ],
       "id": "claude-api-node",
       "name": "Gemini API - Generate README",
@@ -239,8 +263,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1280,
-        320
+        352,
+        272
       ],
       "id": "extract-readme-node",
       "name": "Extract README Content"
@@ -266,8 +290,8 @@
       "type": "n8n-nodes-base.github",
       "typeVersion": 1.1,
       "position": [
-        1504,
-        320
+        832,
+        256
       ],
       "id": "get-readme-sha-node",
       "name": "Get README SHA",
@@ -316,8 +340,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1712,
-        320
+        1056,
+        256
       ],
       "id": "readme-exists-node",
       "name": "README Exists?",
@@ -344,8 +368,8 @@
       "type": "n8n-nodes-base.github",
       "typeVersion": 1.1,
       "position": [
-        1920,
-        208
+        1344,
+        160
       ],
       "id": "edit-readme-node",
       "name": "Edit README",
@@ -378,8 +402,8 @@
       "type": "n8n-nodes-base.github",
       "typeVersion": 1.1,
       "position": [
-        1920,
-        464
+        1344,
+        368
       ],
       "id": "create-readme-node",
       "name": "Create README",
@@ -393,14 +417,19 @@
       "onError": "continueRegularOutput"
     },
     {
-      "id": "readme-content-check",
-      "name": "README Content OK?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
+      "parameters": {
+        "jsCode": "// Gemini API rate limit 방지용 딜레이\nawait new Promise(resolve => setTimeout(resolve, 5000));\nreturn $input.all();"
+      },
+      "id": "delay-node",
+      "name": "Delay 5s",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
-        1390,
-        320
-      ],
+        1120,
+        -32
+      ]
+    },
+    {
       "parameters": {
         "conditions": {
           "options": {
@@ -409,7 +438,6 @@
             "caseSensitive": true,
             "typeValidation": "strict"
           },
-          "combinator": "and",
           "conditions": [
             {
               "id": "content-not-empty",
@@ -420,11 +448,19 @@
                 "operation": "notEmpty"
               }
             }
-          ]
+          ],
+          "combinator": "and"
         },
         "options": {}
       },
-      "onError": "continueRegularOutput"
+      "id": "readme-content-check",
+      "name": "README Content OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        560,
+        272
+      ]
     }
   ],
   "connections": {
@@ -490,28 +526,6 @@
         ]
       ]
     },
-    "Edit File": {
-      "main": [
-        [
-          {
-            "node": "Gemini API - Generate README",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Create File": {
-      "main": [
-        [
-          {
-            "node": "Gemini API - Generate README",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Gemini API - Generate README": {
       "main": [
         [
@@ -552,6 +566,39 @@
         ]
       ]
     },
+    "Edit File": {
+      "main": [
+        [
+          {
+            "node": "Delay 5s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create File": {
+      "main": [
+        [
+          {
+            "node": "Delay 5s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delay 5s": {
+      "main": [
+        [
+          {
+            "node": "Gemini API - Generate README",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Extract README Content": {
       "main": [
         [
@@ -585,7 +632,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "329c7857-4dc0-498a-a10d-74be16eb0855",
+  "versionId": "bad72dbe-7569-4aca-a86e-2c78ea5c8fb3",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
