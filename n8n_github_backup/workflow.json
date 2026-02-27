@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-27T19:02:49.940Z",
+  "updatedAt": "2026-02-27T19:05:30.695Z",
   "createdAt": "2025-12-01T21:37:22.774Z",
   "id": "gRhv6ri8Nq5sE1Ol",
   "name": "n8n_github_backup",
@@ -194,7 +194,24 @@
     },
     {
       "parameters": {
-        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+        "sendQuery": false,
+        "queryParameters": {
+          "parameters": []
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-goog-api-key",
+              "value": "AIzaSyDbkXrokZ61GrhjICBYdqGEdcCpi6X0LK8"
+            }
+          ]
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -601,7 +618,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "464ec202-5ffe-4447-95e7-652a18436ecb",
+  "versionId": "48bcc6d7-968d-4267-900e-1a967075ec82",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
