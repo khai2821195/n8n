@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-27T16:41:32.146Z",
+  "updatedAt": "2026-02-27T16:44:45.860Z",
   "createdAt": "2025-12-01T21:37:22.774Z",
   "id": "gRhv6ri8Nq5sE1Ol",
   "name": "n8n_github_backup",
@@ -232,23 +232,23 @@
     },
     {
       "parameters": {
+        "options": {},
         "assignments": {
           "assignments": [
             {
               "id": "readme-content",
               "name": "readmeContent",
-              "value": "={{ $('Gemini API - Generate README').first().json.candidates[0].content.parts[0].text }}",
-              "type": "string"
+              "type": "string",
+              "value": "={{ $json.candidates[0].content.parts[0].text }}"
             },
             {
               "id": "workflow-name",
               "name": "workflowName",
-              "value": "={{ $('Split Out').first().json.name }}",
-              "type": "string"
+              "type": "string",
+              "value": "={{ $('Split Out').item.json.name }}"
             }
           ]
-        },
-        "options": {}
+        }
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -554,7 +554,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "24902fd2-71d9-4479-8daa-f334fd4e86b3",
+  "versionId": "c4618672-b7f0-465d-8c3f-fa37061dd6bc",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
