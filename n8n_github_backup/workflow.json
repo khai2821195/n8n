@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-26T09:43:44.930Z",
+  "updatedAt": "2026-02-27T16:17:36.242Z",
   "createdAt": "2025-12-01T21:37:22.774Z",
   "id": "gRhv6ri8Nq5sE1Ol",
   "name": "n8n_github_backup",
@@ -217,7 +217,7 @@
         "sendBody": true,
         "contentType": "raw",
         "rawContentType": "application/json",
-        "body": "={{ JSON.stringify({\"system_instruction\":{\"parts\":[{\"text\":\"당신은 n8n 워크플로우 문서화 전문가입니다. 주어진 워크플로우 JSON을 분석하여 다음 형식으로 한국어 README.md를 작성하세요.\\n\\n반드시 이 정확한 형식으로 작성하세요:\\n\\n# {워크플로우 이름}\\n\\n## 📋 기능 요약\\n이 워크플로우가 무엇을 하는지 2-3문장으로 설명합니다. 주요 목적과 기능을 명확히 합니다.\\n\\n## ⚡ 실행 조건\\n이 워크플로우가 어떻게 실행되는지 설명합니다 (수동 실행, 스케줄, 웹훅 등).\\n\\n## 🔧 노드 구성\\n- 노드이름: 역할 및 목적 설명\\n(모든 주요 노드를 목록으로 작성)\\n\\n## 💡 주요 기능\\n- 기능 1: 설명\\n- 기능 2: 설명\\n- 기능 3: 설명\\n(3-4개의 주요 기능이나 이점을 나열)\\n\\n## ⚠️ 주의사항\\n설정 시 필요한 주의사항, 필요한 크리덴셜, API 키 또는 이 워크플로우를 실행하기 위해 필요한 구성에 대해 나열합니다.\\n\\n---\\n*자동 생성된 문서*\"}]},\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"다음 n8n 워크플로우 JSON을 분석하여 한국어 README.md를 작성해주세요:\\n\\n\" + JSON.stringify($node['Split Out'].json, null, 2)}]}]}) }}"
+        "body": "={{ JSON.stringify({\"system_instruction\":{\"parts\":[{\"text\":\"당신은 n8n 워크플로우 문서화 전문가입니다. 주어진 워크플로우 JSON을 분석하여 아래 형식으로 한국어 README.md를 작성하세요.\\n\\n규칙:\\n- 각 섹션은 간결하게, 핵심만 작성\\n- 불필요한 설명 금지, 중복 내용 금지\\n- 마크다운 형식 엄수\\n\\n# {워크플로우 이름}\\n\\n> 한 줄 요약: 이 워크플로우가 하는 일을 1문장으로.\\n\\n## 🔄 플로우 다이어그램\\n아래 형식으로 노드 간 흐름을 ASCII로 표현하세요. 분기(IF)는 TRUE/FALSE로 표시.\\n```\\n[노드명] → [노드명] → [IF 노드명]\\n                              ├─ TRUE  → [노드명]\\n                              └─ FALSE → [노드명]\\n```\\n각 화살표 옆에 전달되는 핵심 데이터를 간략히 표기하세요. 예: → (workflow JSON)\\n\\n## ⚙️ 노드별 역할 & 데이터 흐름\\n| 노드 | 역할 | 입력 | 출력 |\\n|------|------|------|------|\\n(모든 노드를 표로 정리. 입력/출력은 핵심 필드명만)\\n\\n## 🔑 크리덴셜 & 환경변수\\n| 종류 | 이름/용도 | 필수 여부 |\\n|------|-----------|-----------|\\n(사용된 credential, API key, 환경변수 모두 나열. 없으면 \\\"없음\\\")\\n\\n## ⚡ 실행 조건\\n트리거 방식을 1-2줄로 설명.\\n\\n## ⚠️ 주의사항\\n- (설정 시 주의할 점만 bullet로, 최대 3개)\\n\\n---\\n*자동 생성된 문서 by Gemini*\"}]},\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"다음 n8n 워크플로우 JSON을 분석하여 한국어 README.md를 작성해주세요:\\n\\n\" + JSON.stringify($node['Split Out'].json, null, 2)}]}]}) }}"
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -544,7 +544,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "f9a461fb-5500-4fb0-baa7-1d9a8c2a107b",
+  "versionId": "f47127a1-23ff-437e-ab3e-945448f866ba",
   "activeVersionId": null,
   "triggerCount": 0,
   "shared": [
