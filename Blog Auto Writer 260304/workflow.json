@@ -1,0 +1,839 @@
+{
+  "updatedAt": "2026-03-03T21:05:24.088Z",
+  "createdAt": "2026-03-03T18:16:19.957Z",
+  "id": "L6uRu2oqasHrOIQR",
+  "name": "Blog Auto Writer 260304",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "node-webhook",
+      "name": "웹훅 트리거",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        200,
+        400
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "blog-writer",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      }
+    },
+    {
+      "id": "node-parse",
+      "name": "입력값 파싱",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        420,
+        400
+      ],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "p1",
+              "name": "blog_topic",
+              "value": "={{ $json.body.blog_topic }}",
+              "type": "string"
+            },
+            {
+              "id": "p2",
+              "name": "tone",
+              "value": "={{ $json.body.tone || '친근한' }}",
+              "type": "string"
+            },
+            {
+              "id": "p3",
+              "name": "target_reader",
+              "value": "={{ $json.body.target_reader || '학부모' }}",
+              "type": "string"
+            },
+            {
+              "id": "p4",
+              "name": "url_list",
+              "value": "={{ $json.body.url_list || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "p5",
+              "name": "notion_page_ids",
+              "value": "={{ $json.body.notion_page_ids || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "p6",
+              "name": "obsidian_files",
+              "value": "={{ $json.body.obsidian_files || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "p7",
+              "name": "quality_loop_max",
+              "value": "={{ $json.body.quality_loop_max || '3' }}",
+              "type": "string"
+            },
+            {
+              "id": "p8",
+              "name": "loop_count",
+              "value": "0",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": false
+      }
+    },
+    {
+      "id": "node-split",
+      "name": "URL 목록 분리",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        280
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const input=$input.first().json;\nconst urls=(input.url_list||'').split('\\n').map(u=>u.trim()).filter(u=>u.length>0);\nconst notionIds=(input.notion_page_ids||'').split(',').map(i=>i.trim()).filter(i=>i.length>0);\nconst obsidianFiles=(input.obsidian_files||'').split(',').map(f=>f.trim()).filter(f=>f.length>0);\nreturn [{json:{...input,urls_array:urls,notion_ids_array:notionIds,obsidian_files_array:obsidianFiles}}];"
+      }
+    },
+    {
+      "id": "node-url-prep",
+      "name": "URL 콘텐츠 수집",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        860,
+        160
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const input=$input.first().json;\nconst urls=input.urls_array||[];\nif(urls.length===0) return [{json:{...input,source_type:'url',source:'none',fetch_url:'',content:''}}];\nreturn urls.map(url=>({json:{...input,source_type:'url',source:url,fetch_url:'https://r.jina.ai/'+url}}));"
+      }
+    },
+    {
+      "id": "node-jina",
+      "name": "Jina URL 읽기",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1080,
+        160
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.fetch_url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "text/plain"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "node-url-result",
+      "name": "URL 결과 정리",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1300,
+        160
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items=$input.all();\nconst urlContents=items.filter(i=>i.json.source!=='none'&&i.json.fetch_url).map(i=>'[출처: '+i.json.source+']\\n'+(i.json.data||i.json.body||'').substring(0,3000)).join('\\n\\n---\\n\\n');\nconst base=items[0].json;\nreturn [{json:{...base,url_contents:urlContents}}];"
+      }
+    },
+    {
+      "id": "node-notion-prep",
+      "name": "노션 페이지 읽기",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        860,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const input=$input.first().json;\nconst ids=input.notion_ids_array||[];\nif(ids.length===0) return [{json:{...input,notion_page_id:null}}];\nreturn ids.map(id=>({json:{...input,notion_page_id:id}}));"
+      }
+    },
+    {
+      "id": "node-notion-api",
+      "name": "노션 API 호출",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1080,
+        400
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.notion.com/v1/blocks/{{ $json.notion_page_id }}/children",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "node-notion-parse",
+      "name": "노션 내용 파싱",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1300,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items=$input.all();\nlet notionContents='';\nfor(const item of items){\n  if(!item.json.notion_page_id) continue;\n  const blocks=item.json.results||[];\n  const texts=blocks.filter(b=>b.type&&b[b.type]&&b[b.type].rich_text).map(b=>b[b.type].rich_text.map(t=>t.plain_text).join('')).filter(t=>t.length>0).join('\\n');\n  if(texts) notionContents+='[노션: '+item.json.notion_page_id+']\\n'+texts+'\\n\\n---\\n\\n';\n}\nconst base=items[0].json;\nreturn [{json:{...base,notion_contents:notionContents}}];"
+      }
+    },
+    {
+      "id": "node-obs-prep",
+      "name": "옵시디언 파일 읽기",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        860,
+        640
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const input=$input.first().json;\nconst files=input.obsidian_files_array||[];\nif(files.length===0) return [{json:{...input,obsidian_file_path:null}}];\nreturn files.map(f=>({json:{...input,obsidian_file_path:f}}));"
+      }
+    },
+    {
+      "id": "node-obs-read",
+      "name": "옵시디언 파일 실행",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1080,
+        640
+      ],
+      "parameters": {
+        "command": "=type \"{{ $json.obsidian_file_path }}\""
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "node-obs-parse",
+      "name": "옵시디언 내용 정리",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1300,
+        640
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items=$input.all();\nlet obsidianContents='';\nfor(const item of items){\n  if(!item.json.obsidian_file_path) continue;\n  const content=item.json.stdout||'';\n  if(content.trim()) obsidianContents+='[옵시디언: '+item.json.obsidian_file_path+']\\n'+content.substring(0,3000)+'\\n\\n---\\n\\n';\n}\nconst base=items[0].json;\nreturn [{json:{...base,obsidian_contents:obsidianContents}}];"
+      }
+    },
+    {
+      "id": "node-merge",
+      "name": "자료 통합",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1520,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items=$input.all();\nlet urlC='',notionC='',obsC='',base={};\nfor(const item of items){\n  if(item.json.url_contents!==undefined) urlC=item.json.url_contents;\n  if(item.json.notion_contents!==undefined) notionC=item.json.notion_contents;\n  if(item.json.obsidian_contents!==undefined) obsC=item.json.obsidian_contents;\n  if(item.json.blog_topic) base=item.json;\n}\nconst all=[\n  urlC ? '=== 웹 URL 자료 ===\\n'+urlC : '',\n  notionC ? '=== 노션 자료 ===\\n'+notionC : '',\n  obsC ? '=== 옵시디언 자료 ===\\n'+obsC : ''\n].filter(c=>c.length>0).join('\\n\\n');\nreturn [{json:{...base,merged_contents:all.substring(0,15000),loop_count:0,draft_content:'',quality_passed:false}}];"
+      }
+    },
+    {
+      "id": "node-ai-draft",
+      "name": "AI 초안 작성",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1740,
+        400
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "YOUR_ANTHROPIC_API_KEY"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "={\"model\":\"claude-sonnet-4-20250514\",\"max_tokens\":4000,\"system\":\"네이버 블로그 전문 작가. 반드시 [참고자료]만 기반으로 작성. 외부정보 추가 금지. 톤: \"+$json.tone+\", 독자: \"+$json.target_reader+\". 규칙: 네이버 블로그 형식, 2000자 이상, 소제목 3개 이상, 구체적 예시, 독자 행동유도 문구, 해시태그 10개, 서론/본론/결론 구조\",\"messages\":[{\"role\":\"user\",\"content\":\"블로그 주제: \"+$json.blog_topic+\"\\n\\n[참고자료]\\n\"+$json.merged_contents+\"\\n\\n위 참고자료만 활용해서 네이버 블로그 글 작성해주세요.\"}]}"
+      }
+    },
+    {
+      "id": "node-extract",
+      "name": "초안 텍스트 추출",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1960,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const item=$input.first();\nconst content=item.json.content&&item.json.content[0]?item.json.content[0].text:'';\nreturn [{json:{...item.json,draft_content:content}}];"
+      }
+    },
+    {
+      "id": "node-ai-eval",
+      "name": "AI 품질 평가",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2180,
+        400
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "YOUR_ANTHROPIC_API_KEY"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "={\"model\":\"claude-sonnet-4-20250514\",\"max_tokens\":800,\"system\":\"블로그 품질 평가자. JSON만 반환(preamble금지): {\\\"passed\\\":true,\\\"score\\\":0,\\\"issues\\\":[],\\\"improvements\\\":\\\"\\\"}\",\"messages\":[{\"role\":\"user\",\"content\":\"평가기준: (1)글자수 2000자이상 (2)소제목 3개이상 (3)구체적 예시포함 (4)독자행동유도문구 (5)해시태그포함. 4/5이상 passed:true\\n\\n[평가할 글]\\n\"+$json.draft_content}]}"
+      }
+    },
+    {
+      "id": "node-parse-q",
+      "name": "품질 결과 파싱",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const item=$input.first();\nconst txt=item.json.content&&item.json.content[0]?item.json.content[0].text:'{}';\nlet q={};\ntry{q=JSON.parse(txt.replace(/```json|```/g,'').trim());}catch(e){q={passed:true,score:70,issues:[],improvements:''};}\nconst loopCount=(parseInt(item.json.loop_count)||0)+1;\nconst maxLoop=parseInt(item.json.quality_loop_max||3);\nconst forcePass=loopCount>=maxLoop;\nreturn [{json:{...item.json,quality_passed:q.passed||forcePass,quality_score:q.score||0,quality_issues:q.issues||[],improvements:q.improvements||'',loop_count:loopCount,force_passed:forcePass}}];"
+      }
+    },
+    {
+      "id": "node-if-q",
+      "name": "품질 기준 충족?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2620,
+        400
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.quality_passed }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false
+      }
+    },
+    {
+      "id": "node-ai-improve",
+      "name": "AI 글 보강",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2840,
+        560
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "YOUR_ANTHROPIC_API_KEY"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "={\"model\":\"claude-sonnet-4-20250514\",\"max_tokens\":4000,\"system\":\"블로그 편집 전문가. [참고자료]만 활용, 외부정보 추가 금지.\",\"messages\":[{\"role\":\"user\",\"content\":\"[보완지시]\\n\"+$json.improvements+\"\\n\\n[참고자료]\\n\"+$json.merged_contents+\"\\n\\n[현재초안]\\n\"+$json.draft_content+\"\\n\\n보완된 완성 글 전체를 작성해주세요.\"}]}"
+      }
+    },
+    {
+      "id": "node-update",
+      "name": "보강된 초안 업데이트",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3060,
+        560
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const item=$input.first();\nconst newContent=item.json.content&&item.json.content[0]?item.json.content[0].text:item.json.draft_content;\nreturn [{json:{...item.json,draft_content:newContent}}];"
+      }
+    },
+    {
+      "id": "node-save",
+      "name": "노션에 초안 저장",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2840,
+        240
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.notion.com/v1/pages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "={\"parent\":{\"database_id\":\"YOUR_NOTION_DATABASE_ID\"},\"properties\":{\"제목\":{\"title\":[{\"text\":{\"content\":\"[Blog] \"+$json.blog_topic}}]},\"상태\":{\"select\":{\"name\":\"초안완성\"}},\"품질점수\":{\"number\":$json.quality_score},\"반복횟수\":{\"number\":$json.loop_count}},\"children\":[{\"object\":\"block\",\"type\":\"paragraph\",\"paragraph\":{\"rich_text\":[{\"type\":\"text\",\"text\":{\"content\":$json.draft_content.substring(0,2000)}}]}}]}"
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "node-final",
+      "name": "완성 결과",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3060,
+        240
+      ],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f1",
+              "name": "status",
+              "value": "완성",
+              "type": "string"
+            },
+            {
+              "id": "f2",
+              "name": "final_blog_post",
+              "value": "={{ $json.draft_content }}",
+              "type": "string"
+            },
+            {
+              "id": "f3",
+              "name": "quality_score",
+              "value": "={{ $json.quality_score }}",
+              "type": "string"
+            },
+            {
+              "id": "f4",
+              "name": "total_loops",
+              "value": "={{ $json.loop_count }}",
+              "type": "string"
+            },
+            {
+              "id": "f5",
+              "name": "blog_topic",
+              "value": "={{ $json.blog_topic }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": false
+      }
+    },
+    {
+      "id": "node-respond",
+      "name": "결과 응답",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        3280,
+        240
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({status:'success',blog_topic:$json.blog_topic,final_blog_post:$json.final_blog_post,quality_score:$json.quality_score,total_loops:$json.total_loops}) }}"
+      }
+    }
+  ],
+  "connections": {
+    "웹훅 트리거": {
+      "main": [
+        [
+          {
+            "node": "입력값 파싱",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "입력값 파싱": {
+      "main": [
+        [
+          {
+            "node": "URL 목록 분리",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "URL 목록 분리": {
+      "main": [
+        [
+          {
+            "node": "URL 콘텐츠 수집",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "노션 페이지 읽기",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "옵시디언 파일 읽기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "URL 콘텐츠 수집": {
+      "main": [
+        [
+          {
+            "node": "Jina URL 읽기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jina URL 읽기": {
+      "main": [
+        [
+          {
+            "node": "URL 결과 정리",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "URL 결과 정리": {
+      "main": [
+        [
+          {
+            "node": "자료 통합",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "노션 페이지 읽기": {
+      "main": [
+        [
+          {
+            "node": "노션 API 호출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "노션 API 호출": {
+      "main": [
+        [
+          {
+            "node": "노션 내용 파싱",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "노션 내용 파싱": {
+      "main": [
+        [
+          {
+            "node": "자료 통합",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "옵시디언 파일 읽기": {
+      "main": [
+        [
+          {
+            "node": "옵시디언 파일 실행",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "옵시디언 파일 실행": {
+      "main": [
+        [
+          {
+            "node": "옵시디언 내용 정리",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "옵시디언 내용 정리": {
+      "main": [
+        [
+          {
+            "node": "자료 통합",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "자료 통합": {
+      "main": [
+        [
+          {
+            "node": "AI 초안 작성",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI 초안 작성": {
+      "main": [
+        [
+          {
+            "node": "초안 텍스트 추출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "초안 텍스트 추출": {
+      "main": [
+        [
+          {
+            "node": "AI 품질 평가",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI 품질 평가": {
+      "main": [
+        [
+          {
+            "node": "품질 결과 파싱",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "품질 결과 파싱": {
+      "main": [
+        [
+          {
+            "node": "품질 기준 충족?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "품질 기준 충족?": {
+      "main": [
+        [
+          {
+            "node": "노션에 초안 저장",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI 글 보강",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI 글 보강": {
+      "main": [
+        [
+          {
+            "node": "보강된 초안 업데이트",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "보강된 초안 업데이트": {
+      "main": [
+        [
+          {
+            "node": "AI 품질 평가",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "노션에 초안 저장": {
+      "main": [
+        [
+          {
+            "node": "완성 결과",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "완성 결과": {
+      "main": [
+        [
+          {
+            "node": "결과 응답",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Seoul",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "e6111ce8-631e-4675-880b-768f790947da",
+  "activeVersionId": null,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-03T18:16:19.962Z",
+      "createdAt": "2026-03-03T18:16:19.962Z",
+      "role": "workflow:owner",
+      "workflowId": "L6uRu2oqasHrOIQR",
+      "projectId": "8znYa8Ca7GWeBy0m"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
