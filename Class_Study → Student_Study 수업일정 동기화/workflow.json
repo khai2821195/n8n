@@ -1,0 +1,199 @@
+{
+  "updatedAt": "2026-03-02T09:49:00.334Z",
+  "createdAt": "2026-03-02T09:18:28.694Z",
+  "id": "G5k8fgeviVCR8ixe",
+  "name": "Class_Study → Student_Study 수업일정 동기화",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "node-trigger",
+      "name": "Class_Study 변경 감지",
+      "type": "n8n-nodes-base.notionTrigger",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ],
+      "parameters": {
+        "event": "pagedUpdatedInDatabase",
+        "databaseId": {
+          "__rl": true,
+          "value": "2d0c6a06e17e819c9347e50501c59069",
+          "mode": "id"
+        },
+        "simple": false
+      },
+      "credentials": {
+        "notionApi": {
+          "id": "MAYBu1lbKiMiquHV",
+          "name": "n8n-Math4U"
+        }
+      }
+    },
+    {
+      "id": "node-extract",
+      "name": "수업일정 및 학생ID 추출",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const page = $input.first().json;\n\nconst scheduleProp = page.properties?.['수업일정'];\nlet startDate = null;\nlet endDate = null;\n\nif (scheduleProp?.type === 'date' && scheduleProp?.date) {\n  startDate = scheduleProp.date.start;\n  endDate = scheduleProp.date.end || null;\n}\n\nif (!startDate) {\n  return [{ json: { skip: true, reason: '수업일정 날짜 없음', studentIds: [] } }];\n}\n\nlet studentIds = [];\nfor (const [key, value] of Object.entries(page.properties || {})) {\n  if (value.type === 'relation' && value.relation && value.relation.length > 0) {\n    studentIds = value.relation.map(r => r.id);\n    break;\n  }\n}\n\nif (studentIds.length === 0) {\n  return [{ json: { skip: true, reason: '연결된 학생 레코드 없음', studentIds: [] } }];\n}\n\nreturn studentIds.map(id => ({\n  json: { skip: false, studentPageId: id, startDate, endDate }\n}));"
+      }
+    },
+    {
+      "id": "node-if",
+      "name": "업데이트 필요 여부",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        680,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-skip",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "node-update",
+      "name": "Student_Study 수업일시 업데이트",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        920,
+        180
+      ],
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $json.studentPageId }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "수업일시|date",
+              "date": "={{ $json.startDate }}",
+              "includeTime": true,
+              "dateEnd": "={{ $json.endDate !== null ? $json.endDate : '' }}"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "notionApi": {
+          "id": "MAYBu1lbKiMiquHV",
+          "name": "n8n-Math4U"
+        }
+      }
+    },
+    {
+      "id": "node-skip-log",
+      "name": "스킵 로그",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        920,
+        420
+      ],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Class_Study 변경 감지": {
+      "main": [
+        [
+          {
+            "node": "수업일정 및 학생ID 추출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "수업일정 및 학생ID 추출": {
+      "main": [
+        [
+          {
+            "node": "업데이트 필요 여부",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "업데이트 필요 여부": {
+      "main": [
+        [
+          {
+            "node": "Student_Study 수업일시 업데이트",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "스킵 로그",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "binaryMode": "separate"
+  },
+  "staticData": {
+    "node:Class_Study 변경 감지": {
+      "lastTimeChecked": "2026-03-05T09:06:00.000Z",
+      "possibleDuplicates": [
+        "317c6a06-e17e-8017-ba88-c8c18d2f2ebb"
+      ]
+    }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "a97e5d82-0e32-4f13-8565-bf933878fb4c",
+  "activeVersionId": null,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-03-02T09:18:28.699Z",
+      "createdAt": "2026-03-02T09:18:28.699Z",
+      "role": "workflow:owner",
+      "workflowId": "G5k8fgeviVCR8ixe",
+      "projectId": "8znYa8Ca7GWeBy0m"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
