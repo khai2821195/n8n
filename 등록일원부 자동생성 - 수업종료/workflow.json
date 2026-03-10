@@ -1,0 +1,632 @@
+{
+  "updatedAt": "2026-03-09T22:12:24.541Z",
+  "createdAt": "2026-03-05T11:42:54.670Z",
+  "id": "BrZ88oo3KRKccX0g",
+  "name": "등록일원부 자동생성 - 수업종료",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "trigger-01",
+      "name": "Notion Trigger - Student_Study 변경 감지",
+      "type": "n8n-nodes-base.notionTrigger",
+      "typeVersion": 1,
+      "position": [
+        -600,
+        300
+      ],
+      "parameters": {
+        "event": "pagedUpdatedInDatabase",
+        "databaseId": {
+          "__rl": true,
+          "value": "2d0c6a06e17e81188ce1dd2f76406aa1",
+          "mode": "id"
+        },
+        "simple": false
+      },
+      "credentials": {
+        "notionApi": {
+          "id": "MAYBu1lbKiMiquHV",
+          "name": "n8n-Math4U"
+        }
+      }
+    },
+    {
+      "id": "code-01",
+      "name": "Code - 종료 체크 및 데이터 추출",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -340,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const page = $input.first().json;\nconst props = page.properties || {};\n\nconst isEnded = props['수업완료']?.checkbox === true;\nif (!isEnded) return [];\n\nconst sessionItems = props['수업회차']?.multi_select || [];\nconst sessionItem = sessionItems.find(s => /\\d/.test(s.name));\nconst sessionCount = sessionItem ? parseInt(sessionItem.name) : null;\n\nconst bunArr = props['수업구분']?.rollup?.array || [];\nconst bunName = bunArr[0]?.select?.name || '';\nconst classCount = parseInt(bunName.replace(/[^0-9]/g, '')) || null;\n\nif (sessionCount === null || classCount === null) return [];\nif (sessionCount !== classCount) return [];\n\nconst studentPageId = props['Students']?.relation?.[0]?.id || '';\nif (!studentPageId) return [];\nconst classPageId = props['Class']?.relation?.[0]?.id || '';\nif (!classPageId) return [];\n\nconst rollupArr = props['다음수업일']?.rollup?.array || [];\nconst dateStr = rollupArr[0]?.formula?.string || '';\nlet isoDate = new Date().toISOString().split('T')[0];\nif (dateStr) {\n  const m = dateStr.match(/(\\d{4})년\\s*(\\d{1,2})월\\s*(\\d{1,2})일/);\n  if (m) isoDate = `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;\n}\n\nconst year = String(new Date().getFullYear()).slice(2);\nreturn [{ json: { studentPageId, classPageId, isoDate, year } }];"
+      }
+    },
+    {
+      "id": "notion-01",
+      "name": "Notion - Class 수업료 조회",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        -80,
+        300
+      ],
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "get",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $json.classPageId }}",
+          "mode": "id"
+        },
+        "simple": false,
+        "options": {}
+      },
+      "credentials": {
+        "notionApi": {
+          "id": "MAYBu1lbKiMiquHV",
+          "name": "n8n-Math4U"
+        }
+      }
+    },
+    {
+      "id": "code-02",
+      "name": "Code - 수업료 추출",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        180,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const classData = $json;\nconst prev = $('Code - 종료 체크 및 데이터 추출').item.json;\nconst fee = classData.properties?.['수업료']?.number || 0;\nreturn [{ json: { ...prev, fee } }];"
+      }
+    },
+    {
+      "id": "notion-01b",
+      "name": "Notion - Students 이름 조회",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "get",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $json.studentPageId }}",
+          "mode": "id"
+        },
+        "simple": false,
+        "options": {}
+      },
+      "credentials": {
+        "notionApi": {
+          "id": "MAYBu1lbKiMiquHV",
+          "name": "n8n-Math4U"
+        }
+      }
+    },
+    {
+      "id": "code-02b",
+      "name": "Code - 이름 병합",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const studentData = $json;\nconst prev = $('Code - 수업료 추출').item.json;\nconst studentName = studentData.properties?.['이름']?.title?.[0]?.plain_text || '';\nreturn [{ json: { ...prev, studentName } }];"
+      }
+    },
+    {
+      "id": "http-01",
+      "name": "HTTP - 납부회차 조회",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.notion.com/v1/databases/55aac51e739c4f8e870903cb1eb252b6/query",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "notionApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filter\": {\n    \"property\": \"Students\",\n    \"relation\": {\n      \"contains\": \"{{ $json.studentPageId }}\"\n    }\n  }\n}",
+        "options": {}
+      },
+      "credentials": {
+        "notionApi": {
+          "id": "MAYBu1lbKiMiquHV",
+          "name": "n8n-Math4U"
+        }
+      }
+    },
+    {
+      "id": "code-03",
+      "name": "Code - 납부회차 계산",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1220,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const prev = $('Code - 이름 병합').item.json;\nconst { studentName, studentPageId, isoDate, year, fee } = prev;\nconst pages = $input.first().json.results || [];\n\nconst records = pages.filter(p => (p.properties?.['납부회차']?.select?.name || '').startsWith(year));\nconst nums = records.map(p => parseInt((p.properties?.['납부회차']?.select?.name || '').slice(2), 10) || 0);\nconst maxSeq = nums.length > 0 ? Math.max(...nums) : -1;\nconst seq = String(maxSeq + 1).padStart(2, '0');\nconst paySeq = year + seq;\nconst recordName = `${studentName} | ${paySeq}`;\n\nreturn [{ json: { studentPageId, fee, isoDate, paySeq, recordName } }];"
+      }
+    },
+    {
+      "id": "http-02",
+      "name": "HTTP - 등록일원부 레코드 생성",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1480,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.notion.com/v1/pages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "notionApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"parent\": { \"database_id\": \"55aac51e-739c-4f8e-8709-03cb1eb252b6\" },\n  \"properties\": {\n    \"이름\": {\n      \"title\": [{ \"text\": { \"content\": \"{{ $json.recordName }}\" } }]\n    },\n    \"Students\": {\n      \"relation\": [{ \"id\": \"{{ $json.studentPageId }}\" }]\n    },\n    \"납부회차\": {\n      \"select\": { \"name\": \"{{ $json.paySeq }}\" }\n    },\n    \"수업료\": {\n      \"number\": {{ $json.fee }}\n    },\n    \"등록일\": {\n      \"date\": { \"start\": \"{{ $json.isoDate }}\" }\n    }\n  }\n}",
+        "options": {}
+      },
+      "credentials": {
+        "notionApi": {
+          "id": "MAYBu1lbKiMiquHV",
+          "name": "n8n-Math4U"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Notion Trigger - Student_Study 변경 감지": {
+      "main": [
+        [
+          {
+            "node": "Code - 종료 체크 및 데이터 추출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - 종료 체크 및 데이터 추출": {
+      "main": [
+        [
+          {
+            "node": "Notion - Class 수업료 조회",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion - Class 수업료 조회": {
+      "main": [
+        [
+          {
+            "node": "Code - 수업료 추출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - 수업료 추출": {
+      "main": [
+        [
+          {
+            "node": "Notion - Students 이름 조회",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion - Students 이름 조회": {
+      "main": [
+        [
+          {
+            "node": "Code - 이름 병합",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - 이름 병합": {
+      "main": [
+        [
+          {
+            "node": "HTTP - 납부회차 조회",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - 납부회차 조회": {
+      "main": [
+        [
+          {
+            "node": "Code - 납부회차 계산",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - 납부회차 계산": {
+      "main": [
+        [
+          {
+            "node": "HTTP - 등록일원부 레코드 생성",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Notion Trigger - Student_Study 변경 감지": {
+      "lastTimeChecked": "2026-03-10T15:00:00.000Z",
+      "possibleDuplicates": [
+        "317c6a06-e17e-815e-89e0-fff880355646"
+      ]
+    }
+  },
+  "meta": null,
+  "pinData": {},
+  "versionId": "585ad75f-7a10-4145-a525-a3e89640beba",
+  "activeVersionId": "585ad75f-7a10-4145-a525-a3e89640beba",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-03-07T11:22:50.977Z",
+      "createdAt": "2026-03-07T11:22:50.977Z",
+      "role": "workflow:owner",
+      "workflowId": "BrZ88oo3KRKccX0g",
+      "projectId": "8znYa8Ca7GWeBy0m"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-03-09T22:12:24.543Z",
+    "createdAt": "2026-03-09T22:12:24.543Z",
+    "versionId": "585ad75f-7a10-4145-a525-a3e89640beba",
+    "workflowId": "BrZ88oo3KRKccX0g",
+    "nodes": [
+      {
+        "id": "trigger-01",
+        "name": "Notion Trigger - Student_Study 변경 감지",
+        "type": "n8n-nodes-base.notionTrigger",
+        "typeVersion": 1,
+        "position": [
+          -600,
+          300
+        ],
+        "parameters": {
+          "event": "pagedUpdatedInDatabase",
+          "databaseId": {
+            "__rl": true,
+            "value": "2d0c6a06e17e81188ce1dd2f76406aa1",
+            "mode": "id"
+          },
+          "simple": false
+        },
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        }
+      },
+      {
+        "id": "code-01",
+        "name": "Code - 종료 체크 및 데이터 추출",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -340,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const page = $input.first().json;\nconst props = page.properties || {};\n\nconst isEnded = props['수업완료']?.checkbox === true;\nif (!isEnded) return [];\n\nconst sessionItems = props['수업회차']?.multi_select || [];\nconst sessionItem = sessionItems.find(s => /\\d/.test(s.name));\nconst sessionCount = sessionItem ? parseInt(sessionItem.name) : null;\n\nconst bunArr = props['수업구분']?.rollup?.array || [];\nconst bunName = bunArr[0]?.select?.name || '';\nconst classCount = parseInt(bunName.replace(/[^0-9]/g, '')) || null;\n\nif (sessionCount === null || classCount === null) return [];\nif (sessionCount !== classCount) return [];\n\nconst studentPageId = props['Students']?.relation?.[0]?.id || '';\nif (!studentPageId) return [];\nconst classPageId = props['Class']?.relation?.[0]?.id || '';\nif (!classPageId) return [];\n\nconst rollupArr = props['다음수업일']?.rollup?.array || [];\nconst dateStr = rollupArr[0]?.formula?.string || '';\nlet isoDate = new Date().toISOString().split('T')[0];\nif (dateStr) {\n  const m = dateStr.match(/(\\d{4})년\\s*(\\d{1,2})월\\s*(\\d{1,2})일/);\n  if (m) isoDate = `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;\n}\n\nconst year = String(new Date().getFullYear()).slice(2);\nreturn [{ json: { studentPageId, classPageId, isoDate, year } }];"
+        }
+      },
+      {
+        "id": "notion-01",
+        "name": "Notion - Class 수업료 조회",
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2,
+        "position": [
+          -80,
+          300
+        ],
+        "parameters": {
+          "resource": "databasePage",
+          "operation": "get",
+          "pageId": {
+            "__rl": true,
+            "value": "={{ $json.classPageId }}",
+            "mode": "id"
+          },
+          "simple": false,
+          "options": {}
+        },
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        }
+      },
+      {
+        "id": "code-02",
+        "name": "Code - 수업료 추출",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          180,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const classData = $json;\nconst prev = $('Code - 종료 체크 및 데이터 추출').item.json;\nconst fee = classData.properties?.['수업료']?.number || 0;\nreturn [{ json: { ...prev, fee } }];"
+        }
+      },
+      {
+        "id": "notion-01b",
+        "name": "Notion - Students 이름 조회",
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2,
+        "position": [
+          440,
+          300
+        ],
+        "parameters": {
+          "resource": "databasePage",
+          "operation": "get",
+          "pageId": {
+            "__rl": true,
+            "value": "={{ $json.studentPageId }}",
+            "mode": "id"
+          },
+          "simple": false,
+          "options": {}
+        },
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        }
+      },
+      {
+        "id": "code-02b",
+        "name": "Code - 이름 병합",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          700,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const studentData = $json;\nconst prev = $('Code - 수업료 추출').item.json;\nconst studentName = studentData.properties?.['이름']?.title?.[0]?.plain_text || '';\nreturn [{ json: { ...prev, studentName } }];"
+        }
+      },
+      {
+        "id": "http-01",
+        "name": "HTTP - 납부회차 조회",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          960,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.notion.com/v1/databases/55aac51e739c4f8e870903cb1eb252b6/query",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "notionApi",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Notion-Version",
+                "value": "2022-06-28"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"filter\": {\n    \"property\": \"Students\",\n    \"relation\": {\n      \"contains\": \"{{ $json.studentPageId }}\"\n    }\n  }\n}",
+          "options": {}
+        },
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        }
+      },
+      {
+        "id": "code-03",
+        "name": "Code - 납부회차 계산",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1220,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const prev = $('Code - 이름 병합').item.json;\nconst { studentName, studentPageId, isoDate, year, fee } = prev;\nconst pages = $input.first().json.results || [];\n\nconst records = pages.filter(p => (p.properties?.['납부회차']?.select?.name || '').startsWith(year));\nconst nums = records.map(p => parseInt((p.properties?.['납부회차']?.select?.name || '').slice(2), 10) || 0);\nconst maxSeq = nums.length > 0 ? Math.max(...nums) : -1;\nconst seq = String(maxSeq + 1).padStart(2, '0');\nconst paySeq = year + seq;\nconst recordName = `${studentName} | ${paySeq}`;\n\nreturn [{ json: { studentPageId, fee, isoDate, paySeq, recordName } }];"
+        }
+      },
+      {
+        "id": "http-02",
+        "name": "HTTP - 등록일원부 레코드 생성",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1480,
+          300
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.notion.com/v1/pages",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "notionApi",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Notion-Version",
+                "value": "2022-06-28"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"parent\": { \"database_id\": \"55aac51e-739c-4f8e-8709-03cb1eb252b6\" },\n  \"properties\": {\n    \"이름\": {\n      \"title\": [{ \"text\": { \"content\": \"{{ $json.recordName }}\" } }]\n    },\n    \"Students\": {\n      \"relation\": [{ \"id\": \"{{ $json.studentPageId }}\" }]\n    },\n    \"납부회차\": {\n      \"select\": { \"name\": \"{{ $json.paySeq }}\" }\n    },\n    \"수업료\": {\n      \"number\": {{ $json.fee }}\n    },\n    \"등록일\": {\n      \"date\": { \"start\": \"{{ $json.isoDate }}\" }\n    }\n  }\n}",
+          "options": {}
+        },
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Notion Trigger - Student_Study 변경 감지": {
+        "main": [
+          [
+            {
+              "node": "Code - 종료 체크 및 데이터 추출",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code - 종료 체크 및 데이터 추출": {
+        "main": [
+          [
+            {
+              "node": "Notion - Class 수업료 조회",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Notion - Class 수업료 조회": {
+        "main": [
+          [
+            {
+              "node": "Code - 수업료 추출",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code - 수업료 추출": {
+        "main": [
+          [
+            {
+              "node": "Notion - Students 이름 조회",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Notion - Students 이름 조회": {
+        "main": [
+          [
+            {
+              "node": "Code - 이름 병합",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code - 이름 병합": {
+        "main": [
+          [
+            {
+              "node": "HTTP - 납부회차 조회",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "HTTP - 납부회차 조회": {
+        "main": [
+          [
+            {
+              "node": "Code - 납부회차 계산",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code - 납부회차 계산": {
+        "main": [
+          [
+            {
+              "node": "HTTP - 등록일원부 레코드 생성",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Seung Hyeon Kim",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "tags": []
+}
