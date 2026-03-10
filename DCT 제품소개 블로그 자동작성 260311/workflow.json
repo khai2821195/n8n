@@ -1,0 +1,564 @@
+{
+  "updatedAt": "2026-03-10T22:06:18.589Z",
+  "createdAt": "2026-03-10T22:06:18.589Z",
+  "id": "RvK4j91m05Ljsq5q",
+  "name": "DCT 제품소개 블로그 자동작성 260311",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "node-trigger",
+      "name": "수동 실행",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "node-set-context",
+      "name": "현재 시기 정보",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst month = now.getMonth() + 1;\nconst day = now.getDate();\n\n// 계절 판단\nlet season = '';\nlet seasonDesc = '';\nif (month >= 3 && month <= 5) { season = '봄'; seasonDesc = '졸업/입학 시즌, 벚꽃 행사, 신학기'; }\nelse if (month >= 6 && month <= 8) { season = '여름'; seasonDesc = '워터파크, 야외 행사, 여름 축제, 체육대회'; }\nelse if (month >= 9 && month <= 11) { season = '가을'; seasonDesc = '운동회, 추석 명절, 기업 행사, 송년회 준비'; }\nelse { season = '겨울'; seasonDesc = '연말 송년회, 크리스마스, 신년 선물, 설 명절'; }\n\n// 특수 시즌\nconst specialEvents = [];\nif (month === 2 || month === 3) specialEvents.push('졸업/입학 시즌');\nif (month === 5) specialEvents.push('어린이날, 스승의날, 가정의달');\nif (month === 9 || month === 10) specialEvents.push('추석 명절, 체육대회');\nif (month === 12 || month === 1) specialEvents.push('연말연시, 신년');\n\nreturn [{ json: {\n  month, day, season, seasonDesc,\n  specialEvents: specialEvents.join(', ') || '일반 시즌',\n  dateStr: `${month}월 ${day}일`\n} }];"
+      }
+    },
+    {
+      "id": "node-gemini-recommend",
+      "name": "Gemini 판촉물 추천",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        460,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key={{ $env.GEMINI_API_KEY }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ contents: [{ parts: [{ text: '너는 판촉물·홍보물 전문 마케팅 전문가야.\\n현재 시기: ' + $json.dateStr + ' (' + $json.season + ' - ' + $json.seasonDesc + ')\\n특수 이벤트: ' + $json.specialEvents + '\\n\\n지금 시기에 기업/관공서/학교에서 판촉물·홍보물로 가장 많이 찾는 제품 TOP 5를 추천해줘.\\n각 제품의 인기 이유, 주요 구매처(학교/기업/관공서 등), 예상 검색 트렌드를 포함해서.\\n\\n아래 JSON 형식으로만 응답 (백틱 없이):\\n{\"season\":\"현재시기\",\"products\":[{\"rank\":1,\"name\":\"제품명\",\"category\":\"카테고리\",\"reason\":\"추천이유(검색량/트렌드 포함)\",\"target\":\"주요타겟\",\"keywords\":\"관련키워드\"},{\"rank\":2,...},{\"rank\":3,...},{\"rank\":4,...},{\"rank\":5,...}]}' }] }], generationConfig: { temperature: 0.7, maxOutputTokens: 2000 } }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "node-parse-recommend",
+      "name": "추천 목록 파싱",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nlet raw = '';\nif (d.candidates && d.candidates[0]) raw = d.candidates[0]?.content?.parts?.[0]?.text || '';\nraw = raw.replace(/```json\\s*/g, '').replace(/```\\s*/g, '').trim();\n\nlet parsed;\ntry { parsed = JSON.parse(raw); } catch(e) { parsed = { season: '현재', products: [] }; }\n\nconst products = parsed.products || [];\n\n// 폼 옵션 생성\nconst formOptions = products.map(p => `${p.rank}위. ${p.name} - ${p.reason.slice(0, 50)}`);\n\n// 추천 요약 텍스트\nconst summaryLines = products.map(p =>\n  `${p.rank}위. ${p.name}\\n   카테고리: ${p.category}\\n   추천이유: ${p.reason}\\n   타겟: ${p.target}`\n);\n\nreturn [{ json: {\n  season: parsed.season,\n  products,\n  formOptions,\n  summary: summaryLines.join('\\n\\n'),\n  rawJson: JSON.stringify(products)\n} }];"
+      }
+    },
+    {
+      "id": "node-wait",
+      "name": "제품 선택 대기",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        940,
+        300
+      ],
+      "parameters": {
+        "resume": "form",
+        "formTitle": "📢 제품소개 블로그 - 제품 선택",
+        "formDescription": "={{ 'Gemini가 추천한 ' + $json.season + ' 시즌 판촉물 TOP 5입니다. 블로그 글을 작성할 제품을 선택하세요.' }}",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "추천 제품 선택",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": "={{ $json.formOptions.map(o => ({ option: o })) }}"
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "제품 URL (비즈메카 링크)",
+              "placeholder": "http://biz-mecca.com/product_w/..."
+            },
+            {
+              "fieldLabel": "추가 요청사항",
+              "fieldType": "textarea",
+              "placeholder": "특별히 강조하고 싶은 내용이 있으면 입력해주세요"
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-extract-selection",
+      "name": "선택 제품 정보 추출",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1180,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const formData = $input.first().json;\nconst prevData = $('추천 목록 파싱').first().json;\n\n// 선택된 옵션에서 순위 추출\nconst selected = formData['추천 제품 선택'] || '';\nconst rankMatch = selected.match(/^(\\d+)위\\.\\s*(.+?)\\s*-/);\nconst rank = rankMatch ? parseInt(rankMatch[1]) : 1;\n\n// 해당 제품 정보 찾기\nconst products = prevData.products || [];\nconst product = products.find(p => p.rank === rank) || products[0] || {};\n\nconst today = new Date().toISOString().slice(0, 10);\n\nreturn [{ json: {\n  product_name: product.name || selected,\n  category: product.category || '',\n  reason: product.reason || '',\n  target: product.target || '',\n  keywords: product.keywords || '',\n  season: prevData.season || '',\n  product_url: formData['제품 URL (비즈메카 링크)'] || '',\n  extra_request: formData['추가 요청사항'] || '없음',\n  date: today\n} }];"
+      }
+    },
+    {
+      "id": "node-build-prompt",
+      "name": "블로그 프롬프트 조립",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1420,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\n\nconst lines = [\n  '너는 판촉물·홍보물 전문 납품업체 DCT컴퍼니의 블로그 마케터야.',\n  '아래 제품 정보를 바탕으로 네이버 블로그용 제품소개 포스팅을 작성해줘.',\n  '',\n  '## 제품 정보',\n  '제품명: ' + d.product_name,\n  '카테고리: ' + d.category,\n  '시즌: ' + d.season,\n  '추천이유/트렌드: ' + d.reason,\n  '주요타겟: ' + d.target,\n  '관련키워드: ' + d.keywords,\n  '추가요청: ' + d.extra_request,\n  '',\n  '## 작성 규칙',\n  '1. 제목: SEO 최적화 제목 (예: [제품소개] OO 시즌 필수 판촉물 추천!)',\n  '2. 본문: 500~700자, 친근하고 전문적인 톤',\n  '3. 구성: 인사말 → 시즌 트렌드 소개 → 제품 특징 → 활용 사례 → 구매 안내 → 마무리',\n  '4. 해시태그: 10~15개',\n  '5. JSON 형식으로만 응답 (백틱 없이): {\"title\":\"...\",\"body\":\"...\",\"hashtags\":\"...\"}'\n];\n\nconst requestBody = {\n  contents: [{ parts: [{ text: lines.join('\\n') }] }],\n  generationConfig: { temperature: 0.7, maxOutputTokens: 2000 }\n};\n\nreturn [{ json: { ...d, gemini_body: JSON.stringify(requestBody) } }];"
+      }
+    },
+    {
+      "id": "node-gemini-blog",
+      "name": "Gemini 블로그 1차 작성",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1660,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key={{ $env.GEMINI_API_KEY }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.gemini_body }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "node-extract-blog",
+      "name": "블로그 초안 추출",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1900,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst prev = $('블로그 프롬프트 조립').first().json;\n\nlet raw = '';\nif (d.candidates && d.candidates[0]) raw = d.candidates[0]?.content?.parts?.[0]?.text || '';\nraw = raw.replace(/```json\\s*/g, '').replace(/```\\s*/g, '').trim();\n\nlet title = '', body = '', hashtags = '';\ntry {\n  const p = JSON.parse(raw);\n  title = p.title || '';\n  body = p.body || raw;\n  hashtags = p.hashtags || '';\n} catch(e) {\n  title = '[제품소개] ' + prev.product_name + ' - 수동편집 필요';\n  body = raw;\n  hashtags = '#판촉물 #홍보물 #DCT컴퍼니';\n}\n\nreturn [{ json: { ...prev, title, body, hashtags } }];"
+      }
+    },
+    {
+      "id": "node-notion-save",
+      "name": "노션 초안 저장",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2140,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.notion.com/v1/pages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ parent: { database_id: '39b2fdcea0a345a48db21f22a6d6b0e0' }, properties: { '제목': { title: [{ text: { content: $json.title } }] }, '제품명': { rich_text: [{ text: { content: $json.product_name } }] }, '카테고리': { rich_text: [{ text: { content: $json.category } }] }, '선정 이유': { rich_text: [{ text: { content: $json.reason } }] }, '타겟 고객': { rich_text: [{ text: { content: $json.target } }] }, '제품URL': { url: $json.product_url || 'https://biz-mecca.com' }, '작성일': { date: { start: $json.date } }, '상태': { select: { name: '초안완료' } }, '해시태그': { rich_text: [{ text: { content: $json.hashtags } }] } }, children: [ { object: 'block', type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: '📝 블로그 초안' } }] } }, { object: 'block', type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: $json.body } }] } }, { object: 'block', type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: '🏷️ 해시태그' } }] } }, { object: 'block', type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: $json.hashtags } }] } } ] }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-build-prompt2",
+      "name": "심화 프롬프트 조립",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2380,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const d = $('블로그 초안 추출').first().json;\n\nconst lines = [\n  '너는 판촉물·홍보물 전문 납품업체 DCT컴퍼니의 시니어 블로그 마케터야.',\n  '아래 초안을 바탕으로 훨씬 풍성하고 완성도 높은 네이버 블로그 포스팅으로 업그레이드해줘.',\n  '',\n  '## 초안 제목', d.title,\n  '',\n  '## 초안 본문', d.body,\n  '',\n  '## 제품 정보',\n  '제품명: ' + d.product_name,\n  '시즌 트렌드: ' + d.reason,\n  '타겟: ' + d.target,\n  '추가요청: ' + d.extra_request,\n  '',\n  '## 업그레이드 규칙',\n  '1. 제목: 더 매력적이고 클릭을 유도하는 SEO 최적화 제목으로 개선',\n  '2. 본문: 1200~1500자로 확장',\n  '3. 소제목 구조: ## 로 3~4개 소제목 나눠서 단락 구성',\n  '4. SEO 키워드: 제품명, 시즌, 지역(동탄/수원/경기), 용도 키워드를 자연스럽게 3~5회 삽입',\n  '5. 이미지 설명: 본문 중간중간에 [이미지: 설명] 형식으로 3~5개 삽입',\n  '6. 해시태그: 15~20개로 확장, SEO 키워드 포함',\n  '7. JSON으로만 응답 (백틱 없이): {\"title\":\"...\",\"body\":\"...\",\"hashtags\":\"...\"}'\n];\n\nconst requestBody = {\n  contents: [{ parts: [{ text: lines.join('\\n') }] }],\n  generationConfig: { temperature: 0.8, maxOutputTokens: 3000 }\n};\n\nreturn [{ json: { ...d, gemini_body2: JSON.stringify(requestBody) } }];"
+      }
+    },
+    {
+      "id": "node-gemini-blog2",
+      "name": "Gemini 블로그 심화 작성",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2620,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key={{ $env.GEMINI_API_KEY }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.gemini_body2 }}",
+        "options": {
+          "timeout": 60000
+        }
+      }
+    },
+    {
+      "id": "node-extract-blog2",
+      "name": "심화 블로그 추출",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2860,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst prev = $('심화 프롬프트 조립').first().json;\n\nlet raw = '';\nif (d.candidates && d.candidates[0]) raw = d.candidates[0]?.content?.parts?.[0]?.text || '';\nraw = raw.replace(/```json\\s*/g, '').replace(/```\\s*/g, '').trim();\n\nlet title = prev.title, body = raw, hashtags = prev.hashtags;\ntry {\n  const p = JSON.parse(raw);\n  title = p.title || prev.title;\n  body = p.body || raw;\n  hashtags = p.hashtags || prev.hashtags;\n} catch(e) {}\n\nreturn [{ json: { ...prev, title_enhanced: title, body_enhanced: body, hashtags_enhanced: hashtags } }];"
+      }
+    },
+    {
+      "id": "node-notion-update",
+      "name": "노션 심화본문 업데이트",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3100,
+        300
+      ],
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.notion.com/v1/pages/{{ $('노션 초안 저장').first().json.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ properties: { '제목': { title: [{ text: { content: $json.title_enhanced } }] }, '해시태그': { rich_text: [{ text: { content: $json.hashtags_enhanced } }] }, '상태': { select: { name: '심화완료' } }, '심화작성 완료': { checkbox: true } } }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-append-blocks",
+      "name": "심화본문 블록 추가",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3340,
+        300
+      ],
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.notion.com/v1/blocks/{{ $('노션 초안 저장').first().json.id }}/children",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ children: [ { object: 'block', type: 'divider', divider: {} }, { object: 'block', type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: '✨ 심화 블로그 본문' } }] } }, { object: 'block', type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: $('심화 블로그 추출').first().json.body_enhanced || '' } }] } }, { object: 'block', type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: '🏷️ 심화 해시태그' } }] } }, { object: 'block', type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: $('심화 블로그 추출').first().json.hashtags_enhanced || '' } }] } } ] }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-complete",
+      "name": "완료",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3580,
+        300
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "r1",
+              "name": "result",
+              "value": "={{ '🎉 [' + $json.title_enhanced + '] 심화 작성 완료! 노션에 저장됐어요.' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "수동 실행": {
+      "main": [
+        [
+          {
+            "node": "현재 시기 정보",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "현재 시기 정보": {
+      "main": [
+        [
+          {
+            "node": "Gemini 판촉물 추천",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini 판촉물 추천": {
+      "main": [
+        [
+          {
+            "node": "추천 목록 파싱",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "추천 목록 파싱": {
+      "main": [
+        [
+          {
+            "node": "제품 선택 대기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "제품 선택 대기": {
+      "main": [
+        [
+          {
+            "node": "선택 제품 정보 추출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "선택 제품 정보 추출": {
+      "main": [
+        [
+          {
+            "node": "블로그 프롬프트 조립",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "블로그 프롬프트 조립": {
+      "main": [
+        [
+          {
+            "node": "Gemini 블로그 1차 작성",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini 블로그 1차 작성": {
+      "main": [
+        [
+          {
+            "node": "블로그 초안 추출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "블로그 초안 추출": {
+      "main": [
+        [
+          {
+            "node": "노션 초안 저장",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "노션 초안 저장": {
+      "main": [
+        [
+          {
+            "node": "심화 프롬프트 조립",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "심화 프롬프트 조립": {
+      "main": [
+        [
+          {
+            "node": "Gemini 블로그 심화 작성",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini 블로그 심화 작성": {
+      "main": [
+        [
+          {
+            "node": "심화 블로그 추출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "심화 블로그 추출": {
+      "main": [
+        [
+          {
+            "node": "노션 심화본문 업데이트",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "노션 심화본문 업데이트": {
+      "main": [
+        [
+          {
+            "node": "심화본문 블록 추가",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "심화본문 블록 추가": {
+      "main": [
+        [
+          {
+            "node": "완료",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true,
+    "saveExecutionProgress": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "d9146518-f5cc-4d1b-8cf5-feaf53e8b685",
+  "activeVersionId": null,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-10T22:06:18.595Z",
+      "createdAt": "2026-03-10T22:06:18.595Z",
+      "role": "workflow:owner",
+      "workflowId": "RvK4j91m05Ljsq5q",
+      "projectId": "8znYa8Ca7GWeBy0m"
+    }
+  ],
+  "activeVersion": null,
+  "tags": []
+}
