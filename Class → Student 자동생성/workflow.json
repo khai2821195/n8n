@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-04T21:59:27.204Z",
+  "updatedAt": "2026-03-08T22:41:07.472Z",
   "createdAt": "2025-11-29T23:09:25.703Z",
   "id": "PNn3uKuzuOyjgFbu",
   "name": "Class → Student 자동생성",
@@ -7,12 +7,7 @@
   "isArchived": false,
   "nodes": [
     {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "cf437762-9463-459c-b1a6-8b27f48b0381",
-        "options": {}
-      },
-      "id": "9851ca9f-4b66-4bcf-97c7-eb288b1d080a",
+      "id": "node-webhook",
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
@@ -20,26 +15,45 @@
         -336,
         240
       ],
-      "webhookId": "cf437762-9463-459c-b1a6-8b27f48b0381"
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cf437762-9463-459c-b1a6-8b27f48b0381",
+        "responseMode": "lastNode",
+        "options": {}
+      }
     },
     {
+      "id": "node-parse-input",
+      "name": "Code - 입력 파싱",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -112,
+        240
+      ],
       "parameters": {
-        "resource": "databasePage",
-        "operation": "get",
-        "pageId": {
-          "__rl": true,
-          "value": "={{ $json.body.data.id }}",
-          "mode": "id"
-        }
-      },
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Notion 자동화 Webhook payload에서 classStudyId, datetime 추출\nconst body = $json.body || $json;\nconst data = body.data || {};\nconst props = data.properties || {};\n\n// page ID = Class_Study 레코드 ID\nconst classStudyId = data.id || '';\n\n// 수업일정 날짜\nconst datetime = props['수업일정']?.date?.start || '';\n\nreturn { json: { classStudyId, datetime } };"
+      }
+    },
+    {
       "id": "ab9cbf0b-acc4-48bd-b549-ad28a3100ba7",
       "name": "Class_Study Get",
       "type": "n8n-nodes-base.notion",
       "typeVersion": 2.2,
       "position": [
-        -112,
+        112,
         240
       ],
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "get",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $json.classStudyId }}",
+          "mode": "id"
+        }
+      },
       "credentials": {
         "notionApi": {
           "id": "MAYBu1lbKiMiquHV",
@@ -48,21 +62,29 @@
       }
     },
     {
-      "parameters": {
-        "fieldToSplitOut": "property_students",
-        "include": "=",
-        "options": {}
-      },
       "id": "5a0c00e2-2295-4ac9-8df6-4944056f904e",
       "name": "Split Out - Student ID Split",
       "type": "n8n-nodes-base.splitOut",
       "typeVersion": 1,
       "position": [
-        96,
+        320,
         240
-      ]
+      ],
+      "parameters": {
+        "fieldToSplitOut": "property_students",
+        "include": "noOtherFields",
+        "options": {}
+      }
     },
     {
+      "id": "c5f73c77-e83a-49b5-a1e1-ca305a481237",
+      "name": "Student ID",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        512,
+        240
+      ],
       "parameters": {
         "resource": "databasePage",
         "operation": "get",
@@ -72,14 +94,6 @@
           "mode": "id"
         }
       },
-      "id": "c5f73c77-e83a-49b5-a1e1-ca305a481237",
-      "name": "Student ID",
-      "type": "n8n-nodes-base.notion",
-      "typeVersion": 2.2,
-      "position": [
-        288,
-        240
-      ],
       "credentials": {
         "notionApi": {
           "id": "MAYBu1lbKiMiquHV",
@@ -88,6 +102,14 @@
       }
     },
     {
+      "id": "c4a16a2d-7f49-40a4-b574-c8321611a946",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        704,
+        240
+      ],
       "parameters": {
         "assignments": {
           "assignments": [
@@ -100,33 +122,31 @@
           ]
         },
         "options": {}
-      },
-      "id": "c4a16a2d-7f49-40a4-b574-c8321611a946",
-      "name": "Edit Fields",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        496,
-        240
-      ]
+      }
     },
     {
+      "id": "4763be7f-5c3b-41f2-a831-4a0336ab9bbd",
+      "name": "Create Page Student_Study",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        240
+      ],
       "parameters": {
         "resource": "databasePage",
         "databaseId": {
           "__rl": true,
           "value": "2d0c6a06-e17e-8118-8ce1-dd2f76406aa1",
-          "mode": "list",
-          "cachedResultName": "Student_Study",
-          "cachedResultUrl": "https://www.notion.so/2d0c6a06e17e81188ce1dd2f76406aa1"
+          "mode": "id"
         },
-        "title": "={{ $json.property_students[0] }}",
+        "title": "={{ $json['property_students[0]'] }}",
         "simple": false,
         "propertiesUi": {
           "propertyValues": [
             {
-              "key": "예정수업일|date",
-              "date": "={{ $('Webhook').item.json.body.data.properties['수업일정'].date.start }}"
+              "key": "수업일시|date",
+              "date": "={{ $('Code - 입력 파싱').item.json.datetime }}"
             },
             {
               "key": "Students|relation",
@@ -150,14 +170,6 @@
         },
         "options": {}
       },
-      "id": "4763be7f-5c3b-41f2-a831-4a0336ab9bbd",
-      "name": "Create Page Student_Study",
-      "type": "n8n-nodes-base.notion",
-      "typeVersion": 2.2,
-      "position": [
-        688,
-        240
-      ],
       "credentials": {
         "notionApi": {
           "id": "MAYBu1lbKiMiquHV",
@@ -166,6 +178,14 @@
       }
     },
     {
+      "id": "20515355-10f6-4300-a792-8474b56fe319",
+      "name": "Notion - 배정확인",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        1088,
+        240
+      ],
       "parameters": {
         "resource": "databasePage",
         "operation": "update",
@@ -184,39 +204,27 @@
         },
         "options": {}
       },
-      "id": "20515355-10f6-4300-a792-8474b56fe319",
-      "name": "Notion",
-      "type": "n8n-nodes-base.notion",
-      "typeVersion": 2.2,
-      "position": [
-        928,
-        240
-      ],
       "credentials": {
         "notionApi": {
           "id": "MAYBu1lbKiMiquHV",
           "name": "n8n-Math4U"
         }
       }
-    },
-    {
-      "parameters": {
-        "content": "## Student_Study DB에 새 페이지 생성 \n**Double click** to edit me. [Guide](https://docs.n8n.io/workflows/sticky-notes/)",
-        "height": 440,
-        "width": 1020
-      },
-      "id": "c1717ca7-09ea-456a-95e4-b1ecda3dffc6",
-      "name": "Sticky Note",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        -176,
-        96
-      ]
     }
   ],
   "connections": {
     "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code - 입력 파싱",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - 입력 파싱": {
       "main": [
         [
           {
@@ -275,7 +283,7 @@
       "main": [
         [
           {
-            "node": "Notion",
+            "node": "Notion - 배정확인",
             "type": "main",
             "index": 0
           }
@@ -286,7 +294,8 @@
   "settings": {
     "executionOrder": "v1",
     "availableInMCP": false,
-    "callerPolicy": "workflowsFromSameOwner"
+    "callerPolicy": "workflowsFromSameOwner",
+    "timezone": "Asia/Seoul"
   },
   "staticData": null,
   "meta": {
@@ -445,8 +454,8 @@
       }
     ]
   },
-  "versionId": "0a09db23-94fd-4936-a566-302530d46cd4",
-  "activeVersionId": "0a09db23-94fd-4936-a566-302530d46cd4",
+  "versionId": "d46394e6-fbc0-4bbb-8a13-06093fb4fbe7",
+  "activeVersionId": "d46394e6-fbc0-4bbb-8a13-06093fb4fbe7",
   "triggerCount": 1,
   "shared": [
     {
@@ -458,18 +467,13 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-03-04T21:59:40.000Z",
-    "createdAt": "2026-03-04T21:59:27.205Z",
-    "versionId": "0a09db23-94fd-4936-a566-302530d46cd4",
+    "updatedAt": "2026-03-08T22:41:07.474Z",
+    "createdAt": "2026-03-08T22:41:07.474Z",
+    "versionId": "d46394e6-fbc0-4bbb-8a13-06093fb4fbe7",
     "workflowId": "PNn3uKuzuOyjgFbu",
     "nodes": [
       {
-        "parameters": {
-          "httpMethod": "POST",
-          "path": "cf437762-9463-459c-b1a6-8b27f48b0381",
-          "options": {}
-        },
-        "id": "9851ca9f-4b66-4bcf-97c7-eb288b1d080a",
+        "id": "node-webhook",
         "name": "Webhook",
         "type": "n8n-nodes-base.webhook",
         "typeVersion": 2,
@@ -477,26 +481,45 @@
           -336,
           240
         ],
-        "webhookId": "cf437762-9463-459c-b1a6-8b27f48b0381"
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "cf437762-9463-459c-b1a6-8b27f48b0381",
+          "responseMode": "lastNode",
+          "options": {}
+        }
       },
       {
+        "id": "node-parse-input",
+        "name": "Code - 입력 파싱",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -112,
+          240
+        ],
         "parameters": {
-          "resource": "databasePage",
-          "operation": "get",
-          "pageId": {
-            "__rl": true,
-            "value": "={{ $json.body.data.id }}",
-            "mode": "id"
-          }
-        },
+          "mode": "runOnceForEachItem",
+          "jsCode": "// Notion 자동화 Webhook payload에서 classStudyId, datetime 추출\nconst body = $json.body || $json;\nconst data = body.data || {};\nconst props = data.properties || {};\n\n// page ID = Class_Study 레코드 ID\nconst classStudyId = data.id || '';\n\n// 수업일정 날짜\nconst datetime = props['수업일정']?.date?.start || '';\n\nreturn { json: { classStudyId, datetime } };"
+        }
+      },
+      {
         "id": "ab9cbf0b-acc4-48bd-b549-ad28a3100ba7",
         "name": "Class_Study Get",
         "type": "n8n-nodes-base.notion",
         "typeVersion": 2.2,
         "position": [
-          -112,
+          112,
           240
         ],
+        "parameters": {
+          "resource": "databasePage",
+          "operation": "get",
+          "pageId": {
+            "__rl": true,
+            "value": "={{ $json.classStudyId }}",
+            "mode": "id"
+          }
+        },
         "credentials": {
           "notionApi": {
             "id": "MAYBu1lbKiMiquHV",
@@ -505,21 +528,29 @@
         }
       },
       {
-        "parameters": {
-          "fieldToSplitOut": "property_students",
-          "include": "=",
-          "options": {}
-        },
         "id": "5a0c00e2-2295-4ac9-8df6-4944056f904e",
         "name": "Split Out - Student ID Split",
         "type": "n8n-nodes-base.splitOut",
         "typeVersion": 1,
         "position": [
-          96,
+          320,
           240
-        ]
+        ],
+        "parameters": {
+          "fieldToSplitOut": "property_students",
+          "include": "noOtherFields",
+          "options": {}
+        }
       },
       {
+        "id": "c5f73c77-e83a-49b5-a1e1-ca305a481237",
+        "name": "Student ID",
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2,
+        "position": [
+          512,
+          240
+        ],
         "parameters": {
           "resource": "databasePage",
           "operation": "get",
@@ -529,14 +560,6 @@
             "mode": "id"
           }
         },
-        "id": "c5f73c77-e83a-49b5-a1e1-ca305a481237",
-        "name": "Student ID",
-        "type": "n8n-nodes-base.notion",
-        "typeVersion": 2.2,
-        "position": [
-          288,
-          240
-        ],
         "credentials": {
           "notionApi": {
             "id": "MAYBu1lbKiMiquHV",
@@ -545,6 +568,14 @@
         }
       },
       {
+        "id": "c4a16a2d-7f49-40a4-b574-c8321611a946",
+        "name": "Edit Fields",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          704,
+          240
+        ],
         "parameters": {
           "assignments": {
             "assignments": [
@@ -557,33 +588,31 @@
             ]
           },
           "options": {}
-        },
-        "id": "c4a16a2d-7f49-40a4-b574-c8321611a946",
-        "name": "Edit Fields",
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 3.4,
-        "position": [
-          496,
-          240
-        ]
+        }
       },
       {
+        "id": "4763be7f-5c3b-41f2-a831-4a0336ab9bbd",
+        "name": "Create Page Student_Study",
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2,
+        "position": [
+          896,
+          240
+        ],
         "parameters": {
           "resource": "databasePage",
           "databaseId": {
             "__rl": true,
             "value": "2d0c6a06-e17e-8118-8ce1-dd2f76406aa1",
-            "mode": "list",
-            "cachedResultName": "Student_Study",
-            "cachedResultUrl": "https://www.notion.so/2d0c6a06e17e81188ce1dd2f76406aa1"
+            "mode": "id"
           },
-          "title": "={{ $json.property_students[0] }}",
+          "title": "={{ $json['property_students[0]'] }}",
           "simple": false,
           "propertiesUi": {
             "propertyValues": [
               {
-                "key": "예정수업일|date",
-                "date": "={{ $('Webhook').item.json.body.data.properties['수업일정'].date.start }}"
+                "key": "수업일시|date",
+                "date": "={{ $('Code - 입력 파싱').item.json.datetime }}"
               },
               {
                 "key": "Students|relation",
@@ -607,14 +636,6 @@
           },
           "options": {}
         },
-        "id": "4763be7f-5c3b-41f2-a831-4a0336ab9bbd",
-        "name": "Create Page Student_Study",
-        "type": "n8n-nodes-base.notion",
-        "typeVersion": 2.2,
-        "position": [
-          688,
-          240
-        ],
         "credentials": {
           "notionApi": {
             "id": "MAYBu1lbKiMiquHV",
@@ -623,6 +644,14 @@
         }
       },
       {
+        "id": "20515355-10f6-4300-a792-8474b56fe319",
+        "name": "Notion - 배정확인",
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2,
+        "position": [
+          1088,
+          240
+        ],
         "parameters": {
           "resource": "databasePage",
           "operation": "update",
@@ -641,39 +670,27 @@
           },
           "options": {}
         },
-        "id": "20515355-10f6-4300-a792-8474b56fe319",
-        "name": "Notion",
-        "type": "n8n-nodes-base.notion",
-        "typeVersion": 2.2,
-        "position": [
-          928,
-          240
-        ],
         "credentials": {
           "notionApi": {
             "id": "MAYBu1lbKiMiquHV",
             "name": "n8n-Math4U"
           }
         }
-      },
-      {
-        "parameters": {
-          "content": "## Student_Study DB에 새 페이지 생성 \n**Double click** to edit me. [Guide](https://docs.n8n.io/workflows/sticky-notes/)",
-          "height": 440,
-          "width": 1020
-        },
-        "id": "c1717ca7-09ea-456a-95e4-b1ecda3dffc6",
-        "name": "Sticky Note",
-        "type": "n8n-nodes-base.stickyNote",
-        "typeVersion": 1,
-        "position": [
-          -176,
-          96
-        ]
       }
     ],
     "connections": {
       "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Code - 입력 파싱",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code - 입력 파싱": {
         "main": [
           [
             {
@@ -732,7 +749,7 @@
         "main": [
           [
             {
-              "node": "Notion",
+              "node": "Notion - 배정확인",
               "type": "main",
               "index": 0
             }
@@ -741,9 +758,9 @@
       }
     },
     "authors": "Seung Hyeon Kim",
-    "name": "Version 0a09db23",
-    "description": "",
-    "autosaved": true
+    "name": null,
+    "description": null,
+    "autosaved": false
   },
   "tags": []
 }
