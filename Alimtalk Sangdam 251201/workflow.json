@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-02T09:54:56.016Z",
+  "updatedAt": "2026-03-08T16:08:55.280Z",
   "createdAt": "2025-11-29T23:12:37.874Z",
   "id": "S1ObqqNJYt6Weh0b",
   "name": "Alimtalk Sangdam 251201",
@@ -111,19 +111,20 @@
       "id": "4219a07b-3070-4883-b597-6ee7448c76bc",
       "name": "Send a message",
       "type": "n8n-nodes-base.slack",
-      "typeVersion": 2.3,
+      "typeVersion": 2.4,
       "position": [
         288,
         -16
       ],
       "parameters": {
+        "operation": "post",
         "select": "channel",
         "channelId": {
           "__rl": true,
           "value": "=#상담신청",
           "mode": "id"
         },
-        "text": "=카이야 🔔신규 상담이 도착했어!\n\n신청일시: {{ $('\bNotion 신규상담신청 확인').item.json.properties['생성일'].formula.string }}\n연락처: {{ $('Notion 신규상담신청 확인').item.json.properties['상담연락처'].phone_number }}\n상담희망시간: {{ $('Notion 신규상담신청 확인').item.json.properties['상담 희망시간'].multi_select[0].name }}\n학생이름: {{ $('Notion 신규상담신청 확인').item.json.properties['학생이름'].title[0].plain_text }}\n학교: {{ $('Notion 신규상담신청 확인').item.json.properties['학교'].rich_text[0].plain_text }}\n학년: {{ $('Notion 신규상담신청 확인').item.json.properties['학년'].select.name }}\n상담내용: {{ $('Notion 신규상담신청 확인').item.json.properties['상담 내용'].rich_text[0].plain_text }}\n\n✨ Notion에서 자세한 정보를 확인하고 상담전화 진행할 것.\n",
+        "text": "=카이야 🔔신규 상담이 도착했어!\n\n신청일시: {{ $('Notion 신규상담신청 확인').item.json.properties['생성일'].formula.string }}\n연락처: {{ $('Notion 신규상담신청 확인').item.json.properties['상담연락처'].phone_number }}\n상담희망시간: {{ $('Notion 신규상담신청 확인').item.json.properties['상담 희망시간'].multi_select[0].name }}\n학생이름: {{ $('Notion 신규상담신청 확인').item.json.properties['학생이름'].title[0].plain_text }}\n학교: {{ $('Notion 신규상담신청 확인').item.json.properties['학교'].rich_text[0].plain_text }}\n학년: {{ $('Notion 신규상담신청 확인').item.json.properties['학년'].select.name }}\n상담내용: {{ $('Notion 신규상담신청 확인').item.json.properties['상담 내용'].rich_text[0].plain_text }}\n\n✨ Notion에서 자세한 정보를 확인하고 상담전화 진행할 것.\n",
         "otherOptions": {}
       },
       "webhookId": "805f268b-e5f2-4f6c-a77a-0eda2144d5a9",
@@ -304,8 +305,8 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "a6579d20-3e4c-4e0b-9ac9-80599f90fb83",
-  "activeVersionId": "a6579d20-3e4c-4e0b-9ac9-80599f90fb83",
+  "versionId": "f12f07ad-358d-4afb-b6a8-1bfbd8ac1db8",
+  "activeVersionId": "f12f07ad-358d-4afb-b6a8-1bfbd8ac1db8",
   "triggerCount": 1,
   "shared": [
     {
@@ -317,9 +318,9 @@
     }
   ],
   "activeVersion": {
-    "updatedAt": "2026-03-02T09:54:56.018Z",
-    "createdAt": "2026-03-02T09:54:56.018Z",
-    "versionId": "a6579d20-3e4c-4e0b-9ac9-80599f90fb83",
+    "updatedAt": "2026-03-08T16:08:55.282Z",
+    "createdAt": "2026-03-08T16:08:55.282Z",
+    "versionId": "f12f07ad-358d-4afb-b6a8-1bfbd8ac1db8",
     "workflowId": "S1ObqqNJYt6Weh0b",
     "nodes": [
       {
@@ -427,19 +428,20 @@
         "id": "4219a07b-3070-4883-b597-6ee7448c76bc",
         "name": "Send a message",
         "type": "n8n-nodes-base.slack",
-        "typeVersion": 2.3,
+        "typeVersion": 2.4,
         "position": [
           288,
           -16
         ],
         "parameters": {
+          "operation": "post",
           "select": "channel",
           "channelId": {
             "__rl": true,
             "value": "=#상담신청",
             "mode": "id"
           },
-          "text": "=카이야 🔔신규 상담이 도착했어!\n\n신청일시: {{ $('\bNotion 신규상담신청 확인').item.json.properties['생성일'].formula.string }}\n연락처: {{ $('Notion 신규상담신청 확인').item.json.properties['상담연락처'].phone_number }}\n상담희망시간: {{ $('Notion 신규상담신청 확인').item.json.properties['상담 희망시간'].multi_select[0].name }}\n학생이름: {{ $('Notion 신규상담신청 확인').item.json.properties['학생이름'].title[0].plain_text }}\n학교: {{ $('Notion 신규상담신청 확인').item.json.properties['학교'].rich_text[0].plain_text }}\n학년: {{ $('Notion 신규상담신청 확인').item.json.properties['학년'].select.name }}\n상담내용: {{ $('Notion 신규상담신청 확인').item.json.properties['상담 내용'].rich_text[0].plain_text }}\n\n✨ Notion에서 자세한 정보를 확인하고 상담전화 진행할 것.\n",
+          "text": "=카이야 🔔신규 상담이 도착했어!\n\n신청일시: {{ $('Notion 신규상담신청 확인').item.json.properties['생성일'].formula.string }}\n연락처: {{ $('Notion 신규상담신청 확인').item.json.properties['상담연락처'].phone_number }}\n상담희망시간: {{ $('Notion 신규상담신청 확인').item.json.properties['상담 희망시간'].multi_select[0].name }}\n학생이름: {{ $('Notion 신규상담신청 확인').item.json.properties['학생이름'].title[0].plain_text }}\n학교: {{ $('Notion 신규상담신청 확인').item.json.properties['학교'].rich_text[0].plain_text }}\n학년: {{ $('Notion 신규상담신청 확인').item.json.properties['학년'].select.name }}\n상담내용: {{ $('Notion 신규상담신청 확인').item.json.properties['상담 내용'].rich_text[0].plain_text }}\n\n✨ Notion에서 자세한 정보를 확인하고 상담전화 진행할 것.\n",
           "otherOptions": {}
         },
         "webhookId": "805f268b-e5f2-4f6c-a77a-0eda2144d5a9",
