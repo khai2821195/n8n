@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-02T09:49:00.334Z",
+  "updatedAt": "2026-03-07T11:23:03.000Z",
   "createdAt": "2026-03-02T09:18:28.694Z",
   "id": "G5k8fgeviVCR8ixe",
   "name": "Class_Study → Student_Study 수업일정 동기화",
@@ -187,8 +187,8 @@
   "triggerCount": 1,
   "shared": [
     {
-      "updatedAt": "2026-03-02T09:18:28.699Z",
-      "createdAt": "2026-03-02T09:18:28.699Z",
+      "updatedAt": "2026-03-07T11:23:03.669Z",
+      "createdAt": "2026-03-07T11:23:03.669Z",
       "role": "workflow:owner",
       "workflowId": "G5k8fgeviVCR8ixe",
       "projectId": "8znYa8Ca7GWeBy0m"
