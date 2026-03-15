@@ -1,8 +1,9 @@
 {
-  "updatedAt": "2026-03-09T22:12:24.541Z",
+  "updatedAt": "2026-03-15T04:44:11.528Z",
   "createdAt": "2026-03-05T11:42:54.670Z",
   "id": "BrZ88oo3KRKccX0g",
   "name": "등록일원부 자동생성 - 수업종료",
+  "description": null,
   "active": true,
   "isArchived": false,
   "nodes": [
@@ -23,12 +24,6 @@
           "mode": "id"
         },
         "simple": false
-      },
-      "credentials": {
-        "notionApi": {
-          "id": "MAYBu1lbKiMiquHV",
-          "name": "n8n-Math4U"
-        }
       }
     },
     {
@@ -63,12 +58,6 @@
         },
         "simple": false,
         "options": {}
-      },
-      "credentials": {
-        "notionApi": {
-          "id": "MAYBu1lbKiMiquHV",
-          "name": "n8n-Math4U"
-        }
       }
     },
     {
@@ -103,12 +92,6 @@
         },
         "simple": false,
         "options": {}
-      },
-      "credentials": {
-        "notionApi": {
-          "id": "MAYBu1lbKiMiquHV",
-          "name": "n8n-Math4U"
-        }
       }
     },
     {
@@ -151,12 +134,6 @@
         "specifyBody": "json",
         "jsonBody": "={\n  \"filter\": {\n    \"property\": \"Students\",\n    \"relation\": {\n      \"contains\": \"{{ $json.studentPageId }}\"\n    }\n  }\n}",
         "options": {}
-      },
-      "credentials": {
-        "notionApi": {
-          "id": "MAYBu1lbKiMiquHV",
-          "name": "n8n-Math4U"
-        }
       }
     },
     {
@@ -199,12 +176,78 @@
         "specifyBody": "json",
         "jsonBody": "={\n  \"parent\": { \"database_id\": \"55aac51e-739c-4f8e-8709-03cb1eb252b6\" },\n  \"properties\": {\n    \"이름\": {\n      \"title\": [{ \"text\": { \"content\": \"{{ $json.recordName }}\" } }]\n    },\n    \"Students\": {\n      \"relation\": [{ \"id\": \"{{ $json.studentPageId }}\" }]\n    },\n    \"납부회차\": {\n      \"select\": { \"name\": \"{{ $json.paySeq }}\" }\n    },\n    \"수업료\": {\n      \"number\": {{ $json.fee }}\n    },\n    \"등록일\": {\n      \"date\": { \"start\": \"{{ $json.isoDate }}\" }\n    }\n  }\n}",
         "options": {}
-      },
-      "credentials": {
-        "notionApi": {
-          "id": "MAYBu1lbKiMiquHV",
-          "name": "n8n-Math4U"
+      }
+    },
+    {
+      "id": "status-success",
+      "name": "✅ 상태 업데이트 (성공)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        1700,
+        300
+      ],
+      "parameters": {
+        "workflowId": "eOopB5bbEEO9rjrg",
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflowId": "BrZ88oo3KRKccX0g",
+            "workflowName": "등록일원부 자동생성 - 수업종료",
+            "notionPageId": "323c6a06e17e81b6b0a5d91342537f5c",
+            "status": "✅ 정상"
+          }
         }
+      }
+    },
+    {
+      "id": "error-trigger",
+      "name": "❌ 에러 감지",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        700,
+        500
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "status-error",
+      "name": "❌ 상태 업데이트 (에러)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        920,
+        500
+      ],
+      "parameters": {
+        "workflowId": "eOopB5bbEEO9rjrg",
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflowId": "BrZ88oo3KRKccX0g",
+            "workflowName": "등록일원부 자동생성 - 수업종료",
+            "notionPageId": "323c6a06e17e81b6b0a5d91342537f5c",
+            "status": "❌ 에러",
+            "errorMessage": "={{ $json.error.message }}"
+          }
+        }
+      }
+    },
+    {
+      "id": "manual-note",
+      "name": "📋 워크플로우 메뉴얼",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -840,
+        160
+      ],
+      "parameters": {
+        "content": "## 📋 등록일원부 자동생성 메뉴얼\n\n### 🔗 노션 메뉴얼\nhttps://www.notion.so/323c6a06e17e81b6b0a5d91342537f5c\n\n---\n\n### ⚙️ 개요\n- **트리거**: Notion Trigger (Student_Study 변경)\n- **목적**: 수업 종료 시 등록일원부 자동 생성\n\n### 🔧 주요 수정 포인트\n1. 수업료 조회 조건 → `Notion - Class 수업료 조회`\n2. 납부회차 계산 → `Code - 납부회차 계산`\n3. DB ID → `HTTP - 등록일원부 레코드 생성`",
+        "height": 280,
+        "width": 340,
+        "color": 4
       }
     }
   ],
@@ -296,6 +339,28 @@
           }
         ]
       ]
+    },
+    "HTTP - 등록일원부 레코드 생성": {
+      "main": [
+        [
+          {
+            "node": "✅ 상태 업데이트 (성공)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "❌ 에러 감지": {
+      "main": [
+        [
+          {
+            "node": "❌ 상태 업데이트 (에러)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -305,16 +370,17 @@
   },
   "staticData": {
     "node:Notion Trigger - Student_Study 변경 감지": {
-      "lastTimeChecked": "2026-03-10T15:00:00.000Z",
+      "lastTimeChecked": "2026-03-15T12:28:00.000Z",
       "possibleDuplicates": [
-        "317c6a06-e17e-815e-89e0-fff880355646"
+        "317c6a06-e17e-812b-91ed-d0101e0d5571"
       ]
     }
   },
   "meta": null,
   "pinData": {},
-  "versionId": "585ad75f-7a10-4145-a525-a3e89640beba",
-  "activeVersionId": "585ad75f-7a10-4145-a525-a3e89640beba",
+  "versionId": "04fde1f6-9e5e-4b87-a474-1fcbfc290931",
+  "activeVersionId": "04fde1f6-9e5e-4b87-a474-1fcbfc290931",
+  "versionCounter": 158,
   "triggerCount": 1,
   "shared": [
     {
@@ -322,13 +388,24 @@
       "createdAt": "2026-03-07T11:22:50.977Z",
       "role": "workflow:owner",
       "workflowId": "BrZ88oo3KRKccX0g",
-      "projectId": "8znYa8Ca7GWeBy0m"
+      "projectId": "8znYa8Ca7GWeBy0m",
+      "project": {
+        "updatedAt": "2025-11-29T23:05:56.637Z",
+        "createdAt": "2025-11-29T23:04:07.777Z",
+        "id": "8znYa8Ca7GWeBy0m",
+        "name": "Seung Hyeon Kim <khai01@naver.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
     }
   ],
+  "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-09T22:12:24.543Z",
-    "createdAt": "2026-03-09T22:12:24.543Z",
-    "versionId": "585ad75f-7a10-4145-a525-a3e89640beba",
+    "updatedAt": "2026-03-15T04:44:11.530Z",
+    "createdAt": "2026-03-15T04:44:11.530Z",
+    "versionId": "04fde1f6-9e5e-4b87-a474-1fcbfc290931",
     "workflowId": "BrZ88oo3KRKccX0g",
     "nodes": [
       {
@@ -531,6 +608,78 @@
             "name": "n8n-Math4U"
           }
         }
+      },
+      {
+        "id": "status-success",
+        "name": "✅ 상태 업데이트 (성공)",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          1700,
+          300
+        ],
+        "parameters": {
+          "workflowId": "eOopB5bbEEO9rjrg",
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "workflowId": "BrZ88oo3KRKccX0g",
+              "workflowName": "등록일원부 자동생성 - 수업종료",
+              "notionPageId": "323c6a06e17e81b6b0a5d91342537f5c",
+              "status": "✅ 정상"
+            }
+          }
+        }
+      },
+      {
+        "id": "error-trigger",
+        "name": "❌ 에러 감지",
+        "type": "n8n-nodes-base.errorTrigger",
+        "typeVersion": 1,
+        "position": [
+          700,
+          500
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "status-error",
+        "name": "❌ 상태 업데이트 (에러)",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          920,
+          500
+        ],
+        "parameters": {
+          "workflowId": "eOopB5bbEEO9rjrg",
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "workflowId": "BrZ88oo3KRKccX0g",
+              "workflowName": "등록일원부 자동생성 - 수업종료",
+              "notionPageId": "323c6a06e17e81b6b0a5d91342537f5c",
+              "status": "❌ 에러",
+              "errorMessage": "={{ $json.error.message }}"
+            }
+          }
+        }
+      },
+      {
+        "id": "manual-note",
+        "name": "📋 워크플로우 메뉴얼",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -840,
+          160
+        ],
+        "parameters": {
+          "content": "## 📋 등록일원부 자동생성 메뉴얼\n\n### 🔗 노션 메뉴얼\nhttps://www.notion.so/323c6a06e17e81b6b0a5d91342537f5c\n\n---\n\n### ⚙️ 개요\n- **트리거**: Notion Trigger (Student_Study 변경)\n- **목적**: 수업 종료 시 등록일원부 자동 생성\n\n### 🔧 주요 수정 포인트\n1. 수업료 조회 조건 → `Notion - Class 수업료 조회`\n2. 납부회차 계산 → `Code - 납부회차 계산`\n3. DB ID → `HTTP - 등록일원부 레코드 생성`",
+          "height": 280,
+          "width": 340,
+          "color": 4
+        }
       }
     ],
     "connections": {
@@ -621,12 +770,51 @@
             }
           ]
         ]
+      },
+      "HTTP - 등록일원부 레코드 생성": {
+        "main": [
+          [
+            {
+              "node": "✅ 상태 업데이트 (성공)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "❌ 에러 감지": {
+        "main": [
+          [
+            {
+              "node": "❌ 상태 업데이트 (에러)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
     "authors": "Seung Hyeon Kim",
     "name": null,
     "description": null,
-    "autosaved": false
-  },
-  "tags": []
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-03-15T04:44:12.196Z",
+        "id": 285,
+        "workflowId": "BrZ88oo3KRKccX0g",
+        "versionId": "04fde1f6-9e5e-4b87-a474-1fcbfc290931",
+        "event": "activated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      },
+      {
+        "createdAt": "2026-03-15T04:44:11.660Z",
+        "id": 284,
+        "workflowId": "BrZ88oo3KRKccX0g",
+        "versionId": "04fde1f6-9e5e-4b87-a474-1fcbfc290931",
+        "event": "deactivated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
+    ]
+  }
 }
