@@ -1,0 +1,593 @@
+{
+  "updatedAt": "2026-03-15T21:08:58.931Z",
+  "createdAt": "2025-12-01T21:37:22.774Z",
+  "id": "gRhv6ri8Nq5sE1Ol",
+  "name": "n8n Github Sync (노션 메뉴얼 → README)",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger",
+      "name": "수동 실행",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1000,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.notion.com/v1/databases/323c6a06e17e803282b4db8024fdb18e/query",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "{\"filter\":{\"and\":[{\"property\":\"Workflow ID\",\"rich_text\":{\"is_not_empty\":true}},{\"property\":\"Notion Page ID\",\"rich_text\":{\"is_not_empty\":true}}]}}",
+        "options": {}
+      },
+      "id": "notion-db",
+      "name": "노션 DB 조회",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -780,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "var results = $input.first().json.results || [];\nvar items = [];\nfor (var i = 0; i < results.length; i++) {\n  var page = results[i];\n  var props = page.properties;\n  var workflowId = '';\n  if (props['Workflow ID'] && props['Workflow ID'].rich_text && props['Workflow ID'].rich_text.length > 0) {\n    workflowId = props['Workflow ID'].rich_text[0].plain_text;\n  }\n  var workflowName = '';\n  if (props['Workflow Name'] && props['Workflow Name'].title && props['Workflow Name'].title.length > 0) {\n    workflowName = props['Workflow Name'].title[0].plain_text;\n  }\n  var notionPageId = '';\n  if (props['Notion Page ID'] && props['Notion Page ID'].rich_text && props['Notion Page ID'].rich_text.length > 0) {\n    notionPageId = props['Notion Page ID'].rich_text[0].plain_text;\n  }\n  var category = '공통';\n  if (props['Category'] && props['Category'].select) {\n    category = props['Category'].select.name;\n  }\n  if (!workflowId || !notionPageId) continue;\n  if (workflowName.indexOf('🗑️') !== -1) continue;\n  var safeName = workflowName.replace(/[\\/\\\\:*?\"<>|]/g, '-').trim();\n  items.push({ json: { workflowId: workflowId, workflowName: workflowName, notionPageId: notionPageId, category: category, folderPath: safeName } });\n}\nreturn items;"
+      },
+      "id": "prepare",
+      "name": "목록 준비",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "loop",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        -336,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://n8n.math4u.co.kr/api/v1/workflows/{{ $json.workflowId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-N8N-API-KEY",
+              "value": "={{ $env.N8N_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "get-wf",
+      "name": "n8n 워크플로우 조회",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -112,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 루프 안 - 현재 아이템만 사용\n// Loop Over Items가 배치 1개씩 넘겨주므로\n// $input.item = n8n WF API 응답\n// $('Loop Over Items').item = 현재 루프 아이템 (메타)\nvar wfData = $input.item.json;\nvar meta = $('Loop Over Items').item.json;\n\nif (wfData.nodes) {\n  for (var j = 0; j < wfData.nodes.length; j++) {\n    if (wfData.nodes[j].credentials) delete wfData.nodes[j].credentials;\n  }\n}\nvar jsonContent = JSON.stringify(wfData, null, 2);\nvar jsonBase64 = Buffer.from(jsonContent).toString('base64');\n\nreturn [{ json: {\n  workflowId: meta.workflowId,\n  workflowName: meta.workflowName,\n  notionPageId: meta.notionPageId,\n  category: meta.category,\n  folderPath: meta.folderPath,\n  jsonBase64: jsonBase64\n} }];"
+      },
+      "id": "build-json",
+      "name": "JSON 준비",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        112,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.github.com/repos/khai2821195/n8n/contents/{{ $json.folderPath }}/workflow.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=token {{ $env.GITHUB_TOKEN }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            },
+            {
+              "name": "User-Agent",
+              "value": "n8n-github-sync"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "get-json-sha",
+      "name": "JSON SHA 조회",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        336,
+        180
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://api.github.com/repos/khai2821195/n8n/contents/{{ $('JSON 준비').item.json.folderPath }}/workflow.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=token {{ $env.GITHUB_TOKEN }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "User-Agent",
+              "value": "n8n-github-sync"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ message: 'backup: ' + $('JSON 준비').item.json.workflowName, content: $('JSON 준비').item.json.jsonBase64, ...($('JSON SHA 조회').item.json.sha ? { sha: $('JSON SHA 조회').item.json.sha } : {}) }) }}",
+        "options": {}
+      },
+      "id": "save-json",
+      "name": "workflow.json 저장",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        560,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.notion.com/v1/blocks/{{ $('JSON 준비').item.json.notionPageId }}/children?page_size=100",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "get-notion",
+      "name": "노션 메뉴얼 조회",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        784,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "var data = $input.item.json;\nvar prev = $('JSON 준비').item.json;\nfunction getText(rt) {\n  if (!rt || !Array.isArray(rt)) return '';\n  var s = '';\n  for (var i = 0; i < rt.length; i++) s += rt[i].plain_text || '';\n  return s;\n}\nfunction toMd(b) {\n  if (!b || !b.type) return '';\n  var t = b.type;\n  if (t === 'heading_1') return '# ' + getText(b.heading_1 && b.heading_1.rich_text) + '\\n\\n';\n  if (t === 'heading_2') return '## ' + getText(b.heading_2 && b.heading_2.rich_text) + '\\n\\n';\n  if (t === 'heading_3') return '### ' + getText(b.heading_3 && b.heading_3.rich_text) + '\\n\\n';\n  if (t === 'paragraph') { var tx = getText(b.paragraph && b.paragraph.rich_text); return tx ? tx + '\\n\\n' : '\\n'; }\n  if (t === 'bulleted_list_item') return '- ' + getText(b.bulleted_list_item && b.bulleted_list_item.rich_text) + '\\n';\n  if (t === 'numbered_list_item') return '1. ' + getText(b.numbered_list_item && b.numbered_list_item.rich_text) + '\\n';\n  if (t === 'code') { var lang = (b.code && b.code.language) || ''; return '```' + lang + '\\n' + getText(b.code && b.code.rich_text) + '\\n```\\n\\n'; }\n  if (t === 'quote') return '> ' + getText(b.quote && b.quote.rich_text) + '\\n\\n';\n  if (t === 'divider') return '---\\n\\n';\n  return '';\n}\nvar blocks = data.results || [];\nvar md = '# ' + prev.workflowName + '\\n\\n';\nmd += '> **Category:** ' + prev.category + '  \\n';\nmd += '> **Workflow ID:** `' + prev.workflowId + '`  \\n';\nmd += '> **노션 메뉴얼:** https://www.notion.so/' + prev.notionPageId.replace(/-/g, '') + '  \\n\\n';\nmd += '---\\n\\n';\nfor (var i = 0; i < blocks.length; i++) md += toMd(blocks[i]);\nvar readmeBase64 = Buffer.from(md).toString('base64');\nreturn [{ json: { workflowId: prev.workflowId, workflowName: prev.workflowName, notionPageId: prev.notionPageId, category: prev.category, folderPath: prev.folderPath, readmeBase64: readmeBase64 } }];"
+      },
+      "id": "build-readme",
+      "name": "README 생성",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1008,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.github.com/repos/khai2821195/n8n/contents/{{ $json.folderPath }}/README.md",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=token {{ $env.GITHUB_TOKEN }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            },
+            {
+              "name": "User-Agent",
+              "value": "n8n-github-sync"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "get-readme-sha",
+      "name": "README SHA 조회",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1232,
+        180
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://api.github.com/repos/khai2821195/n8n/contents/{{ $('README 생성').item.json.folderPath }}/README.md",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=token {{ $env.GITHUB_TOKEN }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "User-Agent",
+              "value": "n8n-github-sync"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ message: 'docs: README for ' + $('README 생성').item.json.workflowName, content: $('README 생성').item.json.readmeBase64, ...($('README SHA 조회').item.json.sha ? { sha: $('README SHA 조회').item.json.sha } : {}) }) }}",
+        "options": {}
+      },
+      "id": "save-readme",
+      "name": "README.md 저장",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1456,
+        180
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "error-trigger",
+      "name": "❌ 에러 감지",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -780,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": "eOopB5bbEEO9rjrg",
+        "options": {}
+      },
+      "id": "status-error",
+      "name": "❌ 상태 업데이트 (에러)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "var now = new Date();\nvar koreaTime = new Date(now.getTime() + 9 * 60 * 60 * 1000);\nvar lastRun = koreaTime.toISOString().replace('Z', '+09:00');\nvar body = JSON.stringify({ properties: { Status: { select: { name: '✅ 정상' } }, 'Last Run': { date: { start: lastRun } }, 'Error Message': { rich_text: [] } } });\nreturn [{ json: { lastRun: lastRun, notionBody: body } }];"
+      },
+      "id": "calc-time",
+      "name": "완료 시간 계산",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -112,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://api.notion.com/v1/pages/324c6a06e17e81728fb3ccec9d7bae3a",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.notionBody }}",
+        "options": {}
+      },
+      "id": "notion-update-status",
+      "name": "노션 완료 업데이트",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        112,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 🔄 n8n Github Sync\n\n**[v4] batchSize=1 명시**\n• Loop output[0] → n8n WF 조회 (loop body)\n• Loop output[1] → 완료 시간 계산 (done)\n• README.md 저장 → Loop (loop back)\n\n**환경변수:**\n- N8N_API_KEY\n- GITHUB_TOKEN",
+        "height": 240,
+        "width": 270,
+        "color": 5
+      },
+      "id": "sticky",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1000,
+        96
+      ]
+    }
+  ],
+  "connections": {
+    "수동 실행": {
+      "main": [
+        [
+          {
+            "node": "노션 DB 조회",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "노션 DB 조회": {
+      "main": [
+        [
+          {
+            "node": "목록 준비",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "목록 준비": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "n8n 워크플로우 조회",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "완료 시간 계산",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "n8n 워크플로우 조회": {
+      "main": [
+        [
+          {
+            "node": "JSON 준비",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON 준비": {
+      "main": [
+        [
+          {
+            "node": "JSON SHA 조회",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON SHA 조회": {
+      "main": [
+        [
+          {
+            "node": "workflow.json 저장",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "workflow.json 저장": {
+      "main": [
+        [
+          {
+            "node": "노션 메뉴얼 조회",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "노션 메뉴얼 조회": {
+      "main": [
+        [
+          {
+            "node": "README 생성",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "README 생성": {
+      "main": [
+        [
+          {
+            "node": "README SHA 조회",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "README SHA 조회": {
+      "main": [
+        [
+          {
+            "node": "README.md 저장",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "README.md 저장": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "완료 시간 계산": {
+      "main": [
+        [
+          {
+            "node": "노션 완료 업데이트",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "❌ 에러 감지": {
+      "main": [
+        [
+          {
+            "node": "❌ 상태 업데이트 (에러)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "31349dbb-fdbf-4460-b1dc-0f005d425113",
+  "activeVersionId": null,
+  "versionCounter": 160,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2025-12-01T21:37:22.778Z",
+      "createdAt": "2025-12-01T21:37:22.778Z",
+      "role": "workflow:owner",
+      "workflowId": "gRhv6ri8Nq5sE1Ol",
+      "projectId": "8znYa8Ca7GWeBy0m",
+      "project": {
+        "updatedAt": "2025-11-29T23:05:56.637Z",
+        "createdAt": "2025-11-29T23:04:07.777Z",
+        "id": "8znYa8Ca7GWeBy0m",
+        "name": "Seung Hyeon Kim <khai01@naver.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
