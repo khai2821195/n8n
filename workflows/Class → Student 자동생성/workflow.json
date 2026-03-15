@@ -1,0 +1,960 @@
+{
+  "updatedAt": "2026-03-15T04:44:23.419Z",
+  "createdAt": "2025-11-29T23:09:25.703Z",
+  "id": "PNn3uKuzuOyjgFbu",
+  "name": "Class → Student 자동생성",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "node-webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -336,
+        240
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cf437762-9463-459c-b1a6-8b27f48b0381",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-parse-input",
+      "name": "Code - 입력 파싱",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -112,
+        240
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Notion 자동화 Webhook payload에서 classStudyId, datetime 추출\nconst body = $json.body || $json;\nconst data = body.data || {};\nconst props = data.properties || {};\n\n// page ID = Class_Study 레코드 ID\nconst classStudyId = data.id || '';\n\n// 수업일정 날짜\nconst datetime = props['수업일정']?.date?.start || '';\n\nreturn { json: { classStudyId, datetime } };"
+      }
+    },
+    {
+      "id": "ab9cbf0b-acc4-48bd-b549-ad28a3100ba7",
+      "name": "Class_Study Get",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        112,
+        240
+      ],
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "get",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $json.classStudyId }}",
+          "mode": "id"
+        }
+      }
+    },
+    {
+      "id": "5a0c00e2-2295-4ac9-8df6-4944056f904e",
+      "name": "Split Out - Student ID Split",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        320,
+        240
+      ],
+      "parameters": {
+        "fieldToSplitOut": "property_students",
+        "include": "noOtherFields",
+        "options": {}
+      }
+    },
+    {
+      "id": "c5f73c77-e83a-49b5-a1e1-ca305a481237",
+      "name": "Student ID",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        512,
+        240
+      ],
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "get",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $json.property_students }}",
+          "mode": "id"
+        }
+      }
+    },
+    {
+      "id": "c4a16a2d-7f49-40a4-b574-c8321611a946",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        704,
+        240
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bb4b9ece-cf64-407c-8537-7121c1806049",
+              "name": "property_students[0]",
+              "value": "={{ $json.name }} | {{ $('Class_Study Get').item.json.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "4763be7f-5c3b-41f2-a831-4a0336ab9bbd",
+      "name": "Create Page Student_Study",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        240
+      ],
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "value": "2d0c6a06-e17e-8118-8ce1-dd2f76406aa1",
+          "mode": "id"
+        },
+        "title": "={{ $json['property_students[0]'] }}",
+        "simple": false,
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "수업일시|date",
+              "date": "={{ $('Code - 입력 파싱').item.json.datetime }}"
+            },
+            {
+              "key": "Students|relation",
+              "relationValue": [
+                "={{ $('Student ID').item.json.id }}"
+              ]
+            },
+            {
+              "key": "Class|relation",
+              "relationValue": [
+                "={{ $('Class_Study Get').item.json.property_class[0] }}"
+              ]
+            },
+            {
+              "key": "Class_Study|relation",
+              "relationValue": [
+                "={{ $('Class_Study Get').item.json.id }}"
+              ]
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "20515355-10f6-4300-a792-8474b56fe319",
+      "name": "Notion - 배정확인",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        1088,
+        240
+      ],
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Class_Study Get').item.json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "배정확인|checkbox",
+              "checkboxValue": true
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "status-success",
+      "name": "✅ 상태 업데이트 (성공)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        240
+      ],
+      "parameters": {
+        "workflowId": "eOopB5bbEEO9rjrg",
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflowId": "PNn3uKuzuOyjgFbu",
+            "workflowName": "Class → Student 자동생성",
+            "notionPageId": "323c6a06e17e81649c02d5075f8b8945",
+            "status": "✅ 정상"
+          }
+        }
+      }
+    },
+    {
+      "id": "error-trigger",
+      "name": "❌ 에러 감지",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        500,
+        440
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "status-error",
+      "name": "❌ 상태 업데이트 (에러)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        720,
+        440
+      ],
+      "parameters": {
+        "workflowId": "eOopB5bbEEO9rjrg",
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflowId": "PNn3uKuzuOyjgFbu",
+            "workflowName": "Class → Student 자동생성",
+            "notionPageId": "323c6a06e17e81649c02d5075f8b8945",
+            "status": "❌ 에러",
+            "errorMessage": "={{ $json.error.message }}"
+          }
+        }
+      }
+    },
+    {
+      "id": "manual-note",
+      "name": "📋 워크플로우 메뉴얼",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        100
+      ],
+      "parameters": {
+        "content": "## 📋 Class → Student 자동생성 메뉴얼\n\n### 🔗 노션 메뉴얼\nhttps://www.notion.so/323c6a06e17e81649c02d5075f8b8945\n\n---\n\n- **트리거**: Webhook\n- **목적**: Class 등록 시 Student_Study 자동 생성\n\n### 🔧 주요 수정 포인트\n1. 입력 파라미터 → `Code - 입력 파싱`\n2. Student_Study 필드 → `Create Page Student_Study`\n3. 배정확인 → `Notion - 배정확인`",
+        "height": 240,
+        "width": 320,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code - 입력 파싱",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - 입력 파싱": {
+      "main": [
+        [
+          {
+            "node": "Class_Study Get",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Class_Study Get": {
+      "main": [
+        [
+          {
+            "node": "Split Out - Student ID Split",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out - Student ID Split": {
+      "main": [
+        [
+          {
+            "node": "Student ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Student ID": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Create Page Student_Study",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Page Student_Study": {
+      "main": [
+        [
+          {
+            "node": "Notion - 배정확인",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion - 배정확인": {
+      "main": [
+        [
+          {
+            "node": "✅ 상태 업데이트 (성공)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "❌ 에러 감지": {
+      "main": [
+        [
+          {
+            "node": "❌ 상태 업데이트 (에러)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "callerPolicy": "workflowsFromSameOwner",
+    "timezone": "Asia/Seoul"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "connection": "upgrade",
+            "host": "n8n.math4u.co.kr",
+            "x-real-ip": "44.227.140.35",
+            "x-forwarded-for": "44.227.140.35",
+            "x-forwarded-proto": "https",
+            "content-length": "1997",
+            "user-agent": "NotionAutomation",
+            "content-type": "application/json",
+            "sentry-trace": "02e56047b75e4d2f8bbbbd78476f016f-add08d3e8b13917f",
+            "baggage": "sentry-environment=production,sentry-release=20260302.0532-fbd9353,sentry-public_key=529a6d1990e5471d874257842c4f4ad8,sentry-trace_id=02e56047b75e4d2f8bbbbd78476f016f",
+            "traceparent": "00-083168de9b7ecb7b45a297ad3248d7d9-5331ba784cd7a144-00"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "source": {
+              "type": "automation",
+              "automation_id": "2d0c6a06-e17e-81e1-9be4-004dd6a11bd6",
+              "action_id": "2d0c6a06-e17e-81ce-8d37-005ac674cb4f",
+              "event_id": "30027598-49c1-4c4d-9596-97b1fa3b2b74",
+              "user_id": "8a7531c9-81d0-4c05-900c-6525f3294208",
+              "attempt": 1
+            },
+            "data": {
+              "object": "page",
+              "id": "317c6a06-e17e-807f-87a9-dc605e0d2d4e",
+              "created_time": "2026-03-02T08:40:00.000Z",
+              "last_edited_time": "2026-03-02T08:57:00.000Z",
+              "created_by": {
+                "object": "user",
+                "id": "8a7531c9-81d0-4c05-900c-6525f3294208"
+              },
+              "last_edited_by": {
+                "object": "user",
+                "id": "8a7531c9-81d0-4c05-900c-6525f3294208"
+              },
+              "cover": null,
+              "icon": null,
+              "parent": {
+                "type": "data_source_id",
+                "data_source_id": "2d0c6a06-e17e-81c8-aa5d-000b87dc593e",
+                "database_id": "2d0c6a06-e17e-819c-9347-e50501c59069"
+              },
+              "archived": false,
+              "in_trash": false,
+              "is_locked": false,
+              "properties": {
+                "수업구분": {
+                  "id": "title",
+                  "type": "title",
+                  "title": [
+                    {
+                      "type": "text",
+                      "text": {
+                        "content": "고2이 3월 1-1",
+                        "link": null
+                      },
+                      "annotations": {
+                        "bold": false,
+                        "italic": false,
+                        "strikethrough": false,
+                        "underline": false,
+                        "code": false,
+                        "color": "default"
+                      },
+                      "plain_text": "고2이 3월 1-1",
+                      "href": null
+                    }
+                  ]
+                },
+                "과정": {
+                  "id": "pbjp",
+                  "type": "multi_select",
+                  "multi_select": [
+                    {
+                      "id": "gij}",
+                      "name": "대수",
+                      "color": "yellow"
+                    },
+                    {
+                      "id": "TZi_",
+                      "name": "미적분1",
+                      "color": "yellow"
+                    }
+                  ]
+                },
+                "수업일정": {
+                  "id": "UV%5Bt",
+                  "type": "date",
+                  "date": {
+                    "start": "2026-03-02T20:00:00.000+09:00",
+                    "end": null,
+                    "time_zone": null
+                  }
+                },
+                "구성원": {
+                  "id": "HUMT",
+                  "type": "rollup",
+                  "rollup": {
+                    "type": "array",
+                    "array": [
+                      {
+                        "type": "relation",
+                        "relation": [
+                          {
+                            "id": "2d0c6a06-e17e-8180-a8a0-d72c8b1a02f7"
+                          }
+                        ]
+                      }
+                    ],
+                    "function": "show_original"
+                  }
+                },
+                "배정확인": {
+                  "id": "fZh%3E",
+                  "type": "checkbox",
+                  "checkbox": false
+                },
+                "Class": {
+                  "id": "Z%3BQG",
+                  "type": "relation",
+                  "relation": [
+                    {
+                      "id": "2d0c6a06-e17e-814d-b45d-c923731752c9"
+                    }
+                  ],
+                  "has_more": false
+                },
+                "과제": {
+                  "id": "Ym%60%3F",
+                  "type": "rich_text",
+                  "rich_text": []
+                }
+              },
+              "url": "https://www.notion.so/2-3-1-1-317c6a06e17e807f87a9dc605e0d2d4e",
+              "public_url": "https://math4u-edu.notion.site/2-3-1-1-317c6a06e17e807f87a9dc605e0d2d4e",
+              "request_id": "9f5d6ceb-1ec5-4603-a4de-3e8433bdc1e4"
+            }
+          },
+          "webhookUrl": "https://n8n.math4u.co.kr/       // 웹훅 생성 주소(Webhook 생성이나 API 연동시 필요)/webhook/cf437762-9463-459c-b1a6-8b27f48b0381",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "versionId": "70d226fa-8f64-4433-b0bb-58be583e23f4",
+  "activeVersionId": "70d226fa-8f64-4433-b0bb-58be583e23f4",
+  "versionCounter": 86,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-11-29T23:09:25.709Z",
+      "createdAt": "2025-11-29T23:09:25.709Z",
+      "role": "workflow:owner",
+      "workflowId": "PNn3uKuzuOyjgFbu",
+      "projectId": "8znYa8Ca7GWeBy0m",
+      "project": {
+        "updatedAt": "2025-11-29T23:05:56.637Z",
+        "createdAt": "2025-11-29T23:04:07.777Z",
+        "id": "8znYa8Ca7GWeBy0m",
+        "name": "Seung Hyeon Kim <khai01@naver.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-03-15T04:44:23.421Z",
+    "createdAt": "2026-03-15T04:44:23.421Z",
+    "versionId": "70d226fa-8f64-4433-b0bb-58be583e23f4",
+    "workflowId": "PNn3uKuzuOyjgFbu",
+    "nodes": [
+      {
+        "id": "node-webhook",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          -336,
+          240
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "cf437762-9463-459c-b1a6-8b27f48b0381",
+          "responseMode": "lastNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "node-parse-input",
+        "name": "Code - 입력 파싱",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -112,
+          240
+        ],
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "// Notion 자동화 Webhook payload에서 classStudyId, datetime 추출\nconst body = $json.body || $json;\nconst data = body.data || {};\nconst props = data.properties || {};\n\n// page ID = Class_Study 레코드 ID\nconst classStudyId = data.id || '';\n\n// 수업일정 날짜\nconst datetime = props['수업일정']?.date?.start || '';\n\nreturn { json: { classStudyId, datetime } };"
+        }
+      },
+      {
+        "id": "ab9cbf0b-acc4-48bd-b549-ad28a3100ba7",
+        "name": "Class_Study Get",
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2,
+        "position": [
+          112,
+          240
+        ],
+        "parameters": {
+          "resource": "databasePage",
+          "operation": "get",
+          "pageId": {
+            "__rl": true,
+            "value": "={{ $json.classStudyId }}",
+            "mode": "id"
+          }
+        },
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        }
+      },
+      {
+        "id": "5a0c00e2-2295-4ac9-8df6-4944056f904e",
+        "name": "Split Out - Student ID Split",
+        "type": "n8n-nodes-base.splitOut",
+        "typeVersion": 1,
+        "position": [
+          320,
+          240
+        ],
+        "parameters": {
+          "fieldToSplitOut": "property_students",
+          "include": "noOtherFields",
+          "options": {}
+        }
+      },
+      {
+        "id": "c5f73c77-e83a-49b5-a1e1-ca305a481237",
+        "name": "Student ID",
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2,
+        "position": [
+          512,
+          240
+        ],
+        "parameters": {
+          "resource": "databasePage",
+          "operation": "get",
+          "pageId": {
+            "__rl": true,
+            "value": "={{ $json.property_students }}",
+            "mode": "id"
+          }
+        },
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        }
+      },
+      {
+        "id": "c4a16a2d-7f49-40a4-b574-c8321611a946",
+        "name": "Edit Fields",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          704,
+          240
+        ],
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "bb4b9ece-cf64-407c-8537-7121c1806049",
+                "name": "property_students[0]",
+                "value": "={{ $json.name }} | {{ $('Class_Study Get').item.json.name }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "4763be7f-5c3b-41f2-a831-4a0336ab9bbd",
+        "name": "Create Page Student_Study",
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2,
+        "position": [
+          896,
+          240
+        ],
+        "parameters": {
+          "resource": "databasePage",
+          "databaseId": {
+            "__rl": true,
+            "value": "2d0c6a06-e17e-8118-8ce1-dd2f76406aa1",
+            "mode": "id"
+          },
+          "title": "={{ $json['property_students[0]'] }}",
+          "simple": false,
+          "propertiesUi": {
+            "propertyValues": [
+              {
+                "key": "수업일시|date",
+                "date": "={{ $('Code - 입력 파싱').item.json.datetime }}"
+              },
+              {
+                "key": "Students|relation",
+                "relationValue": [
+                  "={{ $('Student ID').item.json.id }}"
+                ]
+              },
+              {
+                "key": "Class|relation",
+                "relationValue": [
+                  "={{ $('Class_Study Get').item.json.property_class[0] }}"
+                ]
+              },
+              {
+                "key": "Class_Study|relation",
+                "relationValue": [
+                  "={{ $('Class_Study Get').item.json.id }}"
+                ]
+              }
+            ]
+          },
+          "options": {}
+        },
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        }
+      },
+      {
+        "id": "20515355-10f6-4300-a792-8474b56fe319",
+        "name": "Notion - 배정확인",
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2,
+        "position": [
+          1088,
+          240
+        ],
+        "parameters": {
+          "resource": "databasePage",
+          "operation": "update",
+          "pageId": {
+            "__rl": true,
+            "value": "={{ $('Class_Study Get').item.json.id }}",
+            "mode": "id"
+          },
+          "propertiesUi": {
+            "propertyValues": [
+              {
+                "key": "배정확인|checkbox",
+                "checkboxValue": true
+              }
+            ]
+          },
+          "options": {}
+        },
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        }
+      },
+      {
+        "id": "status-success",
+        "name": "✅ 상태 업데이트 (성공)",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          1300,
+          240
+        ],
+        "parameters": {
+          "workflowId": "eOopB5bbEEO9rjrg",
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "workflowId": "PNn3uKuzuOyjgFbu",
+              "workflowName": "Class → Student 자동생성",
+              "notionPageId": "323c6a06e17e81649c02d5075f8b8945",
+              "status": "✅ 정상"
+            }
+          }
+        }
+      },
+      {
+        "id": "error-trigger",
+        "name": "❌ 에러 감지",
+        "type": "n8n-nodes-base.errorTrigger",
+        "typeVersion": 1,
+        "position": [
+          500,
+          440
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "status-error",
+        "name": "❌ 상태 업데이트 (에러)",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          720,
+          440
+        ],
+        "parameters": {
+          "workflowId": "eOopB5bbEEO9rjrg",
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "workflowId": "PNn3uKuzuOyjgFbu",
+              "workflowName": "Class → Student 자동생성",
+              "notionPageId": "323c6a06e17e81649c02d5075f8b8945",
+              "status": "❌ 에러",
+              "errorMessage": "={{ $json.error.message }}"
+            }
+          }
+        }
+      },
+      {
+        "id": "manual-note",
+        "name": "📋 워크플로우 메뉴얼",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -560,
+          100
+        ],
+        "parameters": {
+          "content": "## 📋 Class → Student 자동생성 메뉴얼\n\n### 🔗 노션 메뉴얼\nhttps://www.notion.so/323c6a06e17e81649c02d5075f8b8945\n\n---\n\n- **트리거**: Webhook\n- **목적**: Class 등록 시 Student_Study 자동 생성\n\n### 🔧 주요 수정 포인트\n1. 입력 파라미터 → `Code - 입력 파싱`\n2. Student_Study 필드 → `Create Page Student_Study`\n3. 배정확인 → `Notion - 배정확인`",
+          "height": 240,
+          "width": 320,
+          "color": 4
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Code - 입력 파싱",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code - 입력 파싱": {
+        "main": [
+          [
+            {
+              "node": "Class_Study Get",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Class_Study Get": {
+        "main": [
+          [
+            {
+              "node": "Split Out - Student ID Split",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Split Out - Student ID Split": {
+        "main": [
+          [
+            {
+              "node": "Student ID",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Student ID": {
+        "main": [
+          [
+            {
+              "node": "Edit Fields",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Edit Fields": {
+        "main": [
+          [
+            {
+              "node": "Create Page Student_Study",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create Page Student_Study": {
+        "main": [
+          [
+            {
+              "node": "Notion - 배정확인",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Notion - 배정확인": {
+        "main": [
+          [
+            {
+              "node": "✅ 상태 업데이트 (성공)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "❌ 에러 감지": {
+        "main": [
+          [
+            {
+              "node": "❌ 상태 업데이트 (에러)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Seung Hyeon Kim",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-03-15T04:44:23.622Z",
+        "id": 287,
+        "workflowId": "PNn3uKuzuOyjgFbu",
+        "versionId": "70d226fa-8f64-4433-b0bb-58be583e23f4",
+        "event": "activated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      },
+      {
+        "createdAt": "2026-03-15T04:44:23.547Z",
+        "id": 286,
+        "workflowId": "PNn3uKuzuOyjgFbu",
+        "versionId": "70d226fa-8f64-4433-b0bb-58be583e23f4",
+        "event": "deactivated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
+    ]
+  }
+}
