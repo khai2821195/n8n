@@ -1,0 +1,914 @@
+{
+  "updatedAt": "2026-03-15T04:43:51.841Z",
+  "createdAt": "2026-03-14T07:49:13.322Z",
+  "id": "ovShsLWKGcrOOgnE",
+  "name": "DCT 트렌드 기반 블로그 자동작성 260314",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "node-schedule",
+      "name": "매주 일요일 9시",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst month = now.getMonth() + 1;\nconst day = now.getDate();\nconst weekOfMonth = Math.ceil(day / 7);\nlet season = '', seasonDesc = '';\nif (month >= 3 && month <= 5) { season = '봄'; seasonDesc = '졸업/입학 시즌, 벚꽃 행사, 신학기'; }\nelse if (month >= 6 && month <= 8) { season = '여름'; seasonDesc = '워터파크, 야외 행사, 여름 축제, 체육대회'; }\nelse if (month >= 9 && month <= 11) { season = '가을'; seasonDesc = '운동회, 추석 명절, 기업 행사, 송년회 준비'; }\nelse { season = '겨울'; seasonDesc = '연말 송년회, 크리스마스, 신년 선물, 설 명절'; }\nconst specialEvents = [];\nif (month === 2 || month === 3) specialEvents.push('졸업/입학 시즌');\nif (month === 5) specialEvents.push('어린이날, 스승의날, 가정의달');\nif (month === 9 || month === 10) specialEvents.push('추석 명절, 체육대회');\nif (month === 12 || month === 1) specialEvents.push('연말연시, 신년');\nconst dateStr = now.toISOString().slice(0,10);\nconst endDate = dateStr;\nconst startDate = new Date(now.getTime() - 7*24*60*60*1000).toISOString().slice(0,10);\nconst blogTitle = `'26년 ${month}월 ${weekOfMonth}주 AI가 추천하는 판촉/홍보/답례품`;\nreturn [{ json: { month, day, weekOfMonth, season, seasonDesc, specialEvents: specialEvents.join(', ') || '일반 시즌', dateStr, startDate, endDate, blogTitle } }];"
+      },
+      "id": "node-season",
+      "name": "현재 시기 정보",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openapi.naver.com/v1/datalab/shopping/categories",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Naver-Client-Id",
+              "value": "eHQN1xDoAWnFHF4sAe3I"
+            },
+            {
+              "name": "X-Naver-Client-Secret",
+              "value": "Ghnsw8dyRF"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ startDate: $('현재 시기 정보').first().json.startDate, endDate: $('현재 시기 정보').first().json.endDate, timeUnit: 'date', category: [{ name: '판촉물', param: ['50000803'] }, { name: '생활용품선물', param: ['50000810'] }, { name: '답례품', param: ['50000804'] }], device: '', ages: [], gender: '' }) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "node-trend",
+      "name": "네이버 트렌드 수집",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const season = $('현재 시기 정보').first().json;\nconst trendRaw = $input.first().json;\nlet trendSummary = '트렌드 데이터 없음';\ntry {\n  if (trendRaw.results) {\n    trendSummary = trendRaw.results.map(r => {\n      const max = Math.max(...r.data.map(d => d.ratio));\n      return `${r.title}: 최고 검색비율 ${max.toFixed(1)}`;\n    }).join('\\n');\n  }\n} catch(e) {}\nreturn [{ json: { ...season, trendSummary } }];"
+      },
+      "id": "node-merge",
+      "name": "시기+트렌드 합치기",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key={{ $env.GEMINI_API_KEY }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ contents: [{ parts: [{ text: '너는 판촉물·홍보물 전문 납품업체 DCT컴퍼니의 시니어 블로그 마케터야.\\n\\n아래 정보를 바탕으로 네이버 블로그 포스팅을 작성해줘.\\n\\n## 블로그 제목\\n' + $json.blogTitle + '\\n\\n## 현재 시기 정보\\n날짜: ' + $json.dateStr + '\\n계절: ' + $json.season + ' (' + $json.seasonDesc + ')\\n특수 이벤트: ' + $json.specialEvents + '\\n\\n## 네이버 쇼핑 트렌드 데이터\\n' + $json.trendSummary + '\\n\\n## 작성 규칙\\n1. 제목: 위 블로그 제목 그대로 사용\\n2. 본문: 1500자 이내로 작성 (중요: 반드시 1500자 이하)\\n3. 구성:\\n   - 도입부: 이번 주 트렌드 및 시즌 소개\\n   - TOP 5 추천 품목: 각 품목별로 ## 소제목, 추천이유/활용사례 포함\\n   - 마무리: DCT컴퍼니 구매 안내\\n4. SEO 키워드 자연스럽게 삽입\\n5. 이미지 설명: [이미지: 설명] 형식으로 각 품목마다 1개\\n6. 해시태그: 20개\\n7. JSON으로만 응답 (백틱 없이): {\"title\":\"...\",\"body\":\"...\",\"hashtags\":\"...\"}' }] }], generationConfig: { temperature: 0.8, maxOutputTokens: 3000 } }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "node-gemini-blog",
+      "name": "Gemini 블로그 작성",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst prev = $('시기+트렌드 합치기').first().json;\nlet raw = '';\nif (d.candidates && d.candidates[0]) raw = d.candidates[0]?.content?.parts?.[0]?.text || '';\nraw = raw.replace(/```json\\s*/g,'').replace(/```\\s*/g,'').trim();\nlet title = prev.blogTitle, body = raw, hashtags = '';\ntry {\n  const p = JSON.parse(raw);\n  title = p.title || prev.blogTitle;\n  body = p.body || raw;\n  hashtags = p.hashtags || '';\n} catch(e) {}\nconst MAX = 1900;\nconst bodyChunks = [];\nfor (let i = 0; i < body.length; i += MAX) {\n  bodyChunks.push(body.slice(i, i + MAX));\n}\nreturn [{ json: { ...prev, title, body, bodyChunks, hashtags } }];"
+      },
+      "id": "node-extract",
+      "name": "블로그 추출",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst bodyBlocks = d.bodyChunks.map(chunk => ({\n  object: 'block', type: 'paragraph',\n  paragraph: { rich_text: [{ type: 'text', text: { content: chunk } }] }\n}));\nconst payload = {\n  parent: { database_id: '39b2fdcea0a345a48db21f22a6d6b0e0' },\n  properties: {\n    '제목': { title: [{ text: { content: d.title } }] },\n    '카테고리': { rich_text: [{ text: { content: '트렌드 추천' } }] },\n    '작성일': { date: { start: d.dateStr } },\n    '상태': { select: { name: '초안완료' } },\n    '해시태그': { rich_text: [{ text: { content: d.hashtags } }] }\n  },\n  children: [\n    { object: 'block', type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: '📝 블로그 본문' } }] } },\n    ...bodyBlocks,\n    { object: 'block', type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: '🏷️ 해시태그' } }] } },\n    { object: 'block', type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: d.hashtags } }] } }\n  ]\n};\nreturn [{ json: { ...d, notionPayload: JSON.stringify(payload) } }];"
+      },
+      "id": "node-notion",
+      "name": "노션 페이로드 준비",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1328,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.notion.com/v1/pages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.notionPayload }}",
+        "options": {}
+      },
+      "id": "node-notion-http",
+      "name": "노션 저장",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1552,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "r1",
+              "name": "result",
+              "value": "={{ '🎉 [' + $('블로그 추출').first().json.title + '] 블로그 작성 완료! 노션에 저장됐어요.' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-complete",
+      "name": "완료",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1760,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 네이버 트렌드 수집 \n**Double click** to edit me. [Guide](https://docs.n8n.io/workflows/components/sticky-notes/)\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n⚠️ **API 키 교체 필요 시:** Headers에서 `X-Naver-Client-Id`, `X-Naver-Client-Secret` 값 직접 수정",
+        "height": 416,
+        "width": 224
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        384,
+        224
+      ],
+      "typeVersion": 1,
+      "id": "71306a52-88e7-43aa-9f46-b30a9b6cfe07",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## 블로그 작성 \n**Double click** to edit me. [Guide](https://docs.n8n.io/workflows/components/sticky-notes/)\n\n\n\n\n\n\n\n\n\n\n⚠️ **Gemini API 키 교체 시:** Docker 환경변수 `GEMINI_API_KEY` 값 수정 (n8n 서버 재시작 필요)\n\n**API 정보:**\n- 모델: `gemini-3.1-flash-lite-preview`\n- API 키: 환경변수 `$env.GEMINI_API_KEY` 사용\n- 최대 토큰: 3000\n- Temperature: 0.8",
+        "height": 480,
+        "width": 224
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        816,
+        224
+      ],
+      "typeVersion": 1,
+      "id": "8ea44c58-4eba-4ab1-bd3d-4c2c59d51c40",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## I'm a note \n**Double click** to read me. [Manual](obsidian://open?vault=Obsidian&file=Obsidian%2F2.%20Areas%20(%EC%9C%A0%EC%A7%80%EA%B4%80%EB%A6%AC%EC%98%81%EC%97%AD)%2FDCT_Company%2FDCT%20%ED%8A%B8%EB%A0%8C%EB%93%9C%20%EB%B8%94%EB%A1%9C%EA%B7%B8%20%EC%9E%90%EB%8F%99%EC%9E%91%EC%84%B1%20%EC%9B%8C%ED%81%AC%ED%94%8C%EB%A1%9C%EC%9A%B0%20%EB%A7%A4%EB%89%B4%EC%96%BC)"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1152,
+        544
+      ],
+      "typeVersion": 1,
+      "id": "f4ab5b0f-2cbd-4930-a1fe-e300750c5855",
+      "name": "Sticky Note2"
+    },
+    {
+      "id": "manual-note-main",
+      "name": "📋 워크플로우 메뉴얼",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        160
+      ],
+      "parameters": {
+        "content": "## 📋 DCT 트렌드 블로그 자동작성 메뉴얼\n\n### 🔗 메뉴얼 노션에서 보기\nhttps://www.notion.so/323c6a06e17e818ba6d1f28ccacaeed0\n\n---\n\n### ⚙️ 워크플로우 개요\n- **실행 주기**: 매주 일요일 09:00\n- **트렌드 수집**: 네이버 데이터랩 API\n- **AI 작성**: Gemini API\n- **저장**: Notion DB\n\n### 🔧 수정이 필요할 때\n1. **키워드 변경** → `현재 시기 정보` 노드\n2. **Gemini 프롬프트** → `Gemini 블로그 작성` 노드\n3. **저장 DB 변경** → `노션 페이로드 준비` 노드\n4. **API 오류** → HTTP Request 자격증명 확인\n\n### ⚠️ 주의사항\n- 네이버 API 일일 호출 한도 확인\n- Gemini API 키 만료 시 자격증명 갱신",
+        "height": 400,
+        "width": 380,
+        "color": 4
+      }
+    },
+    {
+      "id": "status-success",
+      "name": "✅ 상태 업데이트 (성공)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        1980,
+        304
+      ],
+      "parameters": {
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflowId": "ovShsLWKGcrOOgnE",
+            "workflowName": "DCT 트렌드 기반 블로그 자동작성 260314",
+            "notionPageId": "323c6a06e17e818ba6d1f28ccacaeed0",
+            "status": "✅ 정상"
+          }
+        }
+      }
+    },
+    {
+      "id": "error-trigger",
+      "name": "❌ 에러 감지",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        880,
+        520
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "status-error",
+      "name": "❌ 상태 업데이트 (에러)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        520
+      ],
+      "parameters": {
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflowId": "ovShsLWKGcrOOgnE",
+            "workflowName": "DCT 트렌드 기반 블로그 자동작성 260314",
+            "notionPageId": "323c6a06e17e818ba6d1f28ccacaeed0",
+            "status": "❌ 에러",
+            "errorMessage": "={{ $json.error.message }}"
+          }
+        }
+      }
+    }
+  ],
+  "connections": {
+    "매주 일요일 9시": {
+      "main": [
+        [
+          {
+            "node": "현재 시기 정보",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "현재 시기 정보": {
+      "main": [
+        [
+          {
+            "node": "네이버 트렌드 수집",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "네이버 트렌드 수집": {
+      "main": [
+        [
+          {
+            "node": "시기+트렌드 합치기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "시기+트렌드 합치기": {
+      "main": [
+        [
+          {
+            "node": "Gemini 블로그 작성",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini 블로그 작성": {
+      "main": [
+        [
+          {
+            "node": "블로그 추출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "블로그 추출": {
+      "main": [
+        [
+          {
+            "node": "노션 페이로드 준비",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "노션 페이로드 준비": {
+      "main": [
+        [
+          {
+            "node": "노션 저장",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "노션 저장": {
+      "main": [
+        [
+          {
+            "node": "완료",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "완료": {
+      "main": [
+        [
+          {
+            "node": "✅ 상태 업데이트 (성공)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "❌ 에러 감지": {
+      "main": [
+        [
+          {
+            "node": "❌ 상태 업데이트 (에러)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true,
+    "saveExecutionProgress": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "binaryMode": "separate"
+  },
+  "staticData": {
+    "node:매주 일요일 9시": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": {},
+  "versionId": "19a6a61f-27d1-4ce0-a4c3-a6f716da37b9",
+  "activeVersionId": "19a6a61f-27d1-4ce0-a4c3-a6f716da37b9",
+  "versionCounter": 123,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-03-14T15:47:02.349Z",
+      "createdAt": "2026-03-14T15:47:02.349Z",
+      "role": "workflow:owner",
+      "workflowId": "ovShsLWKGcrOOgnE",
+      "projectId": "8znYa8Ca7GWeBy0m",
+      "project": {
+        "updatedAt": "2025-11-29T23:05:56.637Z",
+        "createdAt": "2025-11-29T23:04:07.777Z",
+        "id": "8znYa8Ca7GWeBy0m",
+        "name": "Seung Hyeon Kim <khai01@naver.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-03-15T04:43:51.844Z",
+    "createdAt": "2026-03-15T04:43:51.844Z",
+    "versionId": "19a6a61f-27d1-4ce0-a4c3-a6f716da37b9",
+    "workflowId": "ovShsLWKGcrOOgnE",
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "weeks",
+                "triggerAtHour": 9
+              }
+            ]
+          }
+        },
+        "id": "node-schedule",
+        "name": "매주 일요일 9시",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const now = new Date();\nconst month = now.getMonth() + 1;\nconst day = now.getDate();\nconst weekOfMonth = Math.ceil(day / 7);\nlet season = '', seasonDesc = '';\nif (month >= 3 && month <= 5) { season = '봄'; seasonDesc = '졸업/입학 시즌, 벚꽃 행사, 신학기'; }\nelse if (month >= 6 && month <= 8) { season = '여름'; seasonDesc = '워터파크, 야외 행사, 여름 축제, 체육대회'; }\nelse if (month >= 9 && month <= 11) { season = '가을'; seasonDesc = '운동회, 추석 명절, 기업 행사, 송년회 준비'; }\nelse { season = '겨울'; seasonDesc = '연말 송년회, 크리스마스, 신년 선물, 설 명절'; }\nconst specialEvents = [];\nif (month === 2 || month === 3) specialEvents.push('졸업/입학 시즌');\nif (month === 5) specialEvents.push('어린이날, 스승의날, 가정의달');\nif (month === 9 || month === 10) specialEvents.push('추석 명절, 체육대회');\nif (month === 12 || month === 1) specialEvents.push('연말연시, 신년');\nconst dateStr = now.toISOString().slice(0,10);\nconst endDate = dateStr;\nconst startDate = new Date(now.getTime() - 7*24*60*60*1000).toISOString().slice(0,10);\nconst blogTitle = `'26년 ${month}월 ${weekOfMonth}주 AI가 추천하는 판촉/홍보/답례품`;\nreturn [{ json: { month, day, weekOfMonth, season, seasonDesc, specialEvents: specialEvents.join(', ') || '일반 시즌', dateStr, startDate, endDate, blogTitle } }];"
+        },
+        "id": "node-season",
+        "name": "현재 시기 정보",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          224,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://openapi.naver.com/v1/datalab/shopping/categories",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "X-Naver-Client-Id",
+                "value": "eHQN1xDoAWnFHF4sAe3I"
+              },
+              {
+                "name": "X-Naver-Client-Secret",
+                "value": "Ghnsw8dyRF"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify({ startDate: $('현재 시기 정보').first().json.startDate, endDate: $('현재 시기 정보').first().json.endDate, timeUnit: 'date', category: [{ name: '판촉물', param: ['50000803'] }, { name: '생활용품선물', param: ['50000810'] }, { name: '답례품', param: ['50000804'] }], device: '', ages: [], gender: '' }) }}",
+          "options": {
+            "timeout": 10000
+          }
+        },
+        "id": "node-trend",
+        "name": "네이버 트렌드 수집",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          448,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const season = $('현재 시기 정보').first().json;\nconst trendRaw = $input.first().json;\nlet trendSummary = '트렌드 데이터 없음';\ntry {\n  if (trendRaw.results) {\n    trendSummary = trendRaw.results.map(r => {\n      const max = Math.max(...r.data.map(d => d.ratio));\n      return `${r.title}: 최고 검색비율 ${max.toFixed(1)}`;\n    }).join('\\n');\n  }\n} catch(e) {}\nreturn [{ json: { ...season, trendSummary } }];"
+        },
+        "id": "node-merge",
+        "name": "시기+트렌드 합치기",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          672,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key={{ $env.GEMINI_API_KEY }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify({ contents: [{ parts: [{ text: '너는 판촉물·홍보물 전문 납품업체 DCT컴퍼니의 시니어 블로그 마케터야.\\n\\n아래 정보를 바탕으로 네이버 블로그 포스팅을 작성해줘.\\n\\n## 블로그 제목\\n' + $json.blogTitle + '\\n\\n## 현재 시기 정보\\n날짜: ' + $json.dateStr + '\\n계절: ' + $json.season + ' (' + $json.seasonDesc + ')\\n특수 이벤트: ' + $json.specialEvents + '\\n\\n## 네이버 쇼핑 트렌드 데이터\\n' + $json.trendSummary + '\\n\\n## 작성 규칙\\n1. 제목: 위 블로그 제목 그대로 사용\\n2. 본문: 1500자 이내로 작성 (중요: 반드시 1500자 이하)\\n3. 구성:\\n   - 도입부: 이번 주 트렌드 및 시즌 소개\\n   - TOP 5 추천 품목: 각 품목별로 ## 소제목, 추천이유/활용사례 포함\\n   - 마무리: DCT컴퍼니 구매 안내\\n4. SEO 키워드 자연스럽게 삽입\\n5. 이미지 설명: [이미지: 설명] 형식으로 각 품목마다 1개\\n6. 해시태그: 20개\\n7. JSON으로만 응답 (백틱 없이): {\"title\":\"...\",\"body\":\"...\",\"hashtags\":\"...\"}' }] }], generationConfig: { temperature: 0.8, maxOutputTokens: 3000 } }) }}",
+          "options": {
+            "timeout": 60000
+          }
+        },
+        "id": "node-gemini-blog",
+        "name": "Gemini 블로그 작성",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          880,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const d = $input.first().json;\nconst prev = $('시기+트렌드 합치기').first().json;\nlet raw = '';\nif (d.candidates && d.candidates[0]) raw = d.candidates[0]?.content?.parts?.[0]?.text || '';\nraw = raw.replace(/```json\\s*/g,'').replace(/```\\s*/g,'').trim();\nlet title = prev.blogTitle, body = raw, hashtags = '';\ntry {\n  const p = JSON.parse(raw);\n  title = p.title || prev.blogTitle;\n  body = p.body || raw;\n  hashtags = p.hashtags || '';\n} catch(e) {}\nconst MAX = 1900;\nconst bodyChunks = [];\nfor (let i = 0; i < body.length; i += MAX) {\n  bodyChunks.push(body.slice(i, i + MAX));\n}\nreturn [{ json: { ...prev, title, body, bodyChunks, hashtags } }];"
+        },
+        "id": "node-extract",
+        "name": "블로그 추출",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1104,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const d = $input.first().json;\nconst bodyBlocks = d.bodyChunks.map(chunk => ({\n  object: 'block', type: 'paragraph',\n  paragraph: { rich_text: [{ type: 'text', text: { content: chunk } }] }\n}));\nconst payload = {\n  parent: { database_id: '39b2fdcea0a345a48db21f22a6d6b0e0' },\n  properties: {\n    '제목': { title: [{ text: { content: d.title } }] },\n    '카테고리': { rich_text: [{ text: { content: '트렌드 추천' } }] },\n    '작성일': { date: { start: d.dateStr } },\n    '상태': { select: { name: '초안완료' } },\n    '해시태그': { rich_text: [{ text: { content: d.hashtags } }] }\n  },\n  children: [\n    { object: 'block', type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: '📝 블로그 본문' } }] } },\n    ...bodyBlocks,\n    { object: 'block', type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: '🏷️ 해시태그' } }] } },\n    { object: 'block', type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: d.hashtags } }] } }\n  ]\n};\nreturn [{ json: { ...d, notionPayload: JSON.stringify(payload) } }];"
+        },
+        "id": "node-notion",
+        "name": "노션 페이로드 준비",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1328,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.notion.com/v1/pages",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer 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"
+              },
+              {
+                "name": "Notion-Version",
+                "value": "2022-06-28"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ $json.notionPayload }}",
+          "options": {}
+        },
+        "id": "node-notion-http",
+        "name": "노션 저장",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1552,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "r1",
+                "name": "result",
+                "value": "={{ '🎉 [' + $('블로그 추출').first().json.title + '] 블로그 작성 완료! 노션에 저장됐어요.' }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "node-complete",
+        "name": "완료",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1760,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "content": "## 네이버 트렌드 수집 \n**Double click** to edit me. [Guide](https://docs.n8n.io/workflows/components/sticky-notes/)\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n⚠️ **API 키 교체 필요 시:** Headers에서 `X-Naver-Client-Id`, `X-Naver-Client-Secret` 값 직접 수정",
+          "height": 416,
+          "width": 224
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          384,
+          224
+        ],
+        "typeVersion": 1,
+        "id": "71306a52-88e7-43aa-9f46-b30a9b6cfe07",
+        "name": "Sticky Note"
+      },
+      {
+        "parameters": {
+          "content": "## 블로그 작성 \n**Double click** to edit me. [Guide](https://docs.n8n.io/workflows/components/sticky-notes/)\n\n\n\n\n\n\n\n\n\n\n⚠️ **Gemini API 키 교체 시:** Docker 환경변수 `GEMINI_API_KEY` 값 수정 (n8n 서버 재시작 필요)\n\n**API 정보:**\n- 모델: `gemini-3.1-flash-lite-preview`\n- API 키: 환경변수 `$env.GEMINI_API_KEY` 사용\n- 최대 토큰: 3000\n- Temperature: 0.8",
+          "height": 480,
+          "width": 224
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          816,
+          224
+        ],
+        "typeVersion": 1,
+        "id": "8ea44c58-4eba-4ab1-bd3d-4c2c59d51c40",
+        "name": "Sticky Note1"
+      },
+      {
+        "parameters": {
+          "content": "## I'm a note \n**Double click** to read me. [Manual](obsidian://open?vault=Obsidian&file=Obsidian%2F2.%20Areas%20(%EC%9C%A0%EC%A7%80%EA%B4%80%EB%A6%AC%EC%98%81%EC%97%AD)%2FDCT_Company%2FDCT%20%ED%8A%B8%EB%A0%8C%EB%93%9C%20%EB%B8%94%EB%A1%9C%EA%B7%B8%20%EC%9E%90%EB%8F%99%EC%9E%91%EC%84%B1%20%EC%9B%8C%ED%81%AC%ED%94%8C%EB%A1%9C%EC%9A%B0%20%EB%A7%A4%EB%89%B4%EC%96%BC)"
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          1152,
+          544
+        ],
+        "typeVersion": 1,
+        "id": "f4ab5b0f-2cbd-4930-a1fe-e300750c5855",
+        "name": "Sticky Note2"
+      },
+      {
+        "id": "manual-note-main",
+        "name": "📋 워크플로우 메뉴얼",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -240,
+          160
+        ],
+        "parameters": {
+          "content": "## 📋 DCT 트렌드 블로그 자동작성 메뉴얼\n\n### 🔗 메뉴얼 노션에서 보기\nhttps://www.notion.so/323c6a06e17e818ba6d1f28ccacaeed0\n\n---\n\n### ⚙️ 워크플로우 개요\n- **실행 주기**: 매주 일요일 09:00\n- **트렌드 수집**: 네이버 데이터랩 API\n- **AI 작성**: Gemini API\n- **저장**: Notion DB\n\n### 🔧 수정이 필요할 때\n1. **키워드 변경** → `현재 시기 정보` 노드\n2. **Gemini 프롬프트** → `Gemini 블로그 작성` 노드\n3. **저장 DB 변경** → `노션 페이로드 준비` 노드\n4. **API 오류** → HTTP Request 자격증명 확인\n\n### ⚠️ 주의사항\n- 네이버 API 일일 호출 한도 확인\n- Gemini API 키 만료 시 자격증명 갱신",
+          "height": 400,
+          "width": 380,
+          "color": 4
+        }
+      },
+      {
+        "id": "status-success",
+        "name": "✅ 상태 업데이트 (성공)",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          1980,
+          304
+        ],
+        "parameters": {
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "workflowId": "ovShsLWKGcrOOgnE",
+              "workflowName": "DCT 트렌드 기반 블로그 자동작성 260314",
+              "notionPageId": "323c6a06e17e818ba6d1f28ccacaeed0",
+              "status": "✅ 정상"
+            }
+          }
+        }
+      },
+      {
+        "id": "error-trigger",
+        "name": "❌ 에러 감지",
+        "type": "n8n-nodes-base.errorTrigger",
+        "typeVersion": 1,
+        "position": [
+          880,
+          520
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "status-error",
+        "name": "❌ 상태 업데이트 (에러)",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          1100,
+          520
+        ],
+        "parameters": {
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "workflowId": "ovShsLWKGcrOOgnE",
+              "workflowName": "DCT 트렌드 기반 블로그 자동작성 260314",
+              "notionPageId": "323c6a06e17e818ba6d1f28ccacaeed0",
+              "status": "❌ 에러",
+              "errorMessage": "={{ $json.error.message }}"
+            }
+          }
+        }
+      }
+    ],
+    "connections": {
+      "매주 일요일 9시": {
+        "main": [
+          [
+            {
+              "node": "현재 시기 정보",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "현재 시기 정보": {
+        "main": [
+          [
+            {
+              "node": "네이버 트렌드 수집",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "네이버 트렌드 수집": {
+        "main": [
+          [
+            {
+              "node": "시기+트렌드 합치기",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "시기+트렌드 합치기": {
+        "main": [
+          [
+            {
+              "node": "Gemini 블로그 작성",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gemini 블로그 작성": {
+        "main": [
+          [
+            {
+              "node": "블로그 추출",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "블로그 추출": {
+        "main": [
+          [
+            {
+              "node": "노션 페이로드 준비",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "노션 페이로드 준비": {
+        "main": [
+          [
+            {
+              "node": "노션 저장",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "노션 저장": {
+        "main": [
+          [
+            {
+              "node": "완료",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "완료": {
+        "main": [
+          [
+            {
+              "node": "✅ 상태 업데이트 (성공)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "❌ 에러 감지": {
+        "main": [
+          [
+            {
+              "node": "❌ 상태 업데이트 (에러)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Seung Hyeon Kim",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": []
+  }
+}
