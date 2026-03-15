@@ -1,8 +1,9 @@
 {
-  "updatedAt": "2026-03-08T22:41:07.472Z",
+  "updatedAt": "2026-03-15T04:44:23.419Z",
   "createdAt": "2025-11-29T23:09:25.703Z",
   "id": "PNn3uKuzuOyjgFbu",
   "name": "Class → Student 자동생성",
+  "description": null,
   "active": true,
   "isArchived": false,
   "nodes": [
@@ -53,12 +54,6 @@
           "value": "={{ $json.classStudyId }}",
           "mode": "id"
         }
-      },
-      "credentials": {
-        "notionApi": {
-          "id": "MAYBu1lbKiMiquHV",
-          "name": "n8n-Math4U"
-        }
       }
     },
     {
@@ -92,12 +87,6 @@
           "__rl": true,
           "value": "={{ $json.property_students }}",
           "mode": "id"
-        }
-      },
-      "credentials": {
-        "notionApi": {
-          "id": "MAYBu1lbKiMiquHV",
-          "name": "n8n-Math4U"
         }
       }
     },
@@ -169,12 +158,6 @@
           ]
         },
         "options": {}
-      },
-      "credentials": {
-        "notionApi": {
-          "id": "MAYBu1lbKiMiquHV",
-          "name": "n8n-Math4U"
-        }
       }
     },
     {
@@ -203,12 +186,78 @@
           ]
         },
         "options": {}
-      },
-      "credentials": {
-        "notionApi": {
-          "id": "MAYBu1lbKiMiquHV",
-          "name": "n8n-Math4U"
+      }
+    },
+    {
+      "id": "status-success",
+      "name": "✅ 상태 업데이트 (성공)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        240
+      ],
+      "parameters": {
+        "workflowId": "eOopB5bbEEO9rjrg",
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflowId": "PNn3uKuzuOyjgFbu",
+            "workflowName": "Class → Student 자동생성",
+            "notionPageId": "323c6a06e17e81649c02d5075f8b8945",
+            "status": "✅ 정상"
+          }
         }
+      }
+    },
+    {
+      "id": "error-trigger",
+      "name": "❌ 에러 감지",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        500,
+        440
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "status-error",
+      "name": "❌ 상태 업데이트 (에러)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        720,
+        440
+      ],
+      "parameters": {
+        "workflowId": "eOopB5bbEEO9rjrg",
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflowId": "PNn3uKuzuOyjgFbu",
+            "workflowName": "Class → Student 자동생성",
+            "notionPageId": "323c6a06e17e81649c02d5075f8b8945",
+            "status": "❌ 에러",
+            "errorMessage": "={{ $json.error.message }}"
+          }
+        }
+      }
+    },
+    {
+      "id": "manual-note",
+      "name": "📋 워크플로우 메뉴얼",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        100
+      ],
+      "parameters": {
+        "content": "## 📋 Class → Student 자동생성 메뉴얼\n\n### 🔗 노션 메뉴얼\nhttps://www.notion.so/323c6a06e17e81649c02d5075f8b8945\n\n---\n\n- **트리거**: Webhook\n- **목적**: Class 등록 시 Student_Study 자동 생성\n\n### 🔧 주요 수정 포인트\n1. 입력 파라미터 → `Code - 입력 파싱`\n2. Student_Study 필드 → `Create Page Student_Study`\n3. 배정확인 → `Notion - 배정확인`",
+        "height": 240,
+        "width": 320,
+        "color": 4
       }
     }
   ],
@@ -284,6 +333,28 @@
         [
           {
             "node": "Notion - 배정확인",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion - 배정확인": {
+      "main": [
+        [
+          {
+            "node": "✅ 상태 업데이트 (성공)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "❌ 에러 감지": {
+      "main": [
+        [
+          {
+            "node": "❌ 상태 업데이트 (에러)",
             "type": "main",
             "index": 0
           }
@@ -454,8 +525,9 @@
       }
     ]
   },
-  "versionId": "d46394e6-fbc0-4bbb-8a13-06093fb4fbe7",
-  "activeVersionId": "d46394e6-fbc0-4bbb-8a13-06093fb4fbe7",
+  "versionId": "70d226fa-8f64-4433-b0bb-58be583e23f4",
+  "activeVersionId": "70d226fa-8f64-4433-b0bb-58be583e23f4",
+  "versionCounter": 86,
   "triggerCount": 1,
   "shared": [
     {
@@ -463,13 +535,24 @@
       "createdAt": "2025-11-29T23:09:25.709Z",
       "role": "workflow:owner",
       "workflowId": "PNn3uKuzuOyjgFbu",
-      "projectId": "8znYa8Ca7GWeBy0m"
+      "projectId": "8znYa8Ca7GWeBy0m",
+      "project": {
+        "updatedAt": "2025-11-29T23:05:56.637Z",
+        "createdAt": "2025-11-29T23:04:07.777Z",
+        "id": "8znYa8Ca7GWeBy0m",
+        "name": "Seung Hyeon Kim <khai01@naver.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
     }
   ],
+  "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-08T22:41:07.474Z",
-    "createdAt": "2026-03-08T22:41:07.474Z",
-    "versionId": "d46394e6-fbc0-4bbb-8a13-06093fb4fbe7",
+    "updatedAt": "2026-03-15T04:44:23.421Z",
+    "createdAt": "2026-03-15T04:44:23.421Z",
+    "versionId": "70d226fa-8f64-4433-b0bb-58be583e23f4",
     "workflowId": "PNn3uKuzuOyjgFbu",
     "nodes": [
       {
@@ -676,6 +759,78 @@
             "name": "n8n-Math4U"
           }
         }
+      },
+      {
+        "id": "status-success",
+        "name": "✅ 상태 업데이트 (성공)",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          1300,
+          240
+        ],
+        "parameters": {
+          "workflowId": "eOopB5bbEEO9rjrg",
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "workflowId": "PNn3uKuzuOyjgFbu",
+              "workflowName": "Class → Student 자동생성",
+              "notionPageId": "323c6a06e17e81649c02d5075f8b8945",
+              "status": "✅ 정상"
+            }
+          }
+        }
+      },
+      {
+        "id": "error-trigger",
+        "name": "❌ 에러 감지",
+        "type": "n8n-nodes-base.errorTrigger",
+        "typeVersion": 1,
+        "position": [
+          500,
+          440
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "status-error",
+        "name": "❌ 상태 업데이트 (에러)",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          720,
+          440
+        ],
+        "parameters": {
+          "workflowId": "eOopB5bbEEO9rjrg",
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "workflowId": "PNn3uKuzuOyjgFbu",
+              "workflowName": "Class → Student 자동생성",
+              "notionPageId": "323c6a06e17e81649c02d5075f8b8945",
+              "status": "❌ 에러",
+              "errorMessage": "={{ $json.error.message }}"
+            }
+          }
+        }
+      },
+      {
+        "id": "manual-note",
+        "name": "📋 워크플로우 메뉴얼",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -560,
+          100
+        ],
+        "parameters": {
+          "content": "## 📋 Class → Student 자동생성 메뉴얼\n\n### 🔗 노션 메뉴얼\nhttps://www.notion.so/323c6a06e17e81649c02d5075f8b8945\n\n---\n\n- **트리거**: Webhook\n- **목적**: Class 등록 시 Student_Study 자동 생성\n\n### 🔧 주요 수정 포인트\n1. 입력 파라미터 → `Code - 입력 파싱`\n2. Student_Study 필드 → `Create Page Student_Study`\n3. 배정확인 → `Notion - 배정확인`",
+          "height": 240,
+          "width": 320,
+          "color": 4
+        }
       }
     ],
     "connections": {
@@ -755,12 +910,51 @@
             }
           ]
         ]
+      },
+      "Notion - 배정확인": {
+        "main": [
+          [
+            {
+              "node": "✅ 상태 업데이트 (성공)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "❌ 에러 감지": {
+        "main": [
+          [
+            {
+              "node": "❌ 상태 업데이트 (에러)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
     "authors": "Seung Hyeon Kim",
     "name": null,
     "description": null,
-    "autosaved": false
-  },
-  "tags": []
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-03-15T04:44:23.622Z",
+        "id": 287,
+        "workflowId": "PNn3uKuzuOyjgFbu",
+        "versionId": "70d226fa-8f64-4433-b0bb-58be583e23f4",
+        "event": "activated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      },
+      {
+        "createdAt": "2026-03-15T04:44:23.547Z",
+        "id": 286,
+        "workflowId": "PNn3uKuzuOyjgFbu",
+        "versionId": "70d226fa-8f64-4433-b0bb-58be583e23f4",
+        "event": "deactivated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
+    ]
+  }
 }
