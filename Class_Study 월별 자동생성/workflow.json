@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-15T04:44:40.899Z",
+  "updatedAt": "2026-03-16T00:13:48.104Z",
   "createdAt": "2026-03-07T18:19:56.995Z",
   "id": "n7M2Z2BhVbGNWhqX",
   "name": "Class_Study 월별 자동생성",
@@ -685,7 +685,7 @@
   "pinData": null,
   "versionId": "b9e4115f-df8a-42f8-bd00-a5f997830107",
   "activeVersionId": "b9e4115f-df8a-42f8-bd00-a5f997830107",
-  "versionCounter": 82,
+  "versionCounter": 86,
   "triggerCount": 1,
   "shared": [
     {
@@ -1432,8 +1432,24 @@
         "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
       },
       {
+        "createdAt": "2026-03-16T00:13:48.328Z",
+        "id": 307,
+        "workflowId": "n7M2Z2BhVbGNWhqX",
+        "versionId": "b9e4115f-df8a-42f8-bd00-a5f997830107",
+        "event": "activated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      },
+      {
         "createdAt": "2026-03-15T04:44:41.007Z",
         "id": 290,
+        "workflowId": "n7M2Z2BhVbGNWhqX",
+        "versionId": "b9e4115f-df8a-42f8-bd00-a5f997830107",
+        "event": "deactivated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      },
+      {
+        "createdAt": "2026-03-16T00:13:48.216Z",
+        "id": 306,
         "workflowId": "n7M2Z2BhVbGNWhqX",
         "versionId": "b9e4115f-df8a-42f8-bd00-a5f997830107",
         "event": "deactivated",
