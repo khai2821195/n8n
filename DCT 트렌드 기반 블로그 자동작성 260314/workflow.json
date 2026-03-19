@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-15T04:43:51.841Z",
+  "updatedAt": "2026-03-16T00:14:27.360Z",
   "createdAt": "2026-03-14T07:49:13.322Z",
   "id": "ovShsLWKGcrOOgnE",
   "name": "DCT 트렌드 기반 블로그 자동작성 260314",
@@ -452,7 +452,7 @@
   "pinData": {},
   "versionId": "19a6a61f-27d1-4ce0-a4c3-a6f716da37b9",
   "activeVersionId": "19a6a61f-27d1-4ce0-a4c3-a6f716da37b9",
-  "versionCounter": 123,
+  "versionCounter": 125,
   "triggerCount": 1,
   "shared": [
     {
