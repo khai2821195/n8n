@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-15T04:44:31.771Z",
+  "updatedAt": "2026-03-16T00:13:56.822Z",
   "createdAt": "2025-11-29T23:12:37.874Z",
   "id": "S1ObqqNJYt6Weh0b",
   "name": "Alimtalk Sangdam 251201",
@@ -378,7 +378,7 @@
   "pinData": {},
   "versionId": "3586d10d-1e65-4f3a-8ee7-2a27b7755713",
   "activeVersionId": "3586d10d-1e65-4f3a-8ee7-2a27b7755713",
-  "versionCounter": 55,
+  "versionCounter": 63,
   "triggerCount": 1,
   "shared": [
     {
@@ -799,8 +799,40 @@
         "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
       },
       {
+        "createdAt": "2026-03-16T00:00:36.292Z",
+        "id": 303,
+        "workflowId": "S1ObqqNJYt6Weh0b",
+        "versionId": "3586d10d-1e65-4f3a-8ee7-2a27b7755713",
+        "event": "activated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      },
+      {
+        "createdAt": "2026-03-16T00:13:56.973Z",
+        "id": 309,
+        "workflowId": "S1ObqqNJYt6Weh0b",
+        "versionId": "3586d10d-1e65-4f3a-8ee7-2a27b7755713",
+        "event": "activated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      },
+      {
         "createdAt": "2026-03-15T04:44:31.857Z",
         "id": 288,
+        "workflowId": "S1ObqqNJYt6Weh0b",
+        "versionId": "3586d10d-1e65-4f3a-8ee7-2a27b7755713",
+        "event": "deactivated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      },
+      {
+        "createdAt": "2026-03-16T00:00:36.199Z",
+        "id": 302,
+        "workflowId": "S1ObqqNJYt6Weh0b",
+        "versionId": "3586d10d-1e65-4f3a-8ee7-2a27b7755713",
+        "event": "deactivated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      },
+      {
+        "createdAt": "2026-03-16T00:13:56.891Z",
+        "id": 308,
         "workflowId": "S1ObqqNJYt6Weh0b",
         "versionId": "3586d10d-1e65-4f3a-8ee7-2a27b7755713",
         "event": "deactivated",
