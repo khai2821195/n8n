@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-15T04:44:50.026Z",
+  "updatedAt": "2026-03-16T00:14:11.364Z",
   "createdAt": "2026-03-10T08:47:40.555Z",
   "id": "ruLfwzGZtsmLSD3k",
   "name": "Biz-mecca 납품사례 블로그 자동작성 260310",
@@ -694,7 +694,7 @@
   "pinData": {},
   "versionId": "4c35f3a1-cb0a-4b22-90fc-40762e9f2d92",
   "activeVersionId": "4c35f3a1-cb0a-4b22-90fc-40762e9f2d92",
-  "versionCounter": 117,
+  "versionCounter": 125,
   "triggerCount": 1,
   "shared": [
     {
@@ -1409,8 +1409,40 @@
         "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
       },
       {
+        "createdAt": "2026-03-16T00:00:52.090Z",
+        "id": 305,
+        "workflowId": "ruLfwzGZtsmLSD3k",
+        "versionId": "4c35f3a1-cb0a-4b22-90fc-40762e9f2d92",
+        "event": "activated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      },
+      {
+        "createdAt": "2026-03-16T00:14:11.619Z",
+        "id": 311,
+        "workflowId": "ruLfwzGZtsmLSD3k",
+        "versionId": "4c35f3a1-cb0a-4b22-90fc-40762e9f2d92",
+        "event": "activated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      },
+      {
         "createdAt": "2026-03-15T04:44:50.166Z",
         "id": 292,
+        "workflowId": "ruLfwzGZtsmLSD3k",
+        "versionId": "4c35f3a1-cb0a-4b22-90fc-40762e9f2d92",
+        "event": "deactivated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      },
+      {
+        "createdAt": "2026-03-16T00:00:51.982Z",
+        "id": 304,
+        "workflowId": "ruLfwzGZtsmLSD3k",
+        "versionId": "4c35f3a1-cb0a-4b22-90fc-40762e9f2d92",
+        "event": "deactivated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      },
+      {
+        "createdAt": "2026-03-16T00:14:11.487Z",
+        "id": 310,
         "workflowId": "ruLfwzGZtsmLSD3k",
         "versionId": "4c35f3a1-cb0a-4b22-90fc-40762e9f2d92",
         "event": "deactivated",
