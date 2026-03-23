@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-16T00:13:48.104Z",
+  "updatedAt": "2026-03-19T10:43:22.555Z",
   "createdAt": "2026-03-07T18:19:56.995Z",
   "id": "n7M2Z2BhVbGNWhqX",
   "name": "Class_Study 월별 자동생성",
@@ -412,15 +412,7 @@
       ],
       "parameters": {
         "workflowId": "eOopB5bbEEO9rjrg",
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "workflowId": "n7M2Z2BhVbGNWhqX",
-            "workflowName": "Class_Study 월별 자동생성",
-            "notionPageId": "323c6a06e17e817daa0bc4f4b7c1bc98",
-            "status": "✅ 정상"
-          }
-        }
+        "options": {}
       }
     },
     {
@@ -445,16 +437,7 @@
       ],
       "parameters": {
         "workflowId": "eOopB5bbEEO9rjrg",
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "workflowId": "n7M2Z2BhVbGNWhqX",
-            "workflowName": "Class_Study 월별 자동생성",
-            "notionPageId": "323c6a06e17e817daa0bc4f4b7c1bc98",
-            "status": "❌ 에러",
-            "errorMessage": "={{ $json.error.message }}"
-          }
-        }
+        "options": {}
       }
     },
     {
@@ -683,9 +666,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "b9e4115f-df8a-42f8-bd00-a5f997830107",
-  "activeVersionId": "b9e4115f-df8a-42f8-bd00-a5f997830107",
-  "versionCounter": 86,
+  "versionId": "0c78c275-7d13-464f-a754-4e14612b1695",
+  "activeVersionId": "0c78c275-7d13-464f-a754-4e14612b1695",
+  "versionCounter": 89,
   "triggerCount": 1,
   "shared": [
     {
@@ -708,9 +691,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-15T04:44:40.903Z",
-    "createdAt": "2026-03-15T04:44:40.903Z",
-    "versionId": "b9e4115f-df8a-42f8-bd00-a5f997830107",
+    "updatedAt": "2026-03-19T10:43:22.557Z",
+    "createdAt": "2026-03-19T10:43:22.557Z",
+    "versionId": "0c78c275-7d13-464f-a754-4e14612b1695",
     "workflowId": "n7M2Z2BhVbGNWhqX",
     "nodes": [
       {
@@ -1160,15 +1143,7 @@
         ],
         "parameters": {
           "workflowId": "eOopB5bbEEO9rjrg",
-          "workflowInputs": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "workflowId": "n7M2Z2BhVbGNWhqX",
-              "workflowName": "Class_Study 월별 자동생성",
-              "notionPageId": "323c6a06e17e817daa0bc4f4b7c1bc98",
-              "status": "✅ 정상"
-            }
-          }
+          "options": {}
         }
       },
       {
@@ -1193,16 +1168,7 @@
         ],
         "parameters": {
           "workflowId": "eOopB5bbEEO9rjrg",
-          "workflowInputs": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "workflowId": "n7M2Z2BhVbGNWhqX",
-              "workflowName": "Class_Study 월별 자동생성",
-              "notionPageId": "323c6a06e17e817daa0bc4f4b7c1bc98",
-              "status": "❌ 에러",
-              "errorMessage": "={{ $json.error.message }}"
-            }
-          }
+          "options": {}
         }
       },
       {
@@ -1424,34 +1390,18 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-15T04:44:41.059Z",
-        "id": 291,
+        "createdAt": "2026-03-19T10:43:22.720Z",
+        "id": 384,
         "workflowId": "n7M2Z2BhVbGNWhqX",
-        "versionId": "b9e4115f-df8a-42f8-bd00-a5f997830107",
+        "versionId": "0c78c275-7d13-464f-a754-4e14612b1695",
         "event": "activated",
         "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
       },
       {
-        "createdAt": "2026-03-16T00:13:48.328Z",
-        "id": 307,
+        "createdAt": "2026-03-19T10:43:22.663Z",
+        "id": 383,
         "workflowId": "n7M2Z2BhVbGNWhqX",
-        "versionId": "b9e4115f-df8a-42f8-bd00-a5f997830107",
-        "event": "activated",
-        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
-      },
-      {
-        "createdAt": "2026-03-15T04:44:41.007Z",
-        "id": 290,
-        "workflowId": "n7M2Z2BhVbGNWhqX",
-        "versionId": "b9e4115f-df8a-42f8-bd00-a5f997830107",
-        "event": "deactivated",
-        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
-      },
-      {
-        "createdAt": "2026-03-16T00:13:48.216Z",
-        "id": 306,
-        "workflowId": "n7M2Z2BhVbGNWhqX",
-        "versionId": "b9e4115f-df8a-42f8-bd00-a5f997830107",
+        "versionId": "0c78c275-7d13-464f-a754-4e14612b1695",
         "event": "deactivated",
         "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
       }
