@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-16T00:18:01.596Z",
+  "updatedAt": "2026-03-19T10:24:08.628Z",
   "createdAt": "2025-12-01T21:37:22.774Z",
   "id": "gRhv6ri8Nq5sE1Ol",
   "name": "n8n Github Sync (노션 메뉴얼 → README)",
@@ -14,8 +14,8 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        -1000,
-        300
+        -1008,
+        304
       ]
     },
     {
@@ -50,8 +50,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -780,
-        300
+        -784,
+        304
       ]
     },
     {
@@ -64,7 +64,7 @@
       "typeVersion": 2,
       "position": [
         -560,
-        300
+        304
       ]
     },
     {
@@ -78,7 +78,7 @@
       "typeVersion": 1,
       "position": [
         -336,
-        300
+        304
       ]
     },
     {
@@ -101,7 +101,7 @@
       "typeVersion": 4.2,
       "position": [
         -112,
-        180
+        192
       ]
     },
     {
@@ -114,7 +114,7 @@
       "typeVersion": 2,
       "position": [
         112,
-        180
+        192
       ]
     },
     {
@@ -145,7 +145,7 @@
       "typeVersion": 4.2,
       "position": [
         336,
-        180
+        192
       ],
       "onError": "continueRegularOutput"
     },
@@ -186,7 +186,7 @@
       "typeVersion": 4.2,
       "position": [
         560,
-        180
+        192
       ]
     },
     {
@@ -213,7 +213,7 @@
       "typeVersion": 4.2,
       "position": [
         784,
-        180
+        192
       ]
     },
     {
@@ -225,8 +225,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1008,
-        180
+        352,
+        432
       ]
     },
     {
@@ -256,8 +256,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1232,
-        180
+        560,
+        432
       ],
       "onError": "continueRegularOutput"
     },
@@ -297,8 +297,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1456,
-        180
+        784,
+        432
       ]
     },
     {
@@ -308,8 +308,8 @@
       "type": "n8n-nodes-base.errorTrigger",
       "typeVersion": 1,
       "position": [
-        -780,
-        500
+        -784,
+        512
       ]
     },
     {
@@ -323,7 +323,7 @@
       "typeVersion": 1,
       "position": [
         -560,
-        500
+        512
       ]
     },
     {
@@ -336,7 +336,7 @@
       "typeVersion": 2,
       "position": [
         -112,
-        500
+        416
       ]
     },
     {
@@ -372,7 +372,7 @@
       "typeVersion": 4.2,
       "position": [
         112,
-        500
+        416
       ]
     },
     {
@@ -387,7 +387,7 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -1000,
+        -1008,
         96
       ]
     }
@@ -567,9 +567,9 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "31349dbb-fdbf-4460-b1dc-0f005d425113",
-  "activeVersionId": "31349dbb-fdbf-4460-b1dc-0f005d425113",
-  "versionCounter": 165,
+  "versionId": "44680518-2cd6-4096-9528-0088d0131632",
+  "activeVersionId": "44680518-2cd6-4096-9528-0088d0131632",
+  "versionCounter": 177,
   "triggerCount": 0,
   "shared": [
     {
@@ -592,9 +592,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-16T00:17:53.000Z",
-    "createdAt": "2026-03-15T21:08:58.933Z",
-    "versionId": "31349dbb-fdbf-4460-b1dc-0f005d425113",
+    "updatedAt": "2026-03-23T16:56:12.000Z",
+    "createdAt": "2026-03-19T10:24:08.629Z",
+    "versionId": "44680518-2cd6-4096-9528-0088d0131632",
     "workflowId": "gRhv6ri8Nq5sE1Ol",
     "nodes": [
       {
@@ -604,8 +604,8 @@
         "type": "n8n-nodes-base.manualTrigger",
         "typeVersion": 1,
         "position": [
-          -1000,
-          300
+          -1008,
+          304
         ]
       },
       {
@@ -640,8 +640,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          -780,
-          300
+          -784,
+          304
         ]
       },
       {
@@ -654,7 +654,7 @@
         "typeVersion": 2,
         "position": [
           -560,
-          300
+          304
         ]
       },
       {
@@ -668,7 +668,7 @@
         "typeVersion": 1,
         "position": [
           -336,
-          300
+          304
         ]
       },
       {
@@ -691,7 +691,7 @@
         "typeVersion": 4.2,
         "position": [
           -112,
-          180
+          192
         ]
       },
       {
@@ -704,7 +704,7 @@
         "typeVersion": 2,
         "position": [
           112,
-          180
+          192
         ]
       },
       {
@@ -735,7 +735,7 @@
         "typeVersion": 4.2,
         "position": [
           336,
-          180
+          192
         ],
         "onError": "continueRegularOutput"
       },
@@ -776,7 +776,7 @@
         "typeVersion": 4.2,
         "position": [
           560,
-          180
+          192
         ]
       },
       {
@@ -803,7 +803,7 @@
         "typeVersion": 4.2,
         "position": [
           784,
-          180
+          192
         ]
       },
       {
@@ -815,8 +815,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1008,
-          180
+          352,
+          432
         ]
       },
       {
@@ -846,8 +846,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          1232,
-          180
+          560,
+          432
         ],
         "onError": "continueRegularOutput"
       },
@@ -887,8 +887,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          1456,
-          180
+          784,
+          432
         ]
       },
       {
@@ -898,8 +898,8 @@
         "type": "n8n-nodes-base.errorTrigger",
         "typeVersion": 1,
         "position": [
-          -780,
-          500
+          -784,
+          512
         ]
       },
       {
@@ -913,7 +913,7 @@
         "typeVersion": 1,
         "position": [
           -560,
-          500
+          512
         ]
       },
       {
@@ -926,7 +926,7 @@
         "typeVersion": 2,
         "position": [
           -112,
-          500
+          416
         ]
       },
       {
@@ -962,7 +962,7 @@
         "typeVersion": 4.2,
         "position": [
           112,
-          500
+          416
         ]
       },
       {
@@ -977,7 +977,7 @@
         "type": "n8n-nodes-base.stickyNote",
         "typeVersion": 1,
         "position": [
-          -1000,
+          -1008,
           96
         ]
       }
@@ -1146,32 +1146,16 @@
       }
     },
     "authors": "Seung Hyeon Kim",
-    "name": "Version 31349dbb",
+    "name": "Version 44680518",
     "description": "",
-    "autosaved": false,
+    "autosaved": true,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-16T00:17:53.537Z",
-        "id": 312,
+        "createdAt": "2026-03-23T16:56:12.411Z",
+        "id": 394,
         "workflowId": "gRhv6ri8Nq5sE1Ol",
-        "versionId": "31349dbb-fdbf-4460-b1dc-0f005d425113",
+        "versionId": "44680518-2cd6-4096-9528-0088d0131632",
         "event": "activated",
-        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
-      },
-      {
-        "createdAt": "2026-03-16T00:18:01.766Z",
-        "id": 314,
-        "workflowId": "gRhv6ri8Nq5sE1Ol",
-        "versionId": "31349dbb-fdbf-4460-b1dc-0f005d425113",
-        "event": "activated",
-        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
-      },
-      {
-        "createdAt": "2026-03-16T00:18:01.667Z",
-        "id": 313,
-        "workflowId": "gRhv6ri8Nq5sE1Ol",
-        "versionId": "31349dbb-fdbf-4460-b1dc-0f005d425113",
-        "event": "deactivated",
         "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
       }
     ]
