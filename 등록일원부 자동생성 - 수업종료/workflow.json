@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-15T04:44:11.528Z",
+  "updatedAt": "2026-03-19T10:49:30.617Z",
   "createdAt": "2026-03-05T11:42:54.670Z",
   "id": "BrZ88oo3KRKccX0g",
   "name": "등록일원부 자동생성 - 수업종료",
@@ -179,25 +179,64 @@
       }
     },
     {
-      "id": "status-success",
-      "name": "✅ 상태 업데이트 (성공)",
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1,
+      "id": "set-success",
+      "name": "Set - 성공 데이터",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
       "position": [
         1700,
         300
       ],
       "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "workflowId",
+              "type": "string",
+              "value": "BrZ88oo3KRKccX0g"
+            },
+            {
+              "id": "a2",
+              "name": "workflowName",
+              "type": "string",
+              "value": "등록일원부 자동생성 - 수업종료"
+            },
+            {
+              "id": "a3",
+              "name": "notionPageId",
+              "type": "string",
+              "value": "323c6a06e17e81b6b0a5d91342537f5c"
+            },
+            {
+              "id": "a4",
+              "name": "status",
+              "type": "string",
+              "value": "✅ 정상"
+            },
+            {
+              "id": "a5",
+              "name": "errorMessage",
+              "type": "string",
+              "value": ""
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "status-success",
+      "name": "✅ 상태 업데이트 (성공)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        1920,
+        300
+      ],
+      "parameters": {
         "workflowId": "eOopB5bbEEO9rjrg",
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "workflowId": "BrZ88oo3KRKccX0g",
-            "workflowName": "등록일원부 자동생성 - 수업종료",
-            "notionPageId": "323c6a06e17e81b6b0a5d91342537f5c",
-            "status": "✅ 정상"
-          }
-        }
+        "options": {}
       }
     },
     {
@@ -212,26 +251,64 @@
       "parameters": {}
     },
     {
-      "id": "status-error",
-      "name": "❌ 상태 업데이트 (에러)",
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1,
+      "id": "set-error",
+      "name": "Set - 에러 데이터",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
       "position": [
         920,
         500
       ],
       "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b1",
+              "name": "workflowId",
+              "type": "string",
+              "value": "BrZ88oo3KRKccX0g"
+            },
+            {
+              "id": "b2",
+              "name": "workflowName",
+              "type": "string",
+              "value": "등록일원부 자동생성 - 수업종료"
+            },
+            {
+              "id": "b3",
+              "name": "notionPageId",
+              "type": "string",
+              "value": "323c6a06e17e81b6b0a5d91342537f5c"
+            },
+            {
+              "id": "b4",
+              "name": "status",
+              "type": "string",
+              "value": "❌ 에러"
+            },
+            {
+              "id": "b5",
+              "name": "errorMessage",
+              "type": "string",
+              "value": "={{ $json.execution.error.message }}"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "status-error",
+      "name": "❌ 상태 업데이트 (에러)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        1140,
+        500
+      ],
+      "parameters": {
         "workflowId": "eOopB5bbEEO9rjrg",
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "workflowId": "BrZ88oo3KRKccX0g",
-            "workflowName": "등록일원부 자동생성 - 수업종료",
-            "notionPageId": "323c6a06e17e81b6b0a5d91342537f5c",
-            "status": "❌ 에러",
-            "errorMessage": "={{ $json.error.message }}"
-          }
-        }
+        "options": {}
       }
     },
     {
@@ -244,7 +321,7 @@
         160
       ],
       "parameters": {
-        "content": "## 📋 등록일원부 자동생성 메뉴얼\n\n### 🔗 노션 메뉴얼\nhttps://www.notion.so/323c6a06e17e81b6b0a5d91342537f5c\n\n---\n\n### ⚙️ 개요\n- **트리거**: Notion Trigger (Student_Study 변경)\n- **목적**: 수업 종료 시 등록일원부 자동 생성\n\n### 🔧 주요 수정 포인트\n1. 수업료 조회 조건 → `Notion - Class 수업료 조회`\n2. 납부회차 계산 → `Code - 납부회차 계산`\n3. DB ID → `HTTP - 등록일원부 레코드 생성`",
+        "content": "## 📋 등록일원부 자동생성 메뉴얼\n\n### 🔗 노션 메뉴얼\nhttps://www.notion.so/323c6a06e17e81b6b0a5d91342537f5c\n\n---\n\n- **트리거**: Notion Trigger (Student_Study 변경)\n- **목적**: 수업 종료 시 등록일원부 자동 생성",
         "height": 280,
         "width": 340,
         "color": 4
@@ -344,6 +421,17 @@
       "main": [
         [
           {
+            "node": "Set - 성공 데이터",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - 성공 데이터": {
+      "main": [
+        [
+          {
             "node": "✅ 상태 업데이트 (성공)",
             "type": "main",
             "index": 0
@@ -352,6 +440,17 @@
       ]
     },
     "❌ 에러 감지": {
+      "main": [
+        [
+          {
+            "node": "Set - 에러 데이터",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - 에러 데이터": {
       "main": [
         [
           {
@@ -366,21 +465,22 @@
   "settings": {
     "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner",
-    "availableInMCP": false
+    "availableInMCP": false,
+    "timezone": "Asia/Seoul"
   },
   "staticData": {
     "node:Notion Trigger - Student_Study 변경 감지": {
-      "lastTimeChecked": "2026-03-19T09:43:00.000Z",
+      "lastTimeChecked": "2026-03-23T16:04:00.000Z",
       "possibleDuplicates": [
-        "328c6a06-e17e-81f9-a9f8-cd3a3507cdea"
+        "328c6a06-e17e-8124-8221-d6edf35bc3b6"
       ]
     }
   },
   "meta": null,
   "pinData": {},
-  "versionId": "04fde1f6-9e5e-4b87-a474-1fcbfc290931",
-  "activeVersionId": "04fde1f6-9e5e-4b87-a474-1fcbfc290931",
-  "versionCounter": 170,
+  "versionId": "4d2b6f2c-bed4-4c3a-aedc-558c311c1bb9",
+  "activeVersionId": "4d2b6f2c-bed4-4c3a-aedc-558c311c1bb9",
+  "versionCounter": 192,
   "triggerCount": 1,
   "shared": [
     {
@@ -403,9 +503,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-15T04:44:11.530Z",
-    "createdAt": "2026-03-15T04:44:11.530Z",
-    "versionId": "04fde1f6-9e5e-4b87-a474-1fcbfc290931",
+    "updatedAt": "2026-03-19T10:49:30.619Z",
+    "createdAt": "2026-03-19T10:49:30.619Z",
+    "versionId": "4d2b6f2c-bed4-4c3a-aedc-558c311c1bb9",
     "workflowId": "BrZ88oo3KRKccX0g",
     "nodes": [
       {
@@ -610,25 +710,64 @@
         }
       },
       {
-        "id": "status-success",
-        "name": "✅ 상태 업데이트 (성공)",
-        "type": "n8n-nodes-base.executeWorkflow",
-        "typeVersion": 1,
+        "id": "set-success",
+        "name": "Set - 성공 데이터",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
         "position": [
           1700,
           300
         ],
         "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "a1",
+                "name": "workflowId",
+                "type": "string",
+                "value": "BrZ88oo3KRKccX0g"
+              },
+              {
+                "id": "a2",
+                "name": "workflowName",
+                "type": "string",
+                "value": "등록일원부 자동생성 - 수업종료"
+              },
+              {
+                "id": "a3",
+                "name": "notionPageId",
+                "type": "string",
+                "value": "323c6a06e17e81b6b0a5d91342537f5c"
+              },
+              {
+                "id": "a4",
+                "name": "status",
+                "type": "string",
+                "value": "✅ 정상"
+              },
+              {
+                "id": "a5",
+                "name": "errorMessage",
+                "type": "string",
+                "value": ""
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "status-success",
+        "name": "✅ 상태 업데이트 (성공)",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          1920,
+          300
+        ],
+        "parameters": {
           "workflowId": "eOopB5bbEEO9rjrg",
-          "workflowInputs": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "workflowId": "BrZ88oo3KRKccX0g",
-              "workflowName": "등록일원부 자동생성 - 수업종료",
-              "notionPageId": "323c6a06e17e81b6b0a5d91342537f5c",
-              "status": "✅ 정상"
-            }
-          }
+          "options": {}
         }
       },
       {
@@ -643,26 +782,64 @@
         "parameters": {}
       },
       {
-        "id": "status-error",
-        "name": "❌ 상태 업데이트 (에러)",
-        "type": "n8n-nodes-base.executeWorkflow",
-        "typeVersion": 1,
+        "id": "set-error",
+        "name": "Set - 에러 데이터",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
         "position": [
           920,
           500
         ],
         "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "b1",
+                "name": "workflowId",
+                "type": "string",
+                "value": "BrZ88oo3KRKccX0g"
+              },
+              {
+                "id": "b2",
+                "name": "workflowName",
+                "type": "string",
+                "value": "등록일원부 자동생성 - 수업종료"
+              },
+              {
+                "id": "b3",
+                "name": "notionPageId",
+                "type": "string",
+                "value": "323c6a06e17e81b6b0a5d91342537f5c"
+              },
+              {
+                "id": "b4",
+                "name": "status",
+                "type": "string",
+                "value": "❌ 에러"
+              },
+              {
+                "id": "b5",
+                "name": "errorMessage",
+                "type": "string",
+                "value": "={{ $json.execution.error.message }}"
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "status-error",
+        "name": "❌ 상태 업데이트 (에러)",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          1140,
+          500
+        ],
+        "parameters": {
           "workflowId": "eOopB5bbEEO9rjrg",
-          "workflowInputs": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "workflowId": "BrZ88oo3KRKccX0g",
-              "workflowName": "등록일원부 자동생성 - 수업종료",
-              "notionPageId": "323c6a06e17e81b6b0a5d91342537f5c",
-              "status": "❌ 에러",
-              "errorMessage": "={{ $json.error.message }}"
-            }
-          }
+          "options": {}
         }
       },
       {
@@ -675,7 +852,7 @@
           160
         ],
         "parameters": {
-          "content": "## 📋 등록일원부 자동생성 메뉴얼\n\n### 🔗 노션 메뉴얼\nhttps://www.notion.so/323c6a06e17e81b6b0a5d91342537f5c\n\n---\n\n### ⚙️ 개요\n- **트리거**: Notion Trigger (Student_Study 변경)\n- **목적**: 수업 종료 시 등록일원부 자동 생성\n\n### 🔧 주요 수정 포인트\n1. 수업료 조회 조건 → `Notion - Class 수업료 조회`\n2. 납부회차 계산 → `Code - 납부회차 계산`\n3. DB ID → `HTTP - 등록일원부 레코드 생성`",
+          "content": "## 📋 등록일원부 자동생성 메뉴얼\n\n### 🔗 노션 메뉴얼\nhttps://www.notion.so/323c6a06e17e81b6b0a5d91342537f5c\n\n---\n\n- **트리거**: Notion Trigger (Student_Study 변경)\n- **목적**: 수업 종료 시 등록일원부 자동 생성",
           "height": 280,
           "width": 340,
           "color": 4
@@ -775,6 +952,17 @@
         "main": [
           [
             {
+              "node": "Set - 성공 데이터",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set - 성공 데이터": {
+        "main": [
+          [
+            {
               "node": "✅ 상태 업데이트 (성공)",
               "type": "main",
               "index": 0
@@ -783,6 +971,17 @@
         ]
       },
       "❌ 에러 감지": {
+        "main": [
+          [
+            {
+              "node": "Set - 에러 데이터",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set - 에러 데이터": {
         "main": [
           [
             {
@@ -800,18 +999,18 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-15T04:44:12.196Z",
-        "id": 285,
+        "createdAt": "2026-03-19T10:49:31.169Z",
+        "id": 390,
         "workflowId": "BrZ88oo3KRKccX0g",
-        "versionId": "04fde1f6-9e5e-4b87-a474-1fcbfc290931",
+        "versionId": "4d2b6f2c-bed4-4c3a-aedc-558c311c1bb9",
         "event": "activated",
         "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
       },
       {
-        "createdAt": "2026-03-15T04:44:11.660Z",
-        "id": 284,
+        "createdAt": "2026-03-19T10:49:30.722Z",
+        "id": 389,
         "workflowId": "BrZ88oo3KRKccX0g",
-        "versionId": "04fde1f6-9e5e-4b87-a474-1fcbfc290931",
+        "versionId": "4d2b6f2c-bed4-4c3a-aedc-558c311c1bb9",
         "event": "deactivated",
         "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
       }
