@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-15T04:44:58.547Z",
+  "updatedAt": "2026-03-19T10:38:21.533Z",
   "createdAt": "2025-11-29T23:11:41.584Z",
   "id": "zQOKALD9EOnl3qhd",
   "name": "Daily Report 260120",
@@ -8,11 +8,6 @@
   "isArchived": false,
   "nodes": [
     {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "037ed99a-21d5-40c0-b285-a8362db2ffcc",
-        "options": {}
-      },
       "id": "abf03590-5b59-4445-ad72-f64d34d7bf38",
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
@@ -21,9 +16,44 @@
         -640,
         400
       ],
-      "webhookId": "037ed99a-21d5-40c0-b285-a8362db2ffcc"
+      "webhookId": "037ed99a-21d5-40c0-b285-a8362db2ffcc",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "037ed99a-21d5-40c0-b285-a8362db2ffcc",
+        "responseMode": "onReceived",
+        "options": {}
+      }
     },
     {
+      "id": "node-get-studentstudy",
+      "name": "Notion - Student_Study 재조회",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        -640,
+        160
+      ],
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "get",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $json.body.data.id }}",
+          "mode": "id"
+        },
+        "simple": false,
+        "options": {}
+      }
+    },
+    {
+      "id": "get-student-node",
+      "name": "Notion - Students 조회",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        -400,
+        400
+      ],
       "parameters": {
         "resource": "databasePage",
         "operation": "get",
@@ -33,17 +63,17 @@
           "mode": "id"
         },
         "simple": false
-      },
-      "id": "get-student-node",
-      "name": "Notion - Students 조회",
+      }
+    },
+    {
+      "id": "get-classstudy-node",
+      "name": "Notion - Class_Study 조회",
       "type": "n8n-nodes-base.notion",
       "typeVersion": 2.2,
       "position": [
-        -400,
-        400
-      ]
-    },
-    {
+        -160,
+        160
+      ],
       "parameters": {
         "resource": "databasePage",
         "operation": "get",
@@ -53,17 +83,17 @@
           "mode": "id"
         },
         "simple": false
-      },
-      "id": "get-classstudy-node",
-      "name": "Notion - Class_Study 조회",
+      }
+    },
+    {
+      "id": "get-prev-classstudy-node",
+      "name": "Notion - 지난수업 조회",
       "type": "n8n-nodes-base.notion",
       "typeVersion": 2.2,
       "position": [
-        -160,
+        80,
         160
-      ]
-    },
-    {
+      ],
       "parameters": {
         "resource": "databasePage",
         "operation": "get",
@@ -72,20 +102,9 @@
           "value": "={{ $('Notion - Class_Study 조회').item.json.properties?.['지난수업']?.relation?.[0]?.id }}",
           "mode": "id"
         }
-      },
-      "id": "get-prev-classstudy-node",
-      "name": "Notion - 지난수업 조회",
-      "type": "n8n-nodes-base.notion",
-      "typeVersion": 2.2,
-      "position": [
-        80,
-        160
-      ]
+      }
     },
     {
-      "parameters": {
-        "jsCode": "const data = $('Notion - Student_Study 재조회').item.json.properties;\nconst student = $('Notion - Students 조회').item.json;\nconst prevClassStudy = $('Notion - 지난수업 조회').item.json;\nconst notionPageId = $('Webhook').item.json.body.data.id;\n\n// 학생 이름\nconst 학생이름 = student.properties?.['이름']?.title?.[0]?.plain_text || student.name || '';\n\n// 학부모 연락처\nconst 학부모연락처1 = student.properties?.['보호자전화번호(모)']?.phone_number || '';\nconst 학부모연락처2 = student.properties?.['보호자전화번호(부)']?.phone_number || '';\n\n// 수업일시\nconst 수업일시Raw = data['수업일시']?.date?.start || '';\nlet 수업날짜 = '';\nlet 요일 = '';\nif (수업일시Raw) {\n  const d = new Date(수업일시Raw);\n  const dayNames = ['일', '월', '화', '수', '목', '금', '토'];\n  요일 = dayNames[d.getDay()];\n  const yyyy = d.getFullYear();\n  const mm = String(d.getMonth() + 1).padStart(2, '0');\n  const dd = String(d.getDate()).padStart(2, '0');\n  const hh = String(d.getHours()).padStart(2, '0');\n  const min = String(d.getMinutes()).padStart(2, '0');\n  수업날짜 = `${yyyy}-${mm}-${dd} ${hh}:${min}`;\n}\n\n// 수업회차\nconst 수업회차 = (data['수업회차']?.multi_select || []).map(s => s.name).join(', ');\n\n// 과정\nconst 과정 = (data['과정']?.rollup?.array || [])\n  .flatMap(item => (item.multi_select || []).map(s => s.name))\n  .join(', ');\n\n// 다음수업일\nconst 다음수업일Raw = data['다음수업일']?.rollup?.array?.[0]?.date?.start || '';\nlet 다음수업일 = '';\nif (다음수업일Raw) {\n  const d2 = new Date(다음수업일Raw);\n  const dayNames2 = ['일', '월', '화', '수', '목', '금', '토'];\n  const yyyy = d2.getFullYear();\n  const mm = String(d2.getMonth() + 1).padStart(2, '0');\n  const dd = String(d2.getDate()).padStart(2, '0');\n  const dow = dayNames2[d2.getDay()];\n  다음수업일 = `${yyyy}-${mm}-${dd}(${dow})`;\n}\n\n// 기타안내\nconst 기타안내 = data['기타안내']?.rich_text?.[0]?.plain_text || '';\n\n// 수업구분\nconst 수업구분 = data['수업구분']?.rollup?.array?.[0]?.select?.name || '';\n\n// 수업내용\nconst 수업내용 = data['진도/수업 내용']?.rollup?.array?.[0]?.rich_text?.[0]?.plain_text || '';\n\n// 지난과제\nconst 지난과제 = prevClassStudy?.properties?.['과제']?.rich_text?.[0]?.plain_text || '';\n\n// 수업 리포트\nconst reportParams = {\n  url_day: notionPageId,\n  학생이름,\n  수업날짜,\n  요일,\n  수업회차,\n  과정,\n  수업내용,\n  지난과제\n};\n\nconst reportRecipientList = [];\nif (학부모연락처1) reportRecipientList.push({ recipientNo: 학부모연락처1, templateParameter: reportParams });\nif (학부모연락처2) reportRecipientList.push({ recipientNo: 학부모연락처2, templateParameter: reportParams });\n\n// 납부 알림 조건\nfunction extractNumber(val) {\n  const match = String(val || '').match(/\\d+/);\n  return match ? parseInt(match[0], 10) : null;\n}\nconst numFromSession = extractNumber(수업회차);\nconst numFromCourse = extractNumber(수업구분);\nconst sendPaymentNotice = (numFromSession !== null && numFromCourse !== null && numFromSession === numFromCourse);\n\n// 납부 알림\nconst paymentParams = {\n  이름: 학생이름,\n  수업구분,\n  수업일시: 수업날짜,\n  요일,\n  다음수업일,\n  기타안내\n};\n\nconst paymentRecipientList = [];\nif (학부모연락처1) paymentRecipientList.push({ recipientNo: 학부모연락처1, templateParameter: paymentParams });\nif (학부모연락처2) paymentRecipientList.push({ recipientNo: 학부모연락처2, templateParameter: paymentParams });\n\nreturn [{\n  json: {\n    reportData: {\n      senderKey: '7780249050d98477b04a1b589e4794c8ac1f7a78',\n      templateCode: 'Math4U-edu-2025002',\n      recipientList: reportRecipientList\n    },\n    paymentData: {\n      senderKey: '7780249050d98477b04a1b589e4794c8ac1f7a78',\n      templateCode: 'Math4U-edu-2025004',\n      recipientList: paymentRecipientList\n    },\n    sendPaymentNotice,\n    notionPageId\n  }\n}];"
-      },
       "id": "d24ca2a4-0197-49ee-97ef-5a4302d72cce",
       "name": "Code",
       "type": "n8n-nodes-base.code",
@@ -94,9 +113,19 @@
         320,
         400
       ],
-      "alwaysOutputData": false
+      "parameters": {
+        "jsCode": "const data = $('Notion - Student_Study 재조회').item.json.properties;\nconst student = $('Notion - Students 조회').item.json;\nconst prevClassStudy = $('Notion - 지난수업 조회').item.json;\nconst notionPageId = $('Webhook').item.json.body.data.id;\n\nconst 학생이름 = student.properties?.['이름']?.title?.[0]?.plain_text || student.name || '';\nconst 학부모연락처1 = student.properties?.['보호자전화번호(모)']?.phone_number || '';\nconst 학부모연락처2 = student.properties?.['보호자전화번호(부)']?.phone_number || '';\n\nconst 수업일시Raw = data['수업일시']?.date?.start || '';\nlet 수업날짜 = '';\nlet 요일 = '';\nif (수업일시Raw) {\n  const d = new Date(수업일시Raw);\n  const dayNames = ['일', '월', '화', '수', '목', '금', '토'];\n  요일 = dayNames[d.getDay()];\n  const yyyy = d.getFullYear();\n  const mm = String(d.getMonth() + 1).padStart(2, '0');\n  const dd = String(d.getDate()).padStart(2, '0');\n  const hh = String(d.getHours()).padStart(2, '0');\n  const min = String(d.getMinutes()).padStart(2, '0');\n  수업날짜 = `${yyyy}-${mm}-${dd} ${hh}:${min}`;\n}\n\nconst 수업회차 = (data['수업회차']?.multi_select || []).map(s => s.name).join(', ');\nconst 과정 = (data['과정']?.rollup?.array || []).flatMap(item => (item.multi_select || []).map(s => s.name)).join(', ');\n\nconst 다음수업일Raw = data['다음수업일']?.rollup?.array?.[0]?.date?.start || '';\nlet 다음수업일 = '';\nif (다음수업일Raw) {\n  const d2 = new Date(다음수업일Raw);\n  const dayNames2 = ['일', '월', '화', '수', '목', '금', '토'];\n  const yyyy = d2.getFullYear();\n  const mm = String(d2.getMonth() + 1).padStart(2, '0');\n  const dd = String(d2.getDate()).padStart(2, '0');\n  const dow = dayNames2[d2.getDay()];\n  다음수업일 = `${yyyy}-${mm}-${dd}(${dow})`;\n}\n\nconst 기타안내 = data['기타안내']?.rich_text?.[0]?.plain_text || '';\nconst 수업구분 = data['수업구분']?.rollup?.array?.[0]?.select?.name || '';\nconst 수업내용 = data['진도/수업 내용']?.rollup?.array?.[0]?.rich_text?.[0]?.plain_text || '';\nconst 지난과제 = prevClassStudy?.properties?.['과제']?.rich_text?.[0]?.plain_text || '';\n\nconst reportParams = { url_day: notionPageId, 학생이름, 수업날짜, 요일, 수업회차, 과정, 수업내용, 지난과제 };\nconst reportRecipientList = [];\nif (학부모연락처1) reportRecipientList.push({ recipientNo: 학부모연락처1, templateParameter: reportParams });\nif (학부모연락처2) reportRecipientList.push({ recipientNo: 학부모연락처2, templateParameter: reportParams });\n\nfunction extractNumber(val) {\n  const match = String(val || '').match(/\\d+/);\n  return match ? parseInt(match[0], 10) : null;\n}\nconst numFromSession = extractNumber(수업회차);\nconst numFromCourse = extractNumber(수업구분);\nconst sendPaymentNotice = (numFromSession !== null && numFromCourse !== null && numFromSession === numFromCourse);\n\nconst paymentParams = { 이름: 학생이름, 수업구분, 수업일시: 수업날짜, 요일, 다음수업일, 기타안내 };\nconst paymentRecipientList = [];\nif (학부모연락처1) paymentRecipientList.push({ recipientNo: 학부모연락처1, templateParameter: paymentParams });\nif (학부모연락처2) paymentRecipientList.push({ recipientNo: 학부모연락처2, templateParameter: paymentParams });\n\nreturn [{ json: { reportData: { senderKey: '7780249050d98477b04a1b589e4794c8ac1f7a78', templateCode: 'Math4U-edu-2025002', recipientList: reportRecipientList }, paymentData: { senderKey: '7780249050d98477b04a1b589e4794c8ac1f7a78', templateCode: 'Math4U-edu-2025004', recipientList: paymentRecipientList }, sendPaymentNotice, notionPageId } }];"
+      }
     },
     {
+      "id": "fd8d5462-58db-49a6-aee2-97fb879812e1",
+      "name": "HTTP Request - 수업 리포트",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        576,
+        400
+      ],
       "parameters": {
         "method": "POST",
         "url": "https://api-alimtalk.cloud.toast.com/alimtalk/v2.0/appkeys/YuIB1lEDj8vuqME2/messages",
@@ -123,17 +152,17 @@
         "specifyBody": "json",
         "jsonBody": "={{ $('Code').item.json.reportData }}",
         "options": {}
-      },
-      "id": "fd8d5462-58db-49a6-aee2-97fb879812e1",
-      "name": "HTTP Request - 수업 리포트",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        576,
-        400
-      ]
+      }
     },
     {
+      "id": "32a64a7e-36a3-486b-a7da-f3793c55c063",
+      "name": "If - 납부 알림 조건 체크",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        832,
+        400
+      ],
       "parameters": {
         "conditions": {
           "options": {
@@ -157,17 +186,17 @@
           "combinator": "and"
         },
         "options": {}
-      },
-      "id": "32a64a7e-36a3-486b-a7da-f3793c55c063",
-      "name": "If - 납부 알림 조건 체크",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        832,
-        400
-      ]
+      }
     },
     {
+      "id": "12c22533-f79d-44b8-ab51-f690a443036e",
+      "name": "HTTP Request - 수업료 납부 알림",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1088,
+        224
+      ],
       "parameters": {
         "method": "POST",
         "url": "https://api-alimtalk.cloud.toast.com/alimtalk/v2.0/appkeys/YuIB1lEDj8vuqME2/messages",
@@ -194,65 +223,9 @@
         "specifyBody": "json",
         "jsonBody": "={{ $('Code').item.json.paymentData }}",
         "options": {}
-      },
-      "id": "12c22533-f79d-44b8-ab51-f690a443036e",
-      "name": "HTTP Request - 수업료 납부 알림",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1088,
-        224
-      ]
+      }
     },
     {
-      "parameters": {
-        "resource": "databasePage",
-        "operation": "update",
-        "pageId": {
-          "__rl": true,
-          "value": "={{ $('Webhook').item.json.body.data.id }}",
-          "mode": "id"
-        },
-        "simple": "={{ true }}",
-        "propertiesUi": {
-          "propertyValues": [
-            {
-              "key": "=보고서 발송|checkbox",
-              "checkboxValue": true
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "9e0c8259-40ef-46a2-acf5-4a2636113924",
-      "name": "Notion - 발송 완료 체크",
-      "type": "n8n-nodes-base.notion",
-      "typeVersion": 2.2,
-      "position": [
-        1088,
-        576
-      ]
-    },
-    {
-      "parameters": {
-        "resource": "databasePage",
-        "operation": "update",
-        "pageId": {
-          "__rl": true,
-          "value": "={{ $('Webhook').item.json.body.data.id }}",
-          "mode": "id"
-        },
-        "simple": "={{ true }}",
-        "propertiesUi": {
-          "propertyValues": [
-            {
-              "key": "=보고서 발송|checkbox",
-              "checkboxValue": true
-            }
-          ]
-        },
-        "options": {}
-      },
       "id": "e53bafb4-e657-4e6f-ac28-639a861d0159",
       "name": "Notion - 발송 완료 체크1",
       "type": "n8n-nodes-base.notion",
@@ -260,26 +233,100 @@
       "position": [
         1328,
         224
-      ]
-    },
-    {
-      "id": "node-get-studentstudy",
-      "name": "Notion - Student_Study 재조회",
-      "type": "n8n-nodes-base.notion",
-      "typeVersion": 2.2,
-      "position": [
-        -640,
-        160
       ],
       "parameters": {
         "resource": "databasePage",
-        "operation": "get",
+        "operation": "update",
         "pageId": {
           "__rl": true,
-          "value": "={{ $json.body.data.id }}",
+          "value": "={{ $('Webhook').item.json.body.data.id }}",
           "mode": "id"
         },
-        "simple": false,
+        "simple": "={{ true }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "=보고서 발송|checkbox",
+              "checkboxValue": true
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "9e0c8259-40ef-46a2-acf5-4a2636113924",
+      "name": "Notion - 발송 완료 체크",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        1088,
+        576
+      ],
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Webhook').item.json.body.data.id }}",
+          "mode": "id"
+        },
+        "simple": "={{ true }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "=보고서 발송|checkbox",
+              "checkboxValue": true
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "set-success1",
+      "name": "Set - 성공 데이터1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1568,
+        224
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "workflowId",
+              "type": "string",
+              "value": "zQOKALD9EOnl3qhd"
+            },
+            {
+              "id": "a2",
+              "name": "workflowName",
+              "type": "string",
+              "value": "Daily Report 260120"
+            },
+            {
+              "id": "a3",
+              "name": "notionPageId",
+              "type": "string",
+              "value": "323c6a06e17e811fa9f8f05949561409"
+            },
+            {
+              "id": "a4",
+              "name": "status",
+              "type": "string",
+              "value": "✅ 정상"
+            },
+            {
+              "id": "a5",
+              "name": "errorMessage",
+              "type": "string",
+              "value": ""
+            }
+          ]
+        },
         "options": {}
       }
     },
@@ -289,20 +336,59 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
       "position": [
-        1568,
+        1788,
         224
       ],
       "parameters": {
         "workflowId": "eOopB5bbEEO9rjrg",
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "workflowId": "zQOKALD9EOnl3qhd",
-            "workflowName": "Daily Report 260120",
-            "notionPageId": "323c6a06e17e811fa9f8f05949561409",
-            "status": "✅ 정상"
-          }
-        }
+        "options": {}
+      }
+    },
+    {
+      "id": "set-success2",
+      "name": "Set - 성공 데이터2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1568,
+        576
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b1",
+              "name": "workflowId",
+              "type": "string",
+              "value": "zQOKALD9EOnl3qhd"
+            },
+            {
+              "id": "b2",
+              "name": "workflowName",
+              "type": "string",
+              "value": "Daily Report 260120"
+            },
+            {
+              "id": "b3",
+              "name": "notionPageId",
+              "type": "string",
+              "value": "323c6a06e17e811fa9f8f05949561409"
+            },
+            {
+              "id": "b4",
+              "name": "status",
+              "type": "string",
+              "value": "✅ 정상"
+            },
+            {
+              "id": "b5",
+              "name": "errorMessage",
+              "type": "string",
+              "value": ""
+            }
+          ]
+        },
+        "options": {}
       }
     },
     {
@@ -311,20 +397,12 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
       "position": [
-        1568,
+        1788,
         576
       ],
       "parameters": {
         "workflowId": "eOopB5bbEEO9rjrg",
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "workflowId": "zQOKALD9EOnl3qhd",
-            "workflowName": "Daily Report 260120",
-            "notionPageId": "323c6a06e17e811fa9f8f05949561409",
-            "status": "✅ 정상"
-          }
-        }
+        "options": {}
       }
     },
     {
@@ -339,26 +417,64 @@
       "parameters": {}
     },
     {
-      "id": "status-error",
-      "name": "❌ 상태 업데이트 (에러)",
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1,
+      "id": "set-error",
+      "name": "Set - 에러 데이터",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
       "position": [
         -160,
         600
       ],
       "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c1",
+              "name": "workflowId",
+              "type": "string",
+              "value": "zQOKALD9EOnl3qhd"
+            },
+            {
+              "id": "c2",
+              "name": "workflowName",
+              "type": "string",
+              "value": "Daily Report 260120"
+            },
+            {
+              "id": "c3",
+              "name": "notionPageId",
+              "type": "string",
+              "value": "323c6a06e17e811fa9f8f05949561409"
+            },
+            {
+              "id": "c4",
+              "name": "status",
+              "type": "string",
+              "value": "❌ 에러"
+            },
+            {
+              "id": "c5",
+              "name": "errorMessage",
+              "type": "string",
+              "value": "={{ $json.execution.error.message }}"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "status-error",
+      "name": "❌ 상태 업데이트 (에러)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        60,
+        600
+      ],
+      "parameters": {
         "workflowId": "eOopB5bbEEO9rjrg",
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "workflowId": "zQOKALD9EOnl3qhd",
-            "workflowName": "Daily Report 260120",
-            "notionPageId": "323c6a06e17e811fa9f8f05949561409",
-            "status": "❌ 에러",
-            "errorMessage": "={{ $json.error.message }}"
-          }
-        }
+        "options": {}
       }
     },
     {
@@ -371,7 +487,7 @@
         0
       ],
       "parameters": {
-        "content": "## 📋 Daily Report 메뉴얼\n\n### 🔗 노션 메뉴얼\nhttps://www.notion.so/323c6a06e17e811fa9f8f05949561409\n\n---\n\n- **트리거**: Webhook\n- **목적**: 수업 리포트 및 납부 알림 자동 발송\n\n### 🔧 주요 수정 포인트\n1. 수업 리포트 메시지 → `HTTP Request - 수업 리포트`\n2. 납부 알림 조건 → `If - 납부 알림 조건 체크`\n3. 납부 알림 메시지 → `HTTP Request - 수업료 납부 알림`",
+        "content": "## 📋 Daily Report 메뉴얼\n\n### 🔗 노션 메뉴얼\nhttps://www.notion.so/323c6a06e17e811fa9f8f05949561409\n\n---\n\n- **트리거**: Webhook\n- **목적**: 수업 리포트 및 납부 알림 자동 발송",
         "height": 240,
         "width": 320,
         "color": 4
@@ -379,6 +495,28 @@
     }
   ],
   "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Notion - Student_Study 재조회",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion - Student_Study 재조회": {
+      "main": [
+        [
+          {
+            "node": "Notion - Students 조회",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Notion - Students 조회": {
       "main": [
         [
@@ -463,29 +601,18 @@
         ]
       ]
     },
-    "Webhook": {
-      "main": [
-        [
-          {
-            "node": "Notion - Student_Study 재조회",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Notion - Student_Study 재조회": {
-      "main": [
-        [
-          {
-            "node": "Notion - Students 조회",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Notion - 발송 완료 체크1": {
+      "main": [
+        [
+          {
+            "node": "Set - 성공 데이터1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - 성공 데이터1": {
       "main": [
         [
           {
@@ -500,6 +627,17 @@
       "main": [
         [
           {
+            "node": "Set - 성공 데이터2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - 성공 데이터2": {
+      "main": [
+        [
+          {
             "node": "✅ 상태 업데이트 (성공)2",
             "type": "main",
             "index": 0
@@ -508,6 +646,17 @@
       ]
     },
     "❌ 에러 감지": {
+      "main": [
+        [
+          {
+            "node": "Set - 에러 데이터",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - 에러 데이터": {
       "main": [
         [
           {
@@ -522,16 +671,17 @@
   "settings": {
     "executionOrder": "v1",
     "availableInMCP": false,
-    "callerPolicy": "workflowsFromSameOwner"
+    "callerPolicy": "workflowsFromSameOwner",
+    "timezone": "Asia/Seoul"
   },
   "staticData": null,
   "meta": {
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "ce7d7e12-6fe0-492d-a428-856651101df7",
-  "activeVersionId": "ce7d7e12-6fe0-492d-a428-856651101df7",
-  "versionCounter": 131,
+  "versionId": "728475e4-2c4c-46b0-843c-46d197d866b2",
+  "activeVersionId": "728475e4-2c4c-46b0-843c-46d197d866b2",
+  "versionCounter": 134,
   "triggerCount": 1,
   "shared": [
     {
@@ -554,17 +704,12 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-15T04:44:58.550Z",
-    "createdAt": "2026-03-15T04:44:58.550Z",
-    "versionId": "ce7d7e12-6fe0-492d-a428-856651101df7",
+    "updatedAt": "2026-03-19T10:38:21.535Z",
+    "createdAt": "2026-03-19T10:38:21.535Z",
+    "versionId": "728475e4-2c4c-46b0-843c-46d197d866b2",
     "workflowId": "zQOKALD9EOnl3qhd",
     "nodes": [
       {
-        "parameters": {
-          "httpMethod": "POST",
-          "path": "037ed99a-21d5-40c0-b285-a8362db2ffcc",
-          "options": {}
-        },
         "id": "abf03590-5b59-4445-ad72-f64d34d7bf38",
         "name": "Webhook",
         "type": "n8n-nodes-base.webhook",
@@ -573,295 +718,12 @@
           -640,
           400
         ],
-        "webhookId": "037ed99a-21d5-40c0-b285-a8362db2ffcc"
-      },
-      {
+        "webhookId": "037ed99a-21d5-40c0-b285-a8362db2ffcc",
         "parameters": {
-          "resource": "databasePage",
-          "operation": "get",
-          "pageId": {
-            "__rl": true,
-            "value": "={{ $('Notion - Student_Study 재조회').item.json.properties?.['Students']?.relation?.[0]?.id }}",
-            "mode": "id"
-          },
-          "simple": false
-        },
-        "id": "get-student-node",
-        "name": "Notion - Students 조회",
-        "type": "n8n-nodes-base.notion",
-        "typeVersion": 2.2,
-        "position": [
-          -400,
-          400
-        ],
-        "credentials": {
-          "notionApi": {
-            "id": "MAYBu1lbKiMiquHV",
-            "name": "n8n-Math4U"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "resource": "databasePage",
-          "operation": "get",
-          "pageId": {
-            "__rl": true,
-            "value": "={{ $('Notion - Student_Study 재조회').item.json.properties?.['Class_Study']?.relation?.[0]?.id }}",
-            "mode": "id"
-          },
-          "simple": false
-        },
-        "id": "get-classstudy-node",
-        "name": "Notion - Class_Study 조회",
-        "type": "n8n-nodes-base.notion",
-        "typeVersion": 2.2,
-        "position": [
-          -160,
-          160
-        ],
-        "credentials": {
-          "notionApi": {
-            "id": "MAYBu1lbKiMiquHV",
-            "name": "n8n-Math4U"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "resource": "databasePage",
-          "operation": "get",
-          "pageId": {
-            "__rl": true,
-            "value": "={{ $('Notion - Class_Study 조회').item.json.properties?.['지난수업']?.relation?.[0]?.id }}",
-            "mode": "id"
-          }
-        },
-        "id": "get-prev-classstudy-node",
-        "name": "Notion - 지난수업 조회",
-        "type": "n8n-nodes-base.notion",
-        "typeVersion": 2.2,
-        "position": [
-          80,
-          160
-        ],
-        "credentials": {
-          "notionApi": {
-            "id": "MAYBu1lbKiMiquHV",
-            "name": "n8n-Math4U"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "jsCode": "const data = $('Notion - Student_Study 재조회').item.json.properties;\nconst student = $('Notion - Students 조회').item.json;\nconst prevClassStudy = $('Notion - 지난수업 조회').item.json;\nconst notionPageId = $('Webhook').item.json.body.data.id;\n\n// 학생 이름\nconst 학생이름 = student.properties?.['이름']?.title?.[0]?.plain_text || student.name || '';\n\n// 학부모 연락처\nconst 학부모연락처1 = student.properties?.['보호자전화번호(모)']?.phone_number || '';\nconst 학부모연락처2 = student.properties?.['보호자전화번호(부)']?.phone_number || '';\n\n// 수업일시\nconst 수업일시Raw = data['수업일시']?.date?.start || '';\nlet 수업날짜 = '';\nlet 요일 = '';\nif (수업일시Raw) {\n  const d = new Date(수업일시Raw);\n  const dayNames = ['일', '월', '화', '수', '목', '금', '토'];\n  요일 = dayNames[d.getDay()];\n  const yyyy = d.getFullYear();\n  const mm = String(d.getMonth() + 1).padStart(2, '0');\n  const dd = String(d.getDate()).padStart(2, '0');\n  const hh = String(d.getHours()).padStart(2, '0');\n  const min = String(d.getMinutes()).padStart(2, '0');\n  수업날짜 = `${yyyy}-${mm}-${dd} ${hh}:${min}`;\n}\n\n// 수업회차\nconst 수업회차 = (data['수업회차']?.multi_select || []).map(s => s.name).join(', ');\n\n// 과정\nconst 과정 = (data['과정']?.rollup?.array || [])\n  .flatMap(item => (item.multi_select || []).map(s => s.name))\n  .join(', ');\n\n// 다음수업일\nconst 다음수업일Raw = data['다음수업일']?.rollup?.array?.[0]?.date?.start || '';\nlet 다음수업일 = '';\nif (다음수업일Raw) {\n  const d2 = new Date(다음수업일Raw);\n  const dayNames2 = ['일', '월', '화', '수', '목', '금', '토'];\n  const yyyy = d2.getFullYear();\n  const mm = String(d2.getMonth() + 1).padStart(2, '0');\n  const dd = String(d2.getDate()).padStart(2, '0');\n  const dow = dayNames2[d2.getDay()];\n  다음수업일 = `${yyyy}-${mm}-${dd}(${dow})`;\n}\n\n// 기타안내\nconst 기타안내 = data['기타안내']?.rich_text?.[0]?.plain_text || '';\n\n// 수업구분\nconst 수업구분 = data['수업구분']?.rollup?.array?.[0]?.select?.name || '';\n\n// 수업내용\nconst 수업내용 = data['진도/수업 내용']?.rollup?.array?.[0]?.rich_text?.[0]?.plain_text || '';\n\n// 지난과제\nconst 지난과제 = prevClassStudy?.properties?.['과제']?.rich_text?.[0]?.plain_text || '';\n\n// 수업 리포트\nconst reportParams = {\n  url_day: notionPageId,\n  학생이름,\n  수업날짜,\n  요일,\n  수업회차,\n  과정,\n  수업내용,\n  지난과제\n};\n\nconst reportRecipientList = [];\nif (학부모연락처1) reportRecipientList.push({ recipientNo: 학부모연락처1, templateParameter: reportParams });\nif (학부모연락처2) reportRecipientList.push({ recipientNo: 학부모연락처2, templateParameter: reportParams });\n\n// 납부 알림 조건\nfunction extractNumber(val) {\n  const match = String(val || '').match(/\\d+/);\n  return match ? parseInt(match[0], 10) : null;\n}\nconst numFromSession = extractNumber(수업회차);\nconst numFromCourse = extractNumber(수업구분);\nconst sendPaymentNotice = (numFromSession !== null && numFromCourse !== null && numFromSession === numFromCourse);\n\n// 납부 알림\nconst paymentParams = {\n  이름: 학생이름,\n  수업구분,\n  수업일시: 수업날짜,\n  요일,\n  다음수업일,\n  기타안내\n};\n\nconst paymentRecipientList = [];\nif (학부모연락처1) paymentRecipientList.push({ recipientNo: 학부모연락처1, templateParameter: paymentParams });\nif (학부모연락처2) paymentRecipientList.push({ recipientNo: 학부모연락처2, templateParameter: paymentParams });\n\nreturn [{\n  json: {\n    reportData: {\n      senderKey: '7780249050d98477b04a1b589e4794c8ac1f7a78',\n      templateCode: 'Math4U-edu-2025002',\n      recipientList: reportRecipientList\n    },\n    paymentData: {\n      senderKey: '7780249050d98477b04a1b589e4794c8ac1f7a78',\n      templateCode: 'Math4U-edu-2025004',\n      recipientList: paymentRecipientList\n    },\n    sendPaymentNotice,\n    notionPageId\n  }\n}];"
-        },
-        "id": "d24ca2a4-0197-49ee-97ef-5a4302d72cce",
-        "name": "Code",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          320,
-          400
-        ],
-        "alwaysOutputData": false
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "https://api-alimtalk.cloud.toast.com/alimtalk/v2.0/appkeys/YuIB1lEDj8vuqME2/messages",
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpCustomAuth",
-          "sendHeaders": true,
-          "headerParameters": {
-            "parameters": [
-              {
-                "name": "Content-Type",
-                "value": "application/json;charset=UTF-8"
-              },
-              {
-                "name": "X-Secret-Key",
-                "value": "BqbvtCkwuidB28H7cuoYGheQ8SyEWOWw"
-              },
-              {
-                "name": "X-App-Key",
-                "value": "YuIB1lEDj8vuqME2"
-              }
-            ]
-          },
-          "sendBody": true,
-          "specifyBody": "json",
-          "jsonBody": "={{ $('Code').item.json.reportData }}",
+          "httpMethod": "POST",
+          "path": "037ed99a-21d5-40c0-b285-a8362db2ffcc",
+          "responseMode": "onReceived",
           "options": {}
-        },
-        "id": "fd8d5462-58db-49a6-aee2-97fb879812e1",
-        "name": "HTTP Request - 수업 리포트",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          576,
-          400
-        ],
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "4vyqQ4BPURG0ufgO",
-            "name": "Header Auth account"
-          },
-          "httpCustomAuth": {
-            "id": "7IkET7kvzmFP3Vr7",
-            "name": "Custom Auth account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "conditions": {
-            "options": {
-              "version": 2,
-              "leftValue": "",
-              "caseSensitive": true,
-              "typeValidation": "strict"
-            },
-            "conditions": [
-              {
-                "id": "4d236c18-3c4d-4037-ba27-d4b21d4dfa4f",
-                "leftValue": "={{ $('Code').item.json.sendPaymentNotice }}",
-                "rightValue": "={{ true }}",
-                "operator": {
-                  "type": "boolean",
-                  "operation": "true",
-                  "singleValue": true
-                }
-              }
-            ],
-            "combinator": "and"
-          },
-          "options": {}
-        },
-        "id": "32a64a7e-36a3-486b-a7da-f3793c55c063",
-        "name": "If - 납부 알림 조건 체크",
-        "type": "n8n-nodes-base.if",
-        "typeVersion": 2.2,
-        "position": [
-          832,
-          400
-        ]
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "https://api-alimtalk.cloud.toast.com/alimtalk/v2.0/appkeys/YuIB1lEDj8vuqME2/messages",
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpCustomAuth",
-          "sendHeaders": true,
-          "headerParameters": {
-            "parameters": [
-              {
-                "name": "Content-Type",
-                "value": "application/json;charset=UTF-8"
-              },
-              {
-                "name": "X-Secret-Key",
-                "value": "BqbvtCkwuidB28H7cuoYGheQ8SyEWOWw"
-              },
-              {
-                "name": "X-App-Key",
-                "value": "YuIB1lEDj8vuqME2"
-              }
-            ]
-          },
-          "sendBody": true,
-          "specifyBody": "json",
-          "jsonBody": "={{ $('Code').item.json.paymentData }}",
-          "options": {}
-        },
-        "id": "12c22533-f79d-44b8-ab51-f690a443036e",
-        "name": "HTTP Request - 수업료 납부 알림",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          1088,
-          224
-        ],
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "4vyqQ4BPURG0ufgO",
-            "name": "Header Auth account"
-          },
-          "httpCustomAuth": {
-            "id": "7IkET7kvzmFP3Vr7",
-            "name": "Custom Auth account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "resource": "databasePage",
-          "operation": "update",
-          "pageId": {
-            "__rl": true,
-            "value": "={{ $('Webhook').item.json.body.data.id }}",
-            "mode": "id"
-          },
-          "simple": "={{ true }}",
-          "propertiesUi": {
-            "propertyValues": [
-              {
-                "key": "=보고서 발송|checkbox",
-                "checkboxValue": true
-              }
-            ]
-          },
-          "options": {}
-        },
-        "id": "9e0c8259-40ef-46a2-acf5-4a2636113924",
-        "name": "Notion - 발송 완료 체크",
-        "type": "n8n-nodes-base.notion",
-        "typeVersion": 2.2,
-        "position": [
-          1088,
-          576
-        ],
-        "credentials": {
-          "notionApi": {
-            "id": "MAYBu1lbKiMiquHV",
-            "name": "n8n-Math4U"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "resource": "databasePage",
-          "operation": "update",
-          "pageId": {
-            "__rl": true,
-            "value": "={{ $('Webhook').item.json.body.data.id }}",
-            "mode": "id"
-          },
-          "simple": "={{ true }}",
-          "propertiesUi": {
-            "propertyValues": [
-              {
-                "key": "=보고서 발송|checkbox",
-                "checkboxValue": true
-              }
-            ]
-          },
-          "options": {}
-        },
-        "id": "e53bafb4-e657-4e6f-ac28-639a861d0159",
-        "name": "Notion - 발송 완료 체크1",
-        "type": "n8n-nodes-base.notion",
-        "typeVersion": 2.2,
-        "position": [
-          1328,
-          224
-        ],
-        "credentials": {
-          "notionApi": {
-            "id": "MAYBu1lbKiMiquHV",
-            "name": "n8n-Math4U"
-          }
         }
       },
       {
@@ -892,25 +754,399 @@
         }
       },
       {
-        "id": "status-success",
-        "name": "✅ 상태 업데이트 (성공)",
-        "type": "n8n-nodes-base.executeWorkflow",
-        "typeVersion": 1,
+        "id": "get-student-node",
+        "name": "Notion - Students 조회",
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2,
+        "position": [
+          -400,
+          400
+        ],
+        "parameters": {
+          "resource": "databasePage",
+          "operation": "get",
+          "pageId": {
+            "__rl": true,
+            "value": "={{ $('Notion - Student_Study 재조회').item.json.properties?.['Students']?.relation?.[0]?.id }}",
+            "mode": "id"
+          },
+          "simple": false
+        },
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        }
+      },
+      {
+        "id": "get-classstudy-node",
+        "name": "Notion - Class_Study 조회",
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2,
+        "position": [
+          -160,
+          160
+        ],
+        "parameters": {
+          "resource": "databasePage",
+          "operation": "get",
+          "pageId": {
+            "__rl": true,
+            "value": "={{ $('Notion - Student_Study 재조회').item.json.properties?.['Class_Study']?.relation?.[0]?.id }}",
+            "mode": "id"
+          },
+          "simple": false
+        },
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        }
+      },
+      {
+        "id": "get-prev-classstudy-node",
+        "name": "Notion - 지난수업 조회",
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2,
+        "position": [
+          80,
+          160
+        ],
+        "parameters": {
+          "resource": "databasePage",
+          "operation": "get",
+          "pageId": {
+            "__rl": true,
+            "value": "={{ $('Notion - Class_Study 조회').item.json.properties?.['지난수업']?.relation?.[0]?.id }}",
+            "mode": "id"
+          }
+        },
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        }
+      },
+      {
+        "id": "d24ca2a4-0197-49ee-97ef-5a4302d72cce",
+        "name": "Code",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          320,
+          400
+        ],
+        "parameters": {
+          "jsCode": "const data = $('Notion - Student_Study 재조회').item.json.properties;\nconst student = $('Notion - Students 조회').item.json;\nconst prevClassStudy = $('Notion - 지난수업 조회').item.json;\nconst notionPageId = $('Webhook').item.json.body.data.id;\n\nconst 학생이름 = student.properties?.['이름']?.title?.[0]?.plain_text || student.name || '';\nconst 학부모연락처1 = student.properties?.['보호자전화번호(모)']?.phone_number || '';\nconst 학부모연락처2 = student.properties?.['보호자전화번호(부)']?.phone_number || '';\n\nconst 수업일시Raw = data['수업일시']?.date?.start || '';\nlet 수업날짜 = '';\nlet 요일 = '';\nif (수업일시Raw) {\n  const d = new Date(수업일시Raw);\n  const dayNames = ['일', '월', '화', '수', '목', '금', '토'];\n  요일 = dayNames[d.getDay()];\n  const yyyy = d.getFullYear();\n  const mm = String(d.getMonth() + 1).padStart(2, '0');\n  const dd = String(d.getDate()).padStart(2, '0');\n  const hh = String(d.getHours()).padStart(2, '0');\n  const min = String(d.getMinutes()).padStart(2, '0');\n  수업날짜 = `${yyyy}-${mm}-${dd} ${hh}:${min}`;\n}\n\nconst 수업회차 = (data['수업회차']?.multi_select || []).map(s => s.name).join(', ');\nconst 과정 = (data['과정']?.rollup?.array || []).flatMap(item => (item.multi_select || []).map(s => s.name)).join(', ');\n\nconst 다음수업일Raw = data['다음수업일']?.rollup?.array?.[0]?.date?.start || '';\nlet 다음수업일 = '';\nif (다음수업일Raw) {\n  const d2 = new Date(다음수업일Raw);\n  const dayNames2 = ['일', '월', '화', '수', '목', '금', '토'];\n  const yyyy = d2.getFullYear();\n  const mm = String(d2.getMonth() + 1).padStart(2, '0');\n  const dd = String(d2.getDate()).padStart(2, '0');\n  const dow = dayNames2[d2.getDay()];\n  다음수업일 = `${yyyy}-${mm}-${dd}(${dow})`;\n}\n\nconst 기타안내 = data['기타안내']?.rich_text?.[0]?.plain_text || '';\nconst 수업구분 = data['수업구분']?.rollup?.array?.[0]?.select?.name || '';\nconst 수업내용 = data['진도/수업 내용']?.rollup?.array?.[0]?.rich_text?.[0]?.plain_text || '';\nconst 지난과제 = prevClassStudy?.properties?.['과제']?.rich_text?.[0]?.plain_text || '';\n\nconst reportParams = { url_day: notionPageId, 학생이름, 수업날짜, 요일, 수업회차, 과정, 수업내용, 지난과제 };\nconst reportRecipientList = [];\nif (학부모연락처1) reportRecipientList.push({ recipientNo: 학부모연락처1, templateParameter: reportParams });\nif (학부모연락처2) reportRecipientList.push({ recipientNo: 학부모연락처2, templateParameter: reportParams });\n\nfunction extractNumber(val) {\n  const match = String(val || '').match(/\\d+/);\n  return match ? parseInt(match[0], 10) : null;\n}\nconst numFromSession = extractNumber(수업회차);\nconst numFromCourse = extractNumber(수업구분);\nconst sendPaymentNotice = (numFromSession !== null && numFromCourse !== null && numFromSession === numFromCourse);\n\nconst paymentParams = { 이름: 학생이름, 수업구분, 수업일시: 수업날짜, 요일, 다음수업일, 기타안내 };\nconst paymentRecipientList = [];\nif (학부모연락처1) paymentRecipientList.push({ recipientNo: 학부모연락처1, templateParameter: paymentParams });\nif (학부모연락처2) paymentRecipientList.push({ recipientNo: 학부모연락처2, templateParameter: paymentParams });\n\nreturn [{ json: { reportData: { senderKey: '7780249050d98477b04a1b589e4794c8ac1f7a78', templateCode: 'Math4U-edu-2025002', recipientList: reportRecipientList }, paymentData: { senderKey: '7780249050d98477b04a1b589e4794c8ac1f7a78', templateCode: 'Math4U-edu-2025004', recipientList: paymentRecipientList }, sendPaymentNotice, notionPageId } }];"
+        }
+      },
+      {
+        "id": "fd8d5462-58db-49a6-aee2-97fb879812e1",
+        "name": "HTTP Request - 수업 리포트",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          576,
+          400
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api-alimtalk.cloud.toast.com/alimtalk/v2.0/appkeys/YuIB1lEDj8vuqME2/messages",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json;charset=UTF-8"
+              },
+              {
+                "name": "X-Secret-Key",
+                "value": "BqbvtCkwuidB28H7cuoYGheQ8SyEWOWw"
+              },
+              {
+                "name": "X-App-Key",
+                "value": "YuIB1lEDj8vuqME2"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $('Code').item.json.reportData }}",
+          "options": {}
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "4vyqQ4BPURG0ufgO",
+            "name": "Header Auth account"
+          },
+          "httpCustomAuth": {
+            "id": "7IkET7kvzmFP3Vr7",
+            "name": "Custom Auth account"
+          }
+        }
+      },
+      {
+        "id": "32a64a7e-36a3-486b-a7da-f3793c55c063",
+        "name": "If - 납부 알림 조건 체크",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          832,
+          400
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "version": 2,
+              "leftValue": "",
+              "caseSensitive": true,
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "4d236c18-3c4d-4037-ba27-d4b21d4dfa4f",
+                "leftValue": "={{ $('Code').item.json.sendPaymentNotice }}",
+                "rightValue": "={{ true }}",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "12c22533-f79d-44b8-ab51-f690a443036e",
+        "name": "HTTP Request - 수업료 납부 알림",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1088,
+          224
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api-alimtalk.cloud.toast.com/alimtalk/v2.0/appkeys/YuIB1lEDj8vuqME2/messages",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json;charset=UTF-8"
+              },
+              {
+                "name": "X-Secret-Key",
+                "value": "BqbvtCkwuidB28H7cuoYGheQ8SyEWOWw"
+              },
+              {
+                "name": "X-App-Key",
+                "value": "YuIB1lEDj8vuqME2"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $('Code').item.json.paymentData }}",
+          "options": {}
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "4vyqQ4BPURG0ufgO",
+            "name": "Header Auth account"
+          },
+          "httpCustomAuth": {
+            "id": "7IkET7kvzmFP3Vr7",
+            "name": "Custom Auth account"
+          }
+        }
+      },
+      {
+        "id": "e53bafb4-e657-4e6f-ac28-639a861d0159",
+        "name": "Notion - 발송 완료 체크1",
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2,
+        "position": [
+          1328,
+          224
+        ],
+        "parameters": {
+          "resource": "databasePage",
+          "operation": "update",
+          "pageId": {
+            "__rl": true,
+            "value": "={{ $('Webhook').item.json.body.data.id }}",
+            "mode": "id"
+          },
+          "simple": "={{ true }}",
+          "propertiesUi": {
+            "propertyValues": [
+              {
+                "key": "=보고서 발송|checkbox",
+                "checkboxValue": true
+              }
+            ]
+          },
+          "options": {}
+        },
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        }
+      },
+      {
+        "id": "9e0c8259-40ef-46a2-acf5-4a2636113924",
+        "name": "Notion - 발송 완료 체크",
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2,
+        "position": [
+          1088,
+          576
+        ],
+        "parameters": {
+          "resource": "databasePage",
+          "operation": "update",
+          "pageId": {
+            "__rl": true,
+            "value": "={{ $('Webhook').item.json.body.data.id }}",
+            "mode": "id"
+          },
+          "simple": "={{ true }}",
+          "propertiesUi": {
+            "propertyValues": [
+              {
+                "key": "=보고서 발송|checkbox",
+                "checkboxValue": true
+              }
+            ]
+          },
+          "options": {}
+        },
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        }
+      },
+      {
+        "id": "set-success1",
+        "name": "Set - 성공 데이터1",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
         "position": [
           1568,
           224
         ],
         "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "a1",
+                "name": "workflowId",
+                "type": "string",
+                "value": "zQOKALD9EOnl3qhd"
+              },
+              {
+                "id": "a2",
+                "name": "workflowName",
+                "type": "string",
+                "value": "Daily Report 260120"
+              },
+              {
+                "id": "a3",
+                "name": "notionPageId",
+                "type": "string",
+                "value": "323c6a06e17e811fa9f8f05949561409"
+              },
+              {
+                "id": "a4",
+                "name": "status",
+                "type": "string",
+                "value": "✅ 정상"
+              },
+              {
+                "id": "a5",
+                "name": "errorMessage",
+                "type": "string",
+                "value": ""
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "status-success",
+        "name": "✅ 상태 업데이트 (성공)",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          1788,
+          224
+        ],
+        "parameters": {
           "workflowId": "eOopB5bbEEO9rjrg",
-          "workflowInputs": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "workflowId": "zQOKALD9EOnl3qhd",
-              "workflowName": "Daily Report 260120",
-              "notionPageId": "323c6a06e17e811fa9f8f05949561409",
-              "status": "✅ 정상"
-            }
-          }
+          "options": {}
+        }
+      },
+      {
+        "id": "set-success2",
+        "name": "Set - 성공 데이터2",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1568,
+          576
+        ],
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "b1",
+                "name": "workflowId",
+                "type": "string",
+                "value": "zQOKALD9EOnl3qhd"
+              },
+              {
+                "id": "b2",
+                "name": "workflowName",
+                "type": "string",
+                "value": "Daily Report 260120"
+              },
+              {
+                "id": "b3",
+                "name": "notionPageId",
+                "type": "string",
+                "value": "323c6a06e17e811fa9f8f05949561409"
+              },
+              {
+                "id": "b4",
+                "name": "status",
+                "type": "string",
+                "value": "✅ 정상"
+              },
+              {
+                "id": "b5",
+                "name": "errorMessage",
+                "type": "string",
+                "value": ""
+              }
+            ]
+          },
+          "options": {}
         }
       },
       {
@@ -919,20 +1155,12 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1,
         "position": [
-          1568,
+          1788,
           576
         ],
         "parameters": {
           "workflowId": "eOopB5bbEEO9rjrg",
-          "workflowInputs": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "workflowId": "zQOKALD9EOnl3qhd",
-              "workflowName": "Daily Report 260120",
-              "notionPageId": "323c6a06e17e811fa9f8f05949561409",
-              "status": "✅ 정상"
-            }
-          }
+          "options": {}
         }
       },
       {
@@ -947,26 +1175,64 @@
         "parameters": {}
       },
       {
-        "id": "status-error",
-        "name": "❌ 상태 업데이트 (에러)",
-        "type": "n8n-nodes-base.executeWorkflow",
-        "typeVersion": 1,
+        "id": "set-error",
+        "name": "Set - 에러 데이터",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
         "position": [
           -160,
           600
         ],
         "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "c1",
+                "name": "workflowId",
+                "type": "string",
+                "value": "zQOKALD9EOnl3qhd"
+              },
+              {
+                "id": "c2",
+                "name": "workflowName",
+                "type": "string",
+                "value": "Daily Report 260120"
+              },
+              {
+                "id": "c3",
+                "name": "notionPageId",
+                "type": "string",
+                "value": "323c6a06e17e811fa9f8f05949561409"
+              },
+              {
+                "id": "c4",
+                "name": "status",
+                "type": "string",
+                "value": "❌ 에러"
+              },
+              {
+                "id": "c5",
+                "name": "errorMessage",
+                "type": "string",
+                "value": "={{ $json.execution.error.message }}"
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "status-error",
+        "name": "❌ 상태 업데이트 (에러)",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          60,
+          600
+        ],
+        "parameters": {
           "workflowId": "eOopB5bbEEO9rjrg",
-          "workflowInputs": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "workflowId": "zQOKALD9EOnl3qhd",
-              "workflowName": "Daily Report 260120",
-              "notionPageId": "323c6a06e17e811fa9f8f05949561409",
-              "status": "❌ 에러",
-              "errorMessage": "={{ $json.error.message }}"
-            }
-          }
+          "options": {}
         }
       },
       {
@@ -979,7 +1245,7 @@
           0
         ],
         "parameters": {
-          "content": "## 📋 Daily Report 메뉴얼\n\n### 🔗 노션 메뉴얼\nhttps://www.notion.so/323c6a06e17e811fa9f8f05949561409\n\n---\n\n- **트리거**: Webhook\n- **목적**: 수업 리포트 및 납부 알림 자동 발송\n\n### 🔧 주요 수정 포인트\n1. 수업 리포트 메시지 → `HTTP Request - 수업 리포트`\n2. 납부 알림 조건 → `If - 납부 알림 조건 체크`\n3. 납부 알림 메시지 → `HTTP Request - 수업료 납부 알림`",
+          "content": "## 📋 Daily Report 메뉴얼\n\n### 🔗 노션 메뉴얼\nhttps://www.notion.so/323c6a06e17e811fa9f8f05949561409\n\n---\n\n- **트리거**: Webhook\n- **목적**: 수업 리포트 및 납부 알림 자동 발송",
           "height": 240,
           "width": 320,
           "color": 4
@@ -987,6 +1253,28 @@
       }
     ],
     "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Notion - Student_Study 재조회",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Notion - Student_Study 재조회": {
+        "main": [
+          [
+            {
+              "node": "Notion - Students 조회",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
       "Notion - Students 조회": {
         "main": [
           [
@@ -1071,29 +1359,18 @@
           ]
         ]
       },
-      "Webhook": {
-        "main": [
-          [
-            {
-              "node": "Notion - Student_Study 재조회",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Notion - Student_Study 재조회": {
-        "main": [
-          [
-            {
-              "node": "Notion - Students 조회",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
       "Notion - 발송 완료 체크1": {
+        "main": [
+          [
+            {
+              "node": "Set - 성공 데이터1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set - 성공 데이터1": {
         "main": [
           [
             {
@@ -1108,6 +1385,17 @@
         "main": [
           [
             {
+              "node": "Set - 성공 데이터2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set - 성공 데이터2": {
+        "main": [
+          [
+            {
               "node": "✅ 상태 업데이트 (성공)2",
               "type": "main",
               "index": 0
@@ -1116,6 +1404,17 @@
         ]
       },
       "❌ 에러 감지": {
+        "main": [
+          [
+            {
+              "node": "Set - 에러 데이터",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set - 에러 데이터": {
         "main": [
           [
             {
@@ -1133,18 +1432,18 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-15T04:44:59.100Z",
-        "id": 295,
+        "createdAt": "2026-03-19T10:38:21.733Z",
+        "id": 378,
         "workflowId": "zQOKALD9EOnl3qhd",
-        "versionId": "ce7d7e12-6fe0-492d-a428-856651101df7",
+        "versionId": "728475e4-2c4c-46b0-843c-46d197d866b2",
         "event": "activated",
         "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
       },
       {
-        "createdAt": "2026-03-15T04:44:58.951Z",
-        "id": 294,
+        "createdAt": "2026-03-19T10:38:21.659Z",
+        "id": 377,
         "workflowId": "zQOKALD9EOnl3qhd",
-        "versionId": "ce7d7e12-6fe0-492d-a428-856651101df7",
+        "versionId": "728475e4-2c4c-46b0-843c-46d197d866b2",
         "event": "deactivated",
         "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
       }
