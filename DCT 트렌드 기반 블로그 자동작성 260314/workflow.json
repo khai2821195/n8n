@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-16T00:14:27.360Z",
+  "updatedAt": "2026-03-19T10:43:28.197Z",
   "createdAt": "2026-03-14T07:49:13.322Z",
   "id": "ovShsLWKGcrOOgnE",
   "name": "DCT 트렌드 기반 블로그 자동작성 260314",
@@ -275,15 +275,8 @@
         304
       ],
       "parameters": {
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "workflowId": "ovShsLWKGcrOOgnE",
-            "workflowName": "DCT 트렌드 기반 블로그 자동작성 260314",
-            "notionPageId": "323c6a06e17e818ba6d1f28ccacaeed0",
-            "status": "✅ 정상"
-          }
-        }
+        "workflowId": "eOopB5bbEEO9rjrg",
+        "options": {}
       }
     },
     {
@@ -307,16 +300,8 @@
         520
       ],
       "parameters": {
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "workflowId": "ovShsLWKGcrOOgnE",
-            "workflowName": "DCT 트렌드 기반 블로그 자동작성 260314",
-            "notionPageId": "323c6a06e17e818ba6d1f28ccacaeed0",
-            "status": "❌ 에러",
-            "errorMessage": "={{ $json.error.message }}"
-          }
-        }
+        "workflowId": "eOopB5bbEEO9rjrg",
+        "options": {}
       }
     }
   ],
@@ -450,9 +435,9 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "19a6a61f-27d1-4ce0-a4c3-a6f716da37b9",
-  "activeVersionId": "19a6a61f-27d1-4ce0-a4c3-a6f716da37b9",
-  "versionCounter": 125,
+  "versionId": "9eaf3af9-847d-48da-8128-d830f5a8a88f",
+  "activeVersionId": "9eaf3af9-847d-48da-8128-d830f5a8a88f",
+  "versionCounter": 128,
   "triggerCount": 1,
   "shared": [
     {
@@ -475,9 +460,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-15T04:43:51.844Z",
-    "createdAt": "2026-03-15T04:43:51.844Z",
-    "versionId": "19a6a61f-27d1-4ce0-a4c3-a6f716da37b9",
+    "updatedAt": "2026-03-19T10:43:28.199Z",
+    "createdAt": "2026-03-19T10:43:28.199Z",
+    "versionId": "9eaf3af9-847d-48da-8128-d830f5a8a88f",
     "workflowId": "ovShsLWKGcrOOgnE",
     "nodes": [
       {
@@ -748,15 +733,8 @@
           304
         ],
         "parameters": {
-          "workflowInputs": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "workflowId": "ovShsLWKGcrOOgnE",
-              "workflowName": "DCT 트렌드 기반 블로그 자동작성 260314",
-              "notionPageId": "323c6a06e17e818ba6d1f28ccacaeed0",
-              "status": "✅ 정상"
-            }
-          }
+          "workflowId": "eOopB5bbEEO9rjrg",
+          "options": {}
         }
       },
       {
@@ -780,16 +758,8 @@
           520
         ],
         "parameters": {
-          "workflowInputs": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "workflowId": "ovShsLWKGcrOOgnE",
-              "workflowName": "DCT 트렌드 기반 블로그 자동작성 260314",
-              "notionPageId": "323c6a06e17e818ba6d1f28ccacaeed0",
-              "status": "❌ 에러",
-              "errorMessage": "={{ $json.error.message }}"
-            }
-          }
+          "workflowId": "eOopB5bbEEO9rjrg",
+          "options": {}
         }
       }
     ],
@@ -909,6 +879,23 @@
     "name": null,
     "description": null,
     "autosaved": false,
-    "workflowPublishHistory": []
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-03-19T10:43:28.450Z",
+        "id": 386,
+        "workflowId": "ovShsLWKGcrOOgnE",
+        "versionId": "9eaf3af9-847d-48da-8128-d830f5a8a88f",
+        "event": "activated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      },
+      {
+        "createdAt": "2026-03-19T10:43:28.380Z",
+        "id": 385,
+        "workflowId": "ovShsLWKGcrOOgnE",
+        "versionId": "9eaf3af9-847d-48da-8128-d830f5a8a88f",
+        "event": "deactivated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
+    ]
   }
 }
