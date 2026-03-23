@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-16T00:14:11.364Z",
+  "updatedAt": "2026-03-19T10:43:35.440Z",
   "createdAt": "2026-03-10T08:47:40.555Z",
   "id": "ruLfwzGZtsmLSD3k",
   "name": "Biz-mecca 납품사례 블로그 자동작성 260310",
@@ -446,15 +446,7 @@
       ],
       "parameters": {
         "workflowId": "eOopB5bbEEO9rjrg",
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "workflowId": "ruLfwzGZtsmLSD3k",
-            "workflowName": "Biz-mecca 납품사례 블로그 자동작성 260310",
-            "notionPageId": "323c6a06e17e8101b97ac00492a67ddd",
-            "status": "✅ 정상"
-          }
-        }
+        "options": {}
       }
     },
     {
@@ -479,16 +471,7 @@
       ],
       "parameters": {
         "workflowId": "eOopB5bbEEO9rjrg",
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "workflowId": "ruLfwzGZtsmLSD3k",
-            "workflowName": "Biz-mecca 납품사례 블로그 자동작성 260310",
-            "notionPageId": "323c6a06e17e8101b97ac00492a67ddd",
-            "status": "❌ 에러",
-            "errorMessage": "={{ $json.error.message }}"
-          }
-        }
+        "options": {}
       }
     },
     {
@@ -692,9 +675,9 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "4c35f3a1-cb0a-4b22-90fc-40762e9f2d92",
-  "activeVersionId": "4c35f3a1-cb0a-4b22-90fc-40762e9f2d92",
-  "versionCounter": 125,
+  "versionId": "31f58fc5-0e18-4b71-9c7b-4f53cac48f7c",
+  "activeVersionId": "31f58fc5-0e18-4b71-9c7b-4f53cac48f7c",
+  "versionCounter": 128,
   "triggerCount": 1,
   "shared": [
     {
@@ -717,9 +700,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-15T04:44:50.029Z",
-    "createdAt": "2026-03-15T04:44:50.029Z",
-    "versionId": "4c35f3a1-cb0a-4b22-90fc-40762e9f2d92",
+    "updatedAt": "2026-03-19T10:43:35.442Z",
+    "createdAt": "2026-03-19T10:43:35.442Z",
+    "versionId": "31f58fc5-0e18-4b71-9c7b-4f53cac48f7c",
     "workflowId": "ruLfwzGZtsmLSD3k",
     "nodes": [
       {
@@ -1161,15 +1144,7 @@
         ],
         "parameters": {
           "workflowId": "eOopB5bbEEO9rjrg",
-          "workflowInputs": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "workflowId": "ruLfwzGZtsmLSD3k",
-              "workflowName": "Biz-mecca 납품사례 블로그 자동작성 260310",
-              "notionPageId": "323c6a06e17e8101b97ac00492a67ddd",
-              "status": "✅ 정상"
-            }
-          }
+          "options": {}
         }
       },
       {
@@ -1194,16 +1169,7 @@
         ],
         "parameters": {
           "workflowId": "eOopB5bbEEO9rjrg",
-          "workflowInputs": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "workflowId": "ruLfwzGZtsmLSD3k",
-              "workflowName": "Biz-mecca 납품사례 블로그 자동작성 260310",
-              "notionPageId": "323c6a06e17e8101b97ac00492a67ddd",
-              "status": "❌ 에러",
-              "errorMessage": "={{ $json.error.message }}"
-            }
-          }
+          "options": {}
         }
       },
       {
@@ -1401,50 +1367,18 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-15T04:44:50.324Z",
-        "id": 293,
+        "createdAt": "2026-03-19T10:43:35.704Z",
+        "id": 388,
         "workflowId": "ruLfwzGZtsmLSD3k",
-        "versionId": "4c35f3a1-cb0a-4b22-90fc-40762e9f2d92",
+        "versionId": "31f58fc5-0e18-4b71-9c7b-4f53cac48f7c",
         "event": "activated",
         "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
       },
       {
-        "createdAt": "2026-03-16T00:00:52.090Z",
-        "id": 305,
+        "createdAt": "2026-03-19T10:43:35.605Z",
+        "id": 387,
         "workflowId": "ruLfwzGZtsmLSD3k",
-        "versionId": "4c35f3a1-cb0a-4b22-90fc-40762e9f2d92",
-        "event": "activated",
-        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
-      },
-      {
-        "createdAt": "2026-03-16T00:14:11.619Z",
-        "id": 311,
-        "workflowId": "ruLfwzGZtsmLSD3k",
-        "versionId": "4c35f3a1-cb0a-4b22-90fc-40762e9f2d92",
-        "event": "activated",
-        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
-      },
-      {
-        "createdAt": "2026-03-15T04:44:50.166Z",
-        "id": 292,
-        "workflowId": "ruLfwzGZtsmLSD3k",
-        "versionId": "4c35f3a1-cb0a-4b22-90fc-40762e9f2d92",
-        "event": "deactivated",
-        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
-      },
-      {
-        "createdAt": "2026-03-16T00:00:51.982Z",
-        "id": 304,
-        "workflowId": "ruLfwzGZtsmLSD3k",
-        "versionId": "4c35f3a1-cb0a-4b22-90fc-40762e9f2d92",
-        "event": "deactivated",
-        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
-      },
-      {
-        "createdAt": "2026-03-16T00:14:11.487Z",
-        "id": 310,
-        "workflowId": "ruLfwzGZtsmLSD3k",
-        "versionId": "4c35f3a1-cb0a-4b22-90fc-40762e9f2d92",
+        "versionId": "31f58fc5-0e18-4b71-9c7b-4f53cac48f7c",
         "event": "deactivated",
         "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
       }
