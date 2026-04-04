@@ -3,6 +3,7 @@
   "createdAt": "2026-03-03T18:16:19.957Z",
   "id": "L6uRu2oqasHrOIQR",
   "name": "Blog Auto Writer 260304",
+  "description": null,
   "active": false,
   "isArchived": false,
   "nodes": [
@@ -824,6 +825,7 @@
   "pinData": {},
   "versionId": "e6111ce8-631e-4675-880b-768f790947da",
   "activeVersionId": null,
+  "versionCounter": 3,
   "triggerCount": 0,
   "shared": [
     {
@@ -831,9 +833,19 @@
       "createdAt": "2026-03-03T18:16:19.962Z",
       "role": "workflow:owner",
       "workflowId": "L6uRu2oqasHrOIQR",
-      "projectId": "8znYa8Ca7GWeBy0m"
+      "projectId": "8znYa8Ca7GWeBy0m",
+      "project": {
+        "updatedAt": "2025-11-29T23:05:56.637Z",
+        "createdAt": "2025-11-29T23:04:07.777Z",
+        "id": "8znYa8Ca7GWeBy0m",
+        "name": "Seung Hyeon Kim <khai01@naver.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
     }
   ],
-  "activeVersion": null,
-  "tags": []
+  "tags": [],
+  "activeVersion": null
 }
