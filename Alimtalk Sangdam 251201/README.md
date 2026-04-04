@@ -3,26 +3,54 @@
 > **Category:** Math4U  
 > **Workflow ID:** `S1ObqqNJYt6Weh0b`  
 > **노션 메뉴얼:** https://www.notion.so/323c6a06e17e815ca8a0eeba78761e16  
+> **자동 생성:** Gemini AI  
 
 ---
 
-## ⚙️ 워크플로우 개요
+# Alimtalk Sangdam 251201
 
-## 🔄 전체 흐름
+본 워크플로우는 노션(Notion)에 접수된 신규 상담 신청 데이터를 자동으로 감지하여, 알림톡(Alimtalk) 발송 및 슬랙(Slack) 알림을 전송하고, 처리 상태를 노션에 업데이트하는 자동화 프로세스입니다.
 
-```javascript
-Schedule Trigger
-  → Notion 신규상담신청 확인
-  → Alimtalk Setting (HTTP Request)
-  → Send a message (Slack)
-  → Notion Update
-```
+---
 
-## 🔧 수정이 필요할 때
+## 🔄 워크플로우 흐름
 
-- 상담신청 조회 조건 → Notion 신규상담신청 확인 노드
-- 알림톡 메시지 템플릿 → Alimtalk Setting 노드 Body
-- Slack 채널 → Send a message 노드
-- 노션 업데이트 필드 → Notion Update 노드
-## 📋 변경 이력
+1.  **Schedule Trigger**: 설정된 주기(시간 단위)마다 워크플로우를 실행합니다.
+2.  **Notion 신규상담신청 확인**: 노션 데이터베이스에서 '알림톡 발송' 체크박스가 체크되지 않은(또는 조건에 맞는) 신규 상담 신청 건을 조회합니다.
+3.  **Alimtalk Setting (HTTP Request)**: NHN Cloud 알림톡 API를 호출하여 신청자에게 상담 관련 메시지를 발송합니다.
+4.  **Send a message (Slack)**: 상담 신청 내용을 슬랙 `#상담신청` 채널로 전송하여 담당자가 즉시 확인할 수 있도록 합니다.
+5.  **Notion Update**: 알림톡 발송이 완료된 건에 대해 노션의 '알림톡 발송' 체크박스를 `true`로 업데이트하여 중복 발송을 방지합니다.
+6.  **✅ 상태 업데이트**: 워크플로우 실행 성공 여부를 기록합니다.
 
+---
+
+## ⚙️ 환경 설정 및 크레덴셜
+
+워크플로우를 정상적으로 작동시키기 위해 다음 항목이 필요합니다.
+
+*   **Notion**: 
+    *   데이터베이스 접근 권한이 있는 API 토큰
+    *   대상 데이터베이스 ID: `229c6a06-e17e-8083-bf21-ec602b6a3033`
+*   **Alimtalk (HTTP Request)**:
+    *   `X-Secret-Key`: NHN Cloud API 시크릿 키
+    *   `X-App-Key`: NHN Cloud 앱 키
+    *   `senderKey`: 알림톡 발신 프로필 키
+*   **Slack**:
+    *   슬랙 워크스페이스 연동 및 `#상담신청` 채널 접근 권한
+
+---
+
+## 🔧 수정 및 유지보수 가이드
+
+*   **상담 신청 조회 조건**: `Notion 신규상담신청 확인` 노드의 필터 설정을 통해 조회 대상을 변경할 수 있습니다.
+*   **알림톡 메시지 템플릿**: `Alimtalk Setting` 노드의 `jsonBody` 내 `templateCode` 및 메시지 구조를 수정하여 내용을 변경할 수 있습니다.
+*   **슬랙 채널**: `Send a message` 노드에서 알림을 받을 채널 ID를 변경할 수 있습니다.
+*   **노션 업데이트 필드**: `Notion Update` 노드에서 업데이트할 속성(체크박스 등)을 조정할 수 있습니다.
+
+---
+
+## ⚠️ 주의사항
+
+*   **API 호출 제한**: 알림톡 API 호출 시 `recipientNo`가 올바른 형식인지 확인하십시오.
+*   **데이터베이스 구조**: 노션 데이터베이스의 속성명(`상담연락처S`, `학생이름` 등)이 변경될 경우, 각 노드의 매핑 값을 반드시 업데이트해야 합니다.
+*   **중복 방지**: `Notion Update` 노드가 정상적으로 작동하지 않으면 동일한 상담 건에 대해 알림톡이 중복 발송될 수 있으므로 주의가 필요합니다.
