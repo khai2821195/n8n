@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-04T07:28:32.362Z",
+  "updatedAt": "2026-04-04T07:50:16.925Z",
   "createdAt": "2025-12-01T21:37:22.774Z",
   "id": "gRhv6ri8Nq5sE1Ol",
   "name": "n8n Github Sync (노션 메뉴얼 → README)",
@@ -435,6 +435,53 @@
         992,
         16
       ]
+    },
+    {
+      "id": "set-success",
+      "name": "Set - 성공 데이터",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        896,
+        120
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "s1",
+              "name": "workflowId",
+              "type": "string",
+              "value": "gRhv6ri8Nq5sE1Ol"
+            },
+            {
+              "id": "s2",
+              "name": "workflowName",
+              "type": "string",
+              "value": "n8n Github Sync (노션 메뉴얼 → README)"
+            },
+            {
+              "id": "s3",
+              "name": "notionPageId",
+              "type": "string",
+              "value": "324c6a06e17e81728fb3ccec9d7bae3a"
+            },
+            {
+              "id": "s4",
+              "name": "status",
+              "type": "string",
+              "value": "✅ 정상"
+            },
+            {
+              "id": "s5",
+              "name": "errorMessage",
+              "type": "string",
+              "value": ""
+            }
+          ]
+        },
+        "options": {}
+      }
     }
   ],
   "connections": {
@@ -599,6 +646,17 @@
       "main": [
         [
           {
+            "node": "Set - 성공 데이터",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - 성공 데이터": {
+      "main": [
+        [
+          {
             "node": "✅ 상태 업데이트 (성공)",
             "type": "main",
             "index": 0
@@ -620,9 +678,9 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "c62e20ce-8eaf-4059-9c0f-aad8b528b392",
-  "activeVersionId": "2317b3e0-53b7-48cf-9a48-c19081586067",
-  "versionCounter": 281,
+  "versionId": "888680bf-5a46-4f7d-8351-be0ce7644b7f",
+  "activeVersionId": "888680bf-5a46-4f7d-8351-be0ce7644b7f",
+  "versionCounter": 284,
   "triggerCount": 0,
   "shared": [
     {
@@ -645,15 +703,15 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-04T07:23:24.454Z",
-    "createdAt": "2026-04-04T07:23:24.454Z",
-    "versionId": "2317b3e0-53b7-48cf-9a48-c19081586067",
+    "updatedAt": "2026-04-04T07:50:16.927Z",
+    "createdAt": "2026-04-04T07:50:16.927Z",
+    "versionId": "888680bf-5a46-4f7d-8351-be0ce7644b7f",
     "workflowId": "gRhv6ri8Nq5sE1Ol",
     "nodes": [
       {
         "parameters": {
           "content": "## 🔄 n8n Github Sync\n\n**흐름 요약**\n1. n8n 전체 WF 목록 조회\n2. 노션 DB 조회 → 비교\n3. 아카이브 WF → 노션에서 삭제\n4. 신규 WF → 노션에 자동 추가\n5. 노션 DB 재조회 → 백업 루프\n6. 각 WF마다: JSON 백업 + 노션페이지에 JSON 저장 + Gemini README 생성\n\n**환경변수:**\n- N8N_API_KEY\n- GITHUB_TOKEN\n- GEMINI_API_KEY",
-          "height": 484,
+          "height": 388,
           "width": 372,
           "color": 5
         },
@@ -968,8 +1026,8 @@
         "id": "prepare",
         "name": "목록 준비",
         "position": [
-          720,
-          176
+          608,
+          16
         ],
         "type": "n8n-nodes-base.code",
         "typeVersion": 2
@@ -1047,36 +1105,83 @@
         "typeVersion": 1
       },
       {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "d0uNR6Mo92P94Wod"
+          },
+          "mode": "each",
+          "options": {}
+        },
         "id": "exec-sub",
         "name": "백업 서브워크플로우 실행",
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.1,
         "position": [
-          480,
-          460
-        ],
-        "parameters": {
-          "mode": "each",
-          "options": {},
-          "workflowId": {
-            "__rl": true,
-            "mode": "id",
-            "value": "d0uNR6Mo92P94Wod"
-          }
-        }
+          800,
+          16
+        ]
       },
       {
+        "parameters": {
+          "workflowId": "eOopB5bbEEO9rjrg",
+          "options": {}
+        },
         "id": "success-final",
         "name": "✅ 상태 업데이트 (성공)",
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1,
         "position": [
-          720,
-          460
+          992,
+          16
+        ]
+      },
+      {
+        "id": "set-success",
+        "name": "Set - 성공 데이터",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          896,
+          120
         ],
         "parameters": {
-          "options": {},
-          "workflowId": "eOopB5bbEEO9rjrg"
+          "assignments": {
+            "assignments": [
+              {
+                "id": "s1",
+                "name": "workflowId",
+                "type": "string",
+                "value": "gRhv6ri8Nq5sE1Ol"
+              },
+              {
+                "id": "s2",
+                "name": "workflowName",
+                "type": "string",
+                "value": "n8n Github Sync (노션 메뉴얼 → README)"
+              },
+              {
+                "id": "s3",
+                "name": "notionPageId",
+                "type": "string",
+                "value": "324c6a06e17e81728fb3ccec9d7bae3a"
+              },
+              {
+                "id": "s4",
+                "name": "status",
+                "type": "string",
+                "value": "✅ 정상"
+              },
+              {
+                "id": "s5",
+                "name": "errorMessage",
+                "type": "string",
+                "value": ""
+              }
+            ]
+          },
+          "options": {}
         }
       }
     ],
@@ -1242,6 +1347,17 @@
         "main": [
           [
             {
+              "node": "Set - 성공 데이터",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set - 성공 데이터": {
+        "main": [
+          [
+            {
               "node": "✅ 상태 업데이트 (성공)",
               "type": "main",
               "index": 0
@@ -1254,6 +1370,23 @@
     "name": null,
     "description": null,
     "autosaved": false,
-    "workflowPublishHistory": []
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-04T07:50:17.099Z",
+        "id": 455,
+        "workflowId": "gRhv6ri8Nq5sE1Ol",
+        "versionId": "888680bf-5a46-4f7d-8351-be0ce7644b7f",
+        "event": "activated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      },
+      {
+        "createdAt": "2026-04-04T07:50:17.024Z",
+        "id": 454,
+        "workflowId": "gRhv6ri8Nq5sE1Ol",
+        "versionId": "888680bf-5a46-4f7d-8351-be0ce7644b7f",
+        "event": "deactivated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
+    ]
   }
 }
