@@ -3,41 +3,50 @@
 > **Category:** 공통  
 > **Workflow ID:** `gRhv6ri8Nq5sE1Ol`  
 > **노션 메뉴얼:** https://www.notion.so/324c6a06e17e81728fb3ccec9d7bae3a  
+> **자동 생성:** Gemini AI  
 
 ---
 
-## ⚙️ 워크플로우 개요
+# n8n Github Sync (노션 메뉴얼 → README)
 
-## 🔄 전체 흐름
+이 워크플로우는 n8n에서 관리되는 워크플로우의 상태를 노션(Notion) 데이터베이스와 동기화하고, 각 워크플로우의 정의(JSON)와 문서(README.md)를 GitHub 저장소에 자동으로 백업 및 생성하는 자동화 도구입니다.
 
-```javascript
-수동 실행
-  → 노션 DB 조회 (Workflow ID + Notion Page ID)
-  → 목록 준비 (삭제예정 항목 제외)
-  → 루프 (1개씩 순차 처리)
-      → n8n API → workflow.json 가져오기
-      → workflow.json → Github 저장
-      → 노션 메뉴얼 조회
-      → 마크다운 변환 → README.md
-      → README.md → Github 저장
-  → 완료
-```
+## 🔄 워크플로우 개요
+n8n의 워크플로우 목록을 주기적으로 확인하여 노션 데이터베이스와 비교합니다. 변경 사항(신규 추가, 삭제)을 반영한 뒤, 각 워크플로우의 구조를 JSON으로 추출하고 노션에 기록된 메뉴얼을 바탕으로 최신 `README.md`를 생성하여 GitHub에 커밋합니다.
 
-## 📁 Github 폴더 구조
+## ⚙️ 전체 흐름
+1. **수동 실행**: 워크플로우를 수동으로 트리거합니다.
+2. **n8n 목록 조회**: 현재 n8n 인스턴스에 등록된 모든 워크플로우 정보를 가져옵니다.
+3. **노션 DB 조회**: 관리 중인 노션 데이터베이스에서 워크플로우 ID 목록을 가져옵니다.
+4. **동기화 비교**: 
+   - n8n에는 없거나 아카이브된 항목을 노션에서 삭제 처리합니다.
+   - n8n에 새로 추가된 활성 워크플로우를 노션에 등록합니다.
+5. **백업 및 문서화 루프**:
+   - 각 워크플로우별로 `workflow.json`을 추출합니다.
+   - 노션에 작성된 메뉴얼을 마크다운 형식으로 변환합니다.
+   - 생성된 파일들을 GitHub 저장소의 `workflows/{워크플로우이름}/` 경로에 저장합니다.
 
-```javascript
+## 📁 GitHub 폴더 구조
+```text
 workflows/
   워크플로우이름/
-    workflow.json
-    README.md
+    workflow.json    # 워크플로우 설정 파일
+    README.md        # 노션 메뉴얼 기반 자동 생성 문서
 ```
 
-## 🔧 수정이 필요할 때
+## 🔧 환경변수 및 설정
+워크플로우 실행을 위해 다음 환경변수가 설정되어 있어야 합니다.
 
-- Github repo 변경 → JSON SHA 조회, workflow.json 저장, README SHA 조회, README.md 저장 노드의 URL
-- 노션 DB 변경 → 노션 DB 조회 노드의 database ID
-- 새 워크플로우 추가 → 노션 DB에 항목 추가 후 Notion Page ID 컬럼 입력
-## ⚠️ 필요한 환경변수
+*   `N8N_API_KEY`: n8n API 접근을 위한 인증 키
+*   `GITHUB_TOKEN`: GitHub 저장소에 파일을 커밋하기 위한 개인 액세스 토큰
+*   `GEMINI_API_KEY`: 노션 메뉴얼을 마크다운으로 변환하기 위한 AI 모델 API 키
 
-## 📋 변경 이력
+### 수정이 필요한 경우
+*   **GitHub 저장소 변경**: JSON 및 README 저장 노드의 URL(GitHub API 호출 경로)을 수정하십시오.
+*   **노션 DB 변경**: '노션 DB 조회' 노드의 `database_id`를 운영 중인 데이터베이스 ID로 업데이트하십시오.
+*   **신규 워크플로우 추가**: 노션 DB에 항목을 추가하고, 해당 워크플로우의 고유 ID를 'Workflow ID' 컬럼에 입력하십시오.
 
+## ⚠️ 주의사항
+*   **API 권한**: 사용되는 모든 API(n8n, Notion, GitHub)의 토큰은 적절한 읽기/쓰기 권한을 가지고 있어야 합니다.
+*   **데이터 정합성**: 노션의 'Workflow ID' 컬럼은 n8n의 실제 워크플로우 ID와 정확히 일치해야 동기화가 정상적으로 작동합니다.
+*   **에러 처리**: 노션 아카이브 삭제 노드는 오류 발생 시 워크플로우가 중단되지 않도록 'Continue Regular Output' 설정이 적용되어 있습니다.
