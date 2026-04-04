@@ -1,0 +1,170 @@
+{
+  "updatedAt": "2026-03-23T15:45:35.544Z",
+  "createdAt": "2026-03-23T15:45:35.544Z",
+  "id": "FKIIXxr7LFVwSUX0",
+  "name": "🔧 Alimtalk 발송 (공통 서브워크플로우)",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "note-main",
+      "name": "📋 서브워크플로우 메뉴얼",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        -80
+      ],
+      "parameters": {
+        "content": "## 🔧 알림톡 발송 공통 서브워크플로우\n\n### 입력 (Execute Workflow로 전달)\n| 필드 | 타입 | 설명 |\n|------|------|------|\n| `senderKey` | string | 카카오 채널 발신 키 |\n| `templateCode` | string | 알림톡 템플릿 코드 |\n| `recipientList` | array | 수신자 목록 (아래 형식) |\n\n**recipientList 형식:**\n```json\n[\n  {\n    \"recipientNo\": \"010-1234-5678\",\n    \"templateParameter\": {\n      \"변수명\": \"값\"\n    }\n  }\n]\n```\n\n### 출력\n- `isSuccess`: 발송 성공 여부 (boolean)\n- `resultCode`: API 응답 코드\n- `resultMessage`: API 응답 메시지\n\n### 사용 중인 워크플로우\n- Daily Report 260120\n- Alimtalk Sangdam 251201",
+        "height": 480,
+        "width": 420,
+        "color": 4
+      }
+    },
+    {
+      "id": "trigger-01",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        100,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "code-01",
+      "name": "Code - 입력값 검증",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\n\nconst senderKey = input.senderKey || '';\nconst templateCode = input.templateCode || '';\nconst recipientList = input.recipientList || [];\n\nif (!senderKey) throw new Error('senderKey가 없습니다.');\nif (!templateCode) throw new Error('templateCode가 없습니다.');\nif (!Array.isArray(recipientList) || recipientList.length === 0) {\n  throw new Error('recipientList가 비어있습니다.');\n}\n\nreturn [{ json: { senderKey, templateCode, recipientList } }];"
+      }
+    },
+    {
+      "id": "http-01",
+      "name": "HTTP - 알림톡 발송",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        560,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api-alimtalk.cloud.toast.com/alimtalk/v2.0/appkeys/YuIB1lEDj8vuqME2/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json;charset=UTF-8"
+            },
+            {
+              "name": "X-Secret-Key",
+              "value": "BqbvtCkwuidB28H7cuoYGheQ8SyEWOWw"
+            },
+            {
+              "name": "X-App-Key",
+              "value": "YuIB1lEDj8vuqME2"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"senderKey\": \"{{ $json.senderKey }}\",\n  \"templateCode\": \"{{ $json.templateCode }}\",\n  \"recipientList\": {{ JSON.stringify($json.recipientList) }}\n}",
+        "options": {}
+      }
+    },
+    {
+      "id": "code-02",
+      "name": "Code - 결과 정리",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const res = $input.first().json;\nconst resultCode = res.header?.resultCode ?? res.resultCode ?? '';\nconst resultMessage = res.header?.resultMessage ?? res.resultMessage ?? '';\nconst isSuccess = resultCode === 'SUCCESS' || res.header?.isSuccessful === true;\n\nreturn [{ json: { isSuccess, resultCode, resultMessage, raw: res } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code - 입력값 검증",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - 입력값 검증": {
+      "main": [
+        [
+          {
+            "node": "HTTP - 알림톡 발송",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - 알림톡 발송": {
+      "main": [
+        [
+          {
+            "node": "Code - 결과 정리",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Seoul",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "b87f2aa9-f740-47d7-affc-203f4d34f320",
+  "activeVersionId": null,
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-23T15:45:35.549Z",
+      "createdAt": "2026-03-23T15:45:35.549Z",
+      "role": "workflow:owner",
+      "workflowId": "FKIIXxr7LFVwSUX0",
+      "projectId": "8znYa8Ca7GWeBy0m",
+      "project": {
+        "updatedAt": "2025-11-29T23:05:56.637Z",
+        "createdAt": "2025-11-29T23:04:07.777Z",
+        "id": "8znYa8Ca7GWeBy0m",
+        "name": "Seung Hyeon Kim <khai01@naver.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
