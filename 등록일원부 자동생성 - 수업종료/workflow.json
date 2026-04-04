@@ -470,9 +470,9 @@
   },
   "staticData": {
     "node:Notion Trigger - Student_Study 변경 감지": {
-      "lastTimeChecked": "2026-03-23T16:04:00.000Z",
+      "lastTimeChecked": "2026-04-02T12:32:00.000Z",
       "possibleDuplicates": [
-        "328c6a06-e17e-8124-8221-d6edf35bc3b6"
+        "333c6a06-e17e-815e-8fa6-f08e72884bc0"
       ]
     }
   },
@@ -480,7 +480,7 @@
   "pinData": {},
   "versionId": "4d2b6f2c-bed4-4c3a-aedc-558c311c1bb9",
   "activeVersionId": "4d2b6f2c-bed4-4c3a-aedc-558c311c1bb9",
-  "versionCounter": 192,
+  "versionCounter": 239,
   "triggerCount": 1,
   "shared": [
     {
