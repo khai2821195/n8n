@@ -1,0 +1,327 @@
+{
+  "updatedAt": "2026-03-02T09:56:07.062Z",
+  "createdAt": "2026-01-06T10:43:11.856Z",
+  "id": "qWymLvS3naRN5DmD",
+  "name": "My workflow",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "3ae33a86-237c-47f9-942c-2e8801223735",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "options": {}
+      },
+      "webhookId": "493d1779-54aa-441c-8620-330ab5fc52ca"
+    },
+    {
+      "id": "31ea1975-8c37-48a4-b3e7-8bb14182c14a",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        208,
+        0
+      ],
+      "parameters": {
+        "options": {}
+      }
+    },
+    {
+      "id": "574ad2bf-937f-411d-9b9f-a31a94a1e6e4",
+      "name": "Google Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        96,
+        240
+      ],
+      "parameters": {
+        "options": {}
+      }
+    },
+    {
+      "id": "8654b823-f7d2-4308-b5aa-942b21ed3b11",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        304,
+        240
+      ],
+      "parameters": {
+        "contextWindowLength": 10
+      }
+    },
+    {
+      "id": "33b517a6-a6b9-40fe-bf54-77a00d93d46a",
+      "name": "Get a database in Notion",
+      "type": "n8n-nodes-base.notionTool",
+      "typeVersion": 2.2,
+      "position": [
+        512,
+        240
+      ],
+      "parameters": {
+        "resource": "database",
+        "databaseId": {
+          "__rl": true,
+          "value": "2d0c6a06-e17e-8118-8ce1-dd2f76406aa1",
+          "mode": "list",
+          "cachedResultName": "Student_Study",
+          "cachedResultUrl": "https://www.notion.so/2d0c6a06e17e81188ce1dd2f76406aa1"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a database in Notion": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "aa08d76a-cf52-4c50-89e7-fa3b2d3df27f",
+  "activeVersionId": "aa08d76a-cf52-4c50-89e7-fa3b2d3df27f",
+  "versionCounter": 22,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-01-06T10:43:11.860Z",
+      "createdAt": "2026-01-06T10:43:11.860Z",
+      "role": "workflow:owner",
+      "workflowId": "qWymLvS3naRN5DmD",
+      "projectId": "8znYa8Ca7GWeBy0m",
+      "project": {
+        "updatedAt": "2025-11-29T23:05:56.637Z",
+        "createdAt": "2025-11-29T23:04:07.777Z",
+        "id": "8znYa8Ca7GWeBy0m",
+        "name": "Seung Hyeon Kim <khai01@naver.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-03-02T09:56:07.063Z",
+    "createdAt": "2026-03-02T09:56:07.063Z",
+    "versionId": "aa08d76a-cf52-4c50-89e7-fa3b2d3df27f",
+    "workflowId": "qWymLvS3naRN5DmD",
+    "nodes": [
+      {
+        "id": "3ae33a86-237c-47f9-942c-2e8801223735",
+        "name": "When chat message received",
+        "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+        "typeVersion": 1.4,
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {
+          "options": {}
+        },
+        "webhookId": "493d1779-54aa-441c-8620-330ab5fc52ca"
+      },
+      {
+        "id": "31ea1975-8c37-48a4-b3e7-8bb14182c14a",
+        "name": "AI Agent",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 3,
+        "position": [
+          208,
+          0
+        ],
+        "parameters": {
+          "options": {}
+        }
+      },
+      {
+        "id": "574ad2bf-937f-411d-9b9f-a31a94a1e6e4",
+        "name": "Google Gemini Chat Model",
+        "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+        "typeVersion": 1,
+        "position": [
+          96,
+          240
+        ],
+        "parameters": {
+          "options": {}
+        },
+        "credentials": {
+          "googlePalmApi": {
+            "id": "62k1fQmgnqHiijmw",
+            "name": "Google Gemini(PaLM) Api account"
+          }
+        }
+      },
+      {
+        "id": "8654b823-f7d2-4308-b5aa-942b21ed3b11",
+        "name": "Simple Memory",
+        "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+        "typeVersion": 1.3,
+        "position": [
+          304,
+          240
+        ],
+        "parameters": {
+          "contextWindowLength": 10
+        }
+      },
+      {
+        "id": "33b517a6-a6b9-40fe-bf54-77a00d93d46a",
+        "name": "Get a database in Notion",
+        "type": "n8n-nodes-base.notionTool",
+        "typeVersion": 2.2,
+        "position": [
+          512,
+          240
+        ],
+        "parameters": {
+          "resource": "database",
+          "databaseId": {
+            "__rl": true,
+            "value": "2d0c6a06-e17e-8118-8ce1-dd2f76406aa1",
+            "mode": "list",
+            "cachedResultName": "Student_Study",
+            "cachedResultUrl": "https://www.notion.so/2d0c6a06e17e81188ce1dd2f76406aa1"
+          }
+        },
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "When chat message received": {
+        "main": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Google Gemini Chat Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Simple Memory": {
+        "ai_memory": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "ai_memory",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get a database in Notion": {
+        "ai_tool": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Seung Hyeon Kim",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-03-02T09:56:07.346Z",
+        "id": 41,
+        "workflowId": "qWymLvS3naRN5DmD",
+        "versionId": "aa08d76a-cf52-4c50-89e7-fa3b2d3df27f",
+        "event": "activated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      },
+      {
+        "createdAt": "2026-03-02T09:56:07.205Z",
+        "id": 40,
+        "workflowId": "qWymLvS3naRN5DmD",
+        "versionId": "aa08d76a-cf52-4c50-89e7-fa3b2d3df27f",
+        "event": "deactivated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
+    ]
+  }
+}
