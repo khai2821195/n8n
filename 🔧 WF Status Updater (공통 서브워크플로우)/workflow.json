@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-30T23:29:14.510Z",
+  "updatedAt": "2026-04-04T07:45:18.136Z",
   "createdAt": "2026-03-14T15:43:51.332Z",
   "id": "eOopB5bbEEO9rjrg",
   "name": "🔧 WF Status Updater (공통 서브워크플로우)",
@@ -20,7 +20,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.first().json;\nconst workflowId = input.workflowId || '';\nconst status = input.status || '✅ 정상';\nconst notionPageId = input.notionPageId || '';\nconst errorMessage = input.errorMessage || '';\nconst workflowName = input.workflowName || '';\n\nif (!workflowId) throw new Error('workflowId 필수');\nif (!notionPageId) throw new Error('notionPageId 필수');\n\nconst now = new Date();\nconst koreaTime = new Date(now.getTime() + 9 * 60 * 60 * 1000);\nconst lastRun = koreaTime.toISOString().replace('Z', '+09:00');\n\nreturn [{ json: { workflowId, workflowName, status, notionPageId, errorMessage, lastRun } }];"
+        "jsCode": "const input = $input.first().json;\nconst workflowId = input.workflowId || '';\nconst status = input.status || '✅ 정상';\nconst notionPageId = input.notionPageId || '';\nconst errorMessage = input.errorMessage || '';\nconst workflowName = input.workflowName || '';\n\nif (!workflowId) throw new Error('workflowId 필수');\nif (!notionPageId) throw new Error('notionPageId 필수');\n\n// UTC 그대로 전달 - 노션이 사용자 타임존에 맞게 표시\nconst lastRun = new Date().toISOString();\n\nreturn [{ json: { workflowId, workflowName, status, notionPageId, errorMessage, lastRun } }];"
       },
       "id": "validate",
       "name": "입력값 검증",
@@ -286,9 +286,9 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "9457c3d9-03c6-4bd4-862c-58440b822f45",
-  "activeVersionId": "9457c3d9-03c6-4bd4-862c-58440b822f45",
-  "versionCounter": 47,
+  "versionId": "11ad3639-2a0b-4050-b374-0c6f748ff063",
+  "activeVersionId": "11ad3639-2a0b-4050-b374-0c6f748ff063",
+  "versionCounter": 50,
   "triggerCount": 0,
   "shared": [
     {
@@ -311,9 +311,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-30T23:29:14.513Z",
-    "createdAt": "2026-03-30T23:29:14.513Z",
-    "versionId": "9457c3d9-03c6-4bd4-862c-58440b822f45",
+    "updatedAt": "2026-04-04T07:45:18.137Z",
+    "createdAt": "2026-04-04T07:45:18.137Z",
+    "versionId": "11ad3639-2a0b-4050-b374-0c6f748ff063",
     "workflowId": "eOopB5bbEEO9rjrg",
     "nodes": [
       {
@@ -329,7 +329,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const input = $input.first().json;\nconst workflowId = input.workflowId || '';\nconst status = input.status || '✅ 정상';\nconst notionPageId = input.notionPageId || '';\nconst errorMessage = input.errorMessage || '';\nconst workflowName = input.workflowName || '';\n\nif (!workflowId) throw new Error('workflowId 필수');\nif (!notionPageId) throw new Error('notionPageId 필수');\n\nconst now = new Date();\nconst koreaTime = new Date(now.getTime() + 9 * 60 * 60 * 1000);\nconst lastRun = koreaTime.toISOString().replace('Z', '+09:00');\n\nreturn [{ json: { workflowId, workflowName, status, notionPageId, errorMessage, lastRun } }];"
+          "jsCode": "const input = $input.first().json;\nconst workflowId = input.workflowId || '';\nconst status = input.status || '✅ 정상';\nconst notionPageId = input.notionPageId || '';\nconst errorMessage = input.errorMessage || '';\nconst workflowName = input.workflowName || '';\n\nif (!workflowId) throw new Error('workflowId 필수');\nif (!notionPageId) throw new Error('notionPageId 필수');\n\n// UTC 그대로 전달 - 노션이 사용자 타임존에 맞게 표시\nconst lastRun = new Date().toISOString();\n\nreturn [{ json: { workflowId, workflowName, status, notionPageId, errorMessage, lastRun } }];"
         },
         "id": "validate",
         "name": "입력값 검증",
@@ -603,18 +603,18 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-30T23:29:14.707Z",
-        "id": 418,
+        "createdAt": "2026-04-04T07:45:18.410Z",
+        "id": 453,
         "workflowId": "eOopB5bbEEO9rjrg",
-        "versionId": "9457c3d9-03c6-4bd4-862c-58440b822f45",
+        "versionId": "11ad3639-2a0b-4050-b374-0c6f748ff063",
         "event": "activated",
         "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
       },
       {
-        "createdAt": "2026-03-30T23:29:14.653Z",
-        "id": 417,
+        "createdAt": "2026-04-04T07:45:18.335Z",
+        "id": 452,
         "workflowId": "eOopB5bbEEO9rjrg",
-        "versionId": "9457c3d9-03c6-4bd4-862c-58440b822f45",
+        "versionId": "11ad3639-2a0b-4050-b374-0c6f748ff063",
         "event": "deactivated",
         "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
       }
