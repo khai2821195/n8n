@@ -1,29 +1,87 @@
 {
-  "updatedAt": "2026-03-03T21:05:24.088Z",
+  "updatedAt": "2026-04-06T16:38:58.664Z",
   "createdAt": "2026-03-03T18:16:19.957Z",
   "id": "L6uRu2oqasHrOIQR",
-  "name": "Blog Auto Writer 260304",
+  "name": "📚 Math4U 학원 블로그 자동작성",
   "description": null,
-  "active": false,
+  "active": true,
   "isArchived": false,
   "nodes": [
     {
-      "id": "node-webhook",
-      "name": "웹훅 트리거",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2.1,
+      "id": "node-form",
+      "name": "📝 블로그 작성 폼",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
       "position": [
-        200,
+        0,
         400
       ],
       "parameters": {
-        "httpMethod": "POST",
-        "path": "blog-writer",
-        "responseMode": "responseNode",
-        "options": {
-          "allowedOrigins": "*"
-        }
-      }
+        "formTitle": "📚 Math4U 학원 블로그 자동작성",
+        "formDescription": "주제와 옵션을 입력하면 네이버 블로그 초안을 자동으로 작성해드립니다.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "블로그 주제",
+              "fieldType": "textarea",
+              "placeholder": "예: 고3 수능 수학 막판 점수 올리는 법, 동탄 수학학원 선택 기준",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "대상 독자",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "학부모"
+                  },
+                  {
+                    "option": "고등학생"
+                  },
+                  {
+                    "option": "중학생"
+                  },
+                  {
+                    "option": "수험생"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "글 톤",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "친근한"
+                  },
+                  {
+                    "option": "전문적인"
+                  },
+                  {
+                    "option": "신뢰감있는"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "참고 URL (선택)",
+              "fieldType": "textarea",
+              "placeholder": "참고할 블로그나 자료 URL (줄바꿈으로 여러 개 입력 가능)"
+            },
+            {
+              "fieldLabel": "추가 메모",
+              "fieldType": "textarea",
+              "placeholder": "특별히 강조하고 싶은 내용, 포함할 키워드 등"
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "webhookId": "a8235c14-93a5-416c-b209-a669e87f7704"
     },
     {
       "id": "node-parse",
@@ -31,78 +89,51 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        420,
+        240,
         400
       ],
       "parameters": {
-        "mode": "manual",
         "assignments": {
           "assignments": [
             {
               "id": "p1",
               "name": "blog_topic",
-              "value": "={{ $json.body.blog_topic }}",
+              "value": "={{ $json['블로그 주제'] }}",
               "type": "string"
             },
             {
               "id": "p2",
-              "name": "tone",
-              "value": "={{ $json.body.tone || '친근한' }}",
+              "name": "target_reader",
+              "value": "={{ $json['대상 독자'] }}",
               "type": "string"
             },
             {
               "id": "p3",
-              "name": "target_reader",
-              "value": "={{ $json.body.target_reader || '학부모' }}",
+              "name": "tone",
+              "value": "={{ $json['글 톤'] }}",
               "type": "string"
             },
             {
               "id": "p4",
               "name": "url_list",
-              "value": "={{ $json.body.url_list || '' }}",
+              "value": "={{ $json['참고 URL (선택)'] || '' }}",
               "type": "string"
             },
             {
               "id": "p5",
-              "name": "notion_page_ids",
-              "value": "={{ $json.body.notion_page_ids || '' }}",
+              "name": "memo",
+              "value": "={{ $json['추가 메모'] || '' }}",
               "type": "string"
             },
             {
               "id": "p6",
-              "name": "obsidian_files",
-              "value": "={{ $json.body.obsidian_files || '' }}",
-              "type": "string"
-            },
-            {
-              "id": "p7",
-              "name": "quality_loop_max",
-              "value": "={{ $json.body.quality_loop_max || '3' }}",
-              "type": "string"
-            },
-            {
-              "id": "p8",
-              "name": "loop_count",
-              "value": "0",
+              "name": "date_str",
+              "value": "={{ new Date().toISOString().slice(0,10) }}",
               "type": "string"
             }
           ]
         },
-        "includeOtherFields": false
-      }
-    },
-    {
-      "id": "node-split",
-      "name": "URL 목록 분리",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        640,
-        280
-      ],
-      "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "const input=$input.first().json;\nconst urls=(input.url_list||'').split('\\n').map(u=>u.trim()).filter(u=>u.length>0);\nconst notionIds=(input.notion_page_ids||'').split(',').map(i=>i.trim()).filter(i=>i.length>0);\nconst obsidianFiles=(input.obsidian_files||'').split(',').map(f=>f.trim()).filter(f=>f.length>0);\nreturn [{json:{...input,urls_array:urls,notion_ids_array:notionIds,obsidian_files_array:obsidianFiles}}];"
+        "options": {}
       }
     },
     {
@@ -111,25 +142,24 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        860,
-        160
+        480,
+        400
       ],
       "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "const input=$input.first().json;\nconst urls=input.urls_array||[];\nif(urls.length===0) return [{json:{...input,source_type:'url',source:'none',fetch_url:'',content:''}}];\nreturn urls.map(url=>({json:{...input,source_type:'url',source:url,fetch_url:'https://r.jina.ai/'+url}}));"
+        "jsCode": "const input = $input.first().json;\nconst urls = (input.url_list || '').split('\\n').map(u => u.trim()).filter(u => u.length > 0);\nif (urls.length === 0) return [{ json: { ...input, url_contents: '' } }];\nreturn urls.map(url => ({ json: { ...input, fetch_url: 'https://r.jina.ai/' + url, source_url: url } }));"
       }
     },
     {
       "id": "node-jina",
       "name": "Jina URL 읽기",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
+      "typeVersion": 4.2,
       "position": [
-        1080,
-        160
+        720,
+        400
       ],
+      "onError": "continueRegularOutput",
       "parameters": {
-        "method": "GET",
         "url": "={{ $json.fetch_url }}",
         "sendHeaders": true,
         "headerParameters": {
@@ -147,214 +177,183 @@
             }
           }
         }
-      },
-      "onError": "continueRegularOutput"
-    },
-    {
-      "id": "node-url-result",
-      "name": "URL 결과 정리",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1300,
-        160
-      ],
-      "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "const items=$input.all();\nconst urlContents=items.filter(i=>i.json.source!=='none'&&i.json.fetch_url).map(i=>'[출처: '+i.json.source+']\\n'+(i.json.data||i.json.body||'').substring(0,3000)).join('\\n\\n---\\n\\n');\nconst base=items[0].json;\nreturn [{json:{...base,url_contents:urlContents}}];"
       }
     },
     {
-      "id": "node-notion-prep",
-      "name": "노션 페이지 읽기",
+      "id": "node-url-merge",
+      "name": "URL 자료 통합",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        860,
+        960,
         400
       ],
       "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "const input=$input.first().json;\nconst ids=input.notion_ids_array||[];\nif(ids.length===0) return [{json:{...input,notion_page_id:null}}];\nreturn ids.map(id=>({json:{...input,notion_page_id:id}}));"
+        "jsCode": "const items = $input.all();\nconst base = $('입력값 파싱').first().json;\nlet urlContents = '';\nfor (const item of items) {\n  if (!item.json.fetch_url) continue;\n  const content = (item.json.data || item.json.body || '').substring(0, 3000);\n  if (content) urlContents += '[출처: ' + item.json.source_url + ']\\n' + content + '\\n\\n---\\n\\n';\n}\nreturn [{ json: { ...base, url_contents: urlContents } }];"
       }
     },
     {
-      "id": "node-notion-api",
-      "name": "노션 API 호출",
+      "id": "node-prompt1",
+      "name": "1차 프롬프트 조립",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        400
+      ],
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst refSection = d.url_contents ? '\\n\\n## 참고 자료\\n' + d.url_contents : '';\nconst memoSection = d.memo ? '\\n\\n## 추가 요청사항\\n' + d.memo : '';\nconst prompt = [\n  '너는 대치Math4U 동탄캠 수학학원의 네이버 블로그 작가야.',\n  '아래 주제로 학원 블로그 초안을 작성해줘.',\n  '',\n  '## 블로그 주제',\n  d.blog_topic,\n  '',\n  '## 독자 및 톤',\n  '대상 독자: ' + d.target_reader,\n  '글 톤: ' + d.tone,\n  '',\n  '## 학원 기본 정보 (자연스럽게 1~2회 녹여넣기)',\n  '학원명: 대치Math4U 동탄캠',\n  '위치: 동탄 반송동 북광장',\n  '특징: 고등수학 전문, 고3 수능 수학 특화, 소수 정예',\n  refSection,\n  memoSection,\n  '',\n  '## 작성 규칙',\n  '1. 본문: 1200~1500자',\n  '2. 소제목(##) 3개 이상',\n  '3. 구체적 예시 또는 팁 포함',\n  '4. 독자 행동 유도 문구 (상담 문의 등)',\n  '5. 해시태그 10~15개 (동탄수학학원, 대치math4u 등 포함)',\n  '6. JSON으로만 응답 (백틱 없이): {\"title\":\"...\",\"body\":\"...\",\"hashtags\":\"...\"}'\n].join('\\n');\nconst body = JSON.stringify({\n  contents: [{ parts: [{ text: prompt }] }],\n  generationConfig: { temperature: 0.8, maxOutputTokens: 2000 }\n});\nreturn [{ json: { ...d, prompt1_body: body } }];"
+      }
+    },
+    {
+      "id": "node-ai1",
+      "name": "1차 AI 초안 (gemma-3-12b)",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
+      "typeVersion": 4.2,
       "position": [
-        1080,
+        1440,
         400
       ],
-      "parameters": {
-        "method": "GET",
-        "url": "=https://api.notion.com/v1/blocks/{{ $json.notion_page_id }}/children",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Notion-Version",
-              "value": "2022-06-28"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "onError": "continueRegularOutput"
-    },
-    {
-      "id": "node-notion-parse",
-      "name": "노션 내용 파싱",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1300,
-        400
-      ],
-      "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "const items=$input.all();\nlet notionContents='';\nfor(const item of items){\n  if(!item.json.notion_page_id) continue;\n  const blocks=item.json.results||[];\n  const texts=blocks.filter(b=>b.type&&b[b.type]&&b[b.type].rich_text).map(b=>b[b.type].rich_text.map(t=>t.plain_text).join('')).filter(t=>t.length>0).join('\\n');\n  if(texts) notionContents+='[노션: '+item.json.notion_page_id+']\\n'+texts+'\\n\\n---\\n\\n';\n}\nconst base=items[0].json;\nreturn [{json:{...base,notion_contents:notionContents}}];"
-      }
-    },
-    {
-      "id": "node-obs-prep",
-      "name": "옵시디언 파일 읽기",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        860,
-        640
-      ],
-      "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "const input=$input.first().json;\nconst files=input.obsidian_files_array||[];\nif(files.length===0) return [{json:{...input,obsidian_file_path:null}}];\nreturn files.map(f=>({json:{...input,obsidian_file_path:f}}));"
-      }
-    },
-    {
-      "id": "node-obs-read",
-      "name": "옵시디언 파일 실행",
-      "type": "n8n-nodes-base.executeCommand",
-      "typeVersion": 1,
-      "position": [
-        1080,
-        640
-      ],
-      "parameters": {
-        "command": "=type \"{{ $json.obsidian_file_path }}\""
-      },
-      "onError": "continueRegularOutput"
-    },
-    {
-      "id": "node-obs-parse",
-      "name": "옵시디언 내용 정리",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1300,
-        640
-      ],
-      "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "const items=$input.all();\nlet obsidianContents='';\nfor(const item of items){\n  if(!item.json.obsidian_file_path) continue;\n  const content=item.json.stdout||'';\n  if(content.trim()) obsidianContents+='[옵시디언: '+item.json.obsidian_file_path+']\\n'+content.substring(0,3000)+'\\n\\n---\\n\\n';\n}\nconst base=items[0].json;\nreturn [{json:{...base,obsidian_contents:obsidianContents}}];"
-      }
-    },
-    {
-      "id": "node-merge",
-      "name": "자료 통합",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1520,
-        400
-      ],
-      "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "const items=$input.all();\nlet urlC='',notionC='',obsC='',base={};\nfor(const item of items){\n  if(item.json.url_contents!==undefined) urlC=item.json.url_contents;\n  if(item.json.notion_contents!==undefined) notionC=item.json.notion_contents;\n  if(item.json.obsidian_contents!==undefined) obsC=item.json.obsidian_contents;\n  if(item.json.blog_topic) base=item.json;\n}\nconst all=[\n  urlC ? '=== 웹 URL 자료 ===\\n'+urlC : '',\n  notionC ? '=== 노션 자료 ===\\n'+notionC : '',\n  obsC ? '=== 옵시디언 자료 ===\\n'+obsC : ''\n].filter(c=>c.length>0).join('\\n\\n');\nreturn [{json:{...base,merged_contents:all.substring(0,15000),loop_count:0,draft_content:'',quality_passed:false}}];"
-      }
-    },
-    {
-      "id": "node-ai-draft",
-      "name": "AI 초안 작성",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
-      "position": [
-        1740,
-        400
-      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 8000,
       "parameters": {
         "method": "POST",
-        "url": "https://api.anthropic.com/v1/messages",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemma-3-12b-it:generateContent?key={{ $env.GEMINI_API_KEY }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
-              "name": "x-api-key",
-              "value": "YOUR_ANTHROPIC_API_KEY"
-            },
-            {
-              "name": "anthropic-version",
-              "value": "2023-06-01"
-            },
-            {
-              "name": "content-type",
+              "name": "Content-Type",
               "value": "application/json"
             }
           ]
         },
         "sendBody": true,
         "contentType": "raw",
-        "body": "={\"model\":\"claude-sonnet-4-20250514\",\"max_tokens\":4000,\"system\":\"네이버 블로그 전문 작가. 반드시 [참고자료]만 기반으로 작성. 외부정보 추가 금지. 톤: \"+$json.tone+\", 독자: \"+$json.target_reader+\". 규칙: 네이버 블로그 형식, 2000자 이상, 소제목 3개 이상, 구체적 예시, 독자 행동유도 문구, 해시태그 10개, 서론/본론/결론 구조\",\"messages\":[{\"role\":\"user\",\"content\":\"블로그 주제: \"+$json.blog_topic+\"\\n\\n[참고자료]\\n\"+$json.merged_contents+\"\\n\\n위 참고자료만 활용해서 네이버 블로그 글 작성해주세요.\"}]}"
+        "rawContentType": "application/json",
+        "body": "={{ $json.prompt1_body }}",
+        "options": {
+          "timeout": 120000
+        }
       }
     },
     {
-      "id": "node-extract",
-      "name": "초안 텍스트 추출",
+      "id": "node-extract1",
+      "name": "1차 초안 추출",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1960,
+        1680,
         400
       ],
       "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "const item=$input.first();\nconst content=item.json.content&&item.json.content[0]?item.json.content[0].text:'';\nreturn [{json:{...item.json,draft_content:content}}];"
+        "jsCode": "const d = $input.first().json;\nconst prev = $('1차 프롬프트 조립').first().json;\nlet raw = '';\nif (d.candidates && d.candidates[0]) raw = d.candidates[0]['content']['parts'][0]['text'] || '';\nraw = raw.replace(/```json\\s*/g,'').replace(/```\\s*/g,'').trim();\nlet title = '[Blog] ' + prev.blog_topic, body = raw, hashtags = '';\ntry {\n  const p = JSON.parse(raw);\n  title = p.title || title;\n  body = p.body || raw;\n  if (Array.isArray(p.hashtags)) hashtags = p.hashtags.join(' ');\n  else hashtags = p.hashtags || '';\n} catch(e) {}\nreturn [{ json: { ...prev, draft_content: body, draft_title: title, draft_hashtags: hashtags } }];"
+      }
+    },
+    {
+      "id": "node-prompt2",
+      "name": "2차 프롬프트 조립",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        400
+      ],
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst prompt = [\n  '너는 대치Math4U 동탄캠 수학학원의 시니어 블로그 마케터야.',\n  '아래 초안을 더 풍성하고 완성도 높은 네이버 블로그 포스팅으로 업그레이드해줘.',\n  '',\n  '## 초안 제목',\n  d.draft_title,\n  '',\n  '## 초안 본문',\n  d.draft_content,\n  '',\n  '## 업그레이드 규칙',\n  '1. 본문: 1800~2200자로 확장',\n  '2. 소제목(##) 4개 이상으로 구조화',\n  '3. SEO 키워드 (동탄수학학원, 반송동수학학원, 대치math4u, 고등수학, 수능수학) 자연스럽게 3~5회 삽입',\n  '4. 구체적 학습 팁이나 사례 추가',\n  '5. 독자 행동 유도 문구 강화 (상담 문의, 방문 등)',\n  '6. 해시태그: 15~20개로 확장',\n  '7. 학원명(대치Math4U 동탄캠), 위치(동탄 반송동 북광장) 자연스럽게 유지',\n  '8. 대상 독자: ' + d.target_reader + ' / 글 톤: ' + d.tone,\n  '9. JSON으로만 응답 (백틱 없이): {\"title\":\"...\",\"body\":\"...\",\"hashtags\":\"...\"}'\n].join('\\n');\nconst body = JSON.stringify({\n  contents: [{ parts: [{ text: prompt }] }],\n  generationConfig: { temperature: 0.8, maxOutputTokens: 3000 }\n});\nreturn [{ json: { ...d, prompt2_body: body } }];"
+      }
+    },
+    {
+      "id": "node-ai2",
+      "name": "2차 보강 (gemma-3-27b)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2160,
+        400
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 8000,
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key={{ $env.GEMINI_API_KEY }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.prompt2_body }}",
+        "options": {
+          "timeout": 120000
+        }
+      }
+    },
+    {
+      "id": "node-extract2",
+      "name": "2차 보강 추출",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        400
+      ],
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst prev = $('2차 프롬프트 조립').first().json;\nlet raw = '';\nif (d.candidates && d.candidates[0]) raw = d.candidates[0]['content']['parts'][0]['text'] || '';\nraw = raw.replace(/```json\\s*/g,'').replace(/```\\s*/g,'').trim();\nlet title = prev.draft_title, body = raw, hashtags = prev.draft_hashtags;\ntry {\n  const p = JSON.parse(raw);\n  title = p.title || title;\n  body = p.body || raw;\n  if (Array.isArray(p.hashtags)) hashtags = p.hashtags.join(' ');\n  else hashtags = p.hashtags || hashtags;\n} catch(e) {}\nreturn [{ json: { ...prev, draft_content: body, draft_title: title, draft_hashtags: hashtags } }];"
+      }
+    },
+    {
+      "id": "node-eval-prompt",
+      "name": "품질평가 프롬프트 조립",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        400
+      ],
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst prompt = '블로그 품질 평가자야. 아래 기준으로 평가 후 JSON만 반환해 (백틱 없이): {\"passed\":true,\"score\":0,\"improvements\":\"\"}\\n\\n평가기준:\\n(1) 본문 1500자 이상\\n(2) 소제목 4개 이상\\n(3) 구체적 예시 또는 팁 포함\\n(4) SEO 키워드 포함 (동탄수학학원 등)\\n(5) 독자 행동 유도 문구 포함\\n(6) 해시태그 15개 이상\\n5개 이상 충족 시 passed:true, improvements는 미달 항목 개선 방향\\n\\n[평가할 글]\\n제목: ' + d.draft_title + '\\n\\n' + (d.draft_content || '').slice(0, 1000);\nconst body = JSON.stringify({\n  contents: [{ parts: [{ text: prompt }] }],\n  generationConfig: { temperature: 0.2, maxOutputTokens: 400 }\n});\nreturn [{ json: { ...d, eval_body: body } }];"
       }
     },
     {
       "id": "node-ai-eval",
-      "name": "AI 품질 평가",
+      "name": "품질 평가 (gemma-4-26b)",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
+      "typeVersion": 4.2,
       "position": [
-        2180,
+        2880,
         400
       ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 8000,
       "parameters": {
         "method": "POST",
-        "url": "https://api.anthropic.com/v1/messages",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemma-4-26b-a4b-it:generateContent?key={{ $env.GEMINI_API_KEY }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
-              "name": "x-api-key",
-              "value": "YOUR_ANTHROPIC_API_KEY"
-            },
-            {
-              "name": "anthropic-version",
-              "value": "2023-06-01"
-            },
-            {
-              "name": "content-type",
+              "name": "Content-Type",
               "value": "application/json"
             }
           ]
         },
         "sendBody": true,
         "contentType": "raw",
-        "body": "={\"model\":\"claude-sonnet-4-20250514\",\"max_tokens\":800,\"system\":\"블로그 품질 평가자. JSON만 반환(preamble금지): {\\\"passed\\\":true,\\\"score\\\":0,\\\"issues\\\":[],\\\"improvements\\\":\\\"\\\"}\",\"messages\":[{\"role\":\"user\",\"content\":\"평가기준: (1)글자수 2000자이상 (2)소제목 3개이상 (3)구체적 예시포함 (4)독자행동유도문구 (5)해시태그포함. 4/5이상 passed:true\\n\\n[평가할 글]\\n\"+$json.draft_content}]}"
+        "rawContentType": "application/json",
+        "body": "={{ $json.eval_body }}",
+        "options": {
+          "timeout": 60000
+        }
       }
     },
     {
@@ -363,12 +362,11 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2400,
+        3120,
         400
       ],
       "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "const item=$input.first();\nconst txt=item.json.content&&item.json.content[0]?item.json.content[0].text:'{}';\nlet q={};\ntry{q=JSON.parse(txt.replace(/```json|```/g,'').trim());}catch(e){q={passed:true,score:70,issues:[],improvements:''};}\nconst loopCount=(parseInt(item.json.loop_count)||0)+1;\nconst maxLoop=parseInt(item.json.quality_loop_max||3);\nconst forcePass=loopCount>=maxLoop;\nreturn [{json:{...item.json,quality_passed:q.passed||forcePass,quality_score:q.score||0,quality_issues:q.issues||[],improvements:q.improvements||'',loop_count:loopCount,force_passed:forcePass}}];"
+        "jsCode": "const item = $input.first().json;\nconst prev = $('품질평가 프롬프트 조립').first().json;\nlet raw = '';\nif (item.json && item.json.candidates && item.json.candidates[0]) raw = item.json.candidates[0]['content']['parts'][0]['text'] || '{}';\nelse if (item.candidates && item.candidates[0]) raw = item.candidates[0]['content']['parts'][0]['text'] || '{}';\nraw = raw.replace(/```json\\s*/g,'').replace(/```\\s*/g,'').trim();\nlet q = {};\ntry { q = JSON.parse(raw); } catch(e) { q = { passed: true, score: 70, improvements: '' }; }\nreturn [{ json: { ...prev, quality_passed: q.passed || false, quality_score: q.score || 0, improvements: q.improvements || '' } }];"
       }
     },
     {
@@ -377,17 +375,12 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2620,
+        3360,
         400
       ],
       "parameters": {
         "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
-          },
+          "combinator": "and",
           "conditions": [
             {
               "id": "c1",
@@ -399,76 +392,94 @@
               }
             }
           ],
-          "combinator": "and"
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          }
         },
         "looseTypeValidation": false
       }
     },
     {
-      "id": "node-ai-improve",
-      "name": "AI 글 보강",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
+      "id": "node-prompt3",
+      "name": "3차 프롬프트 조립",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
-        2840,
+        3600,
         560
       ],
       "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst prompt = [\n  '너는 대치Math4U 동탄캠 학원 블로그 최고 전문 편집장이야.',\n  '아래 보완 지시사항에 따라 블로그 글을 최종 완성본으로 다듬어줘.',\n  '',\n  '[보완 지시사항]',\n  d.improvements || '전체적으로 더 전문적이고 SEO에 최적화된 글로 개선',\n  '',\n  '[현재 글]',\n  '제목: ' + d.draft_title,\n  '',\n  d.draft_content,\n  '',\n  '## 최종 완성 기준',\n  '1. 본문: 2000~2500자 완성본',\n  '2. 소제목(##) 4~5개',\n  '3. SEO 키워드 (동탄수학학원, 반송동수학학원, 대치math4u, 고등수학, 수능수학) 자연스럽게 삽입',\n  '4. 독자 행동 유도 문구 (상담 문의 등) 포함',\n  '5. 해시태그 20개',\n  '6. 학원명(대치Math4U 동탄캠), 위치(동탄 반송동 북광장) 유지',\n  '7. 대상 독자: ' + d.target_reader + ' / 글 톤: ' + d.tone,\n  '8. JSON으로만 응답 (백틱 없이): {\"title\":\"...\",\"body\":\"...\",\"hashtags\":\"...\"}'\n].join('\\n');\nconst body = JSON.stringify({\n  contents: [{ parts: [{ text: prompt }] }],\n  generationConfig: { temperature: 0.7, maxOutputTokens: 4000 }\n});\nreturn [{ json: { ...d, prompt3_body: body } }];"
+      }
+    },
+    {
+      "id": "node-ai3",
+      "name": "3차 보강 (gemma-4-31b)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3840,
+        560
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 8000,
+      "parameters": {
         "method": "POST",
-        "url": "https://api.anthropic.com/v1/messages",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemma-4-31b-it:generateContent?key={{ $env.GEMINI_API_KEY }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
-              "name": "x-api-key",
-              "value": "YOUR_ANTHROPIC_API_KEY"
-            },
-            {
-              "name": "anthropic-version",
-              "value": "2023-06-01"
-            },
-            {
-              "name": "content-type",
+              "name": "Content-Type",
               "value": "application/json"
             }
           ]
         },
         "sendBody": true,
         "contentType": "raw",
-        "body": "={\"model\":\"claude-sonnet-4-20250514\",\"max_tokens\":4000,\"system\":\"블로그 편집 전문가. [참고자료]만 활용, 외부정보 추가 금지.\",\"messages\":[{\"role\":\"user\",\"content\":\"[보완지시]\\n\"+$json.improvements+\"\\n\\n[참고자료]\\n\"+$json.merged_contents+\"\\n\\n[현재초안]\\n\"+$json.draft_content+\"\\n\\n보완된 완성 글 전체를 작성해주세요.\"}]}"
+        "rawContentType": "application/json",
+        "body": "={{ $json.prompt3_body }}",
+        "options": {
+          "timeout": 120000
+        }
       }
     },
     {
-      "id": "node-update",
-      "name": "보강된 초안 업데이트",
+      "id": "node-extract3",
+      "name": "3차 보강 추출",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3060,
+        4080,
         560
       ],
       "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "const item=$input.first();\nconst newContent=item.json.content&&item.json.content[0]?item.json.content[0].text:item.json.draft_content;\nreturn [{json:{...item.json,draft_content:newContent}}];"
+        "jsCode": "const d = $input.first().json;\nconst prev = $('3차 프롬프트 조립').first().json;\nlet raw = '';\nif (d.candidates && d.candidates[0]) raw = d.candidates[0]['content']['parts'][0]['text'] || '';\nraw = raw.replace(/```json\\s*/g,'').replace(/```\\s*/g,'').trim();\nlet title = prev.draft_title, body = raw, hashtags = prev.draft_hashtags;\ntry {\n  const p = JSON.parse(raw);\n  title = p.title || title;\n  body = p.body || raw;\n  if (Array.isArray(p.hashtags)) hashtags = p.hashtags.join(' ');\n  else hashtags = p.hashtags || hashtags;\n} catch(e) {}\nconst MAX = 1900;\nconst bodyChunks = [];\nfor (let i = 0; i < body.length; i += MAX) bodyChunks.push(body.slice(i, i + MAX));\nreturn [{ json: { ...prev, draft_content: body, bodyChunks, draft_title: title, draft_hashtags: hashtags, final_stage: '3차(gemma-4-31b)' } }];"
       }
     },
     {
-      "id": "node-save",
-      "name": "노션에 초안 저장",
+      "id": "node-notion-save-pass",
+      "name": "노션 저장 (품질통과)",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
+      "typeVersion": 4.2,
       "position": [
-        2840,
+        3600,
         240
       ],
       "parameters": {
         "method": "POST",
         "url": "https://api.notion.com/v1/pages",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer ntn_MASKED"
+            },
             {
               "name": "Notion-Version",
               "value": "2022-06-28"
@@ -481,75 +492,177 @@
         },
         "sendBody": true,
         "contentType": "raw",
-        "body": "={\"parent\":{\"database_id\":\"YOUR_NOTION_DATABASE_ID\"},\"properties\":{\"제목\":{\"title\":[{\"text\":{\"content\":\"[Blog] \"+$json.blog_topic}}]},\"상태\":{\"select\":{\"name\":\"초안완성\"}},\"품질점수\":{\"number\":$json.quality_score},\"반복횟수\":{\"number\":$json.loop_count}},\"children\":[{\"object\":\"block\",\"type\":\"paragraph\",\"paragraph\":{\"rich_text\":[{\"type\":\"text\",\"text\":{\"content\":$json.draft_content.substring(0,2000)}}]}}]}"
-      },
-      "onError": "continueRegularOutput"
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ parent: { database_id: '925413d91bd64c4abfd7904bf353f99d' }, properties: { '제목': { title: [{ text: { content: ($json.draft_title || '[제목 없음]').slice(0,2000) } }] }, '주제': { rich_text: [{ text: { content: ($json.blog_topic || '').slice(0,2000) } }] }, '상태': { select: { name: '품질통과' } }, '대상독자': { select: { name: $json.target_reader || '학부모' } }, '톤': { select: { name: $json.tone || '친근한' } }, '품질점수': { number: Number($json.quality_score) || 0 }, '반복횟수': { number: 2 }, '작성일': { date: { start: $json.date_str || new Date().toISOString().slice(0,10) } }, '해시태그': { rich_text: [{ text: { content: ($json.draft_hashtags || '').slice(0,2000) } }] }, '참고URL': { rich_text: [{ text: { content: ($json.url_list || '').slice(0,2000) } }] } }, children: [ { object: 'block', type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: '📝 블로그 본문 (2차 gemma-3-27b)' } }] } }, ...($json.bodyChunks || [($json.draft_content||'').slice(0,1900)]).map(chunk => ({ object: 'block', type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: chunk } }] } })), { object: 'block', type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: '🏷️ 해시태그' } }] } }, { object: 'block', type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: ($json.draft_hashtags || '').slice(0,2000) } }] } } ] }) }}",
+        "options": {}
+      }
     },
     {
-      "id": "node-final",
-      "name": "완성 결과",
+      "id": "node-notion-save-3rd",
+      "name": "노션 저장 (3차 보강)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4320,
+        560
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.notion.com/v1/pages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer ntn_MASKED"
+            },
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ parent: { database_id: '925413d91bd64c4abfd7904bf353f99d' }, properties: { '제목': { title: [{ text: { content: ($json.draft_title || '[제목 없음]').slice(0,2000) } }] }, '주제': { rich_text: [{ text: { content: ($json.blog_topic || '').slice(0,2000) } }] }, '상태': { select: { name: '품질통과' } }, '대상독자': { select: { name: $json.target_reader || '학부모' } }, '톤': { select: { name: $json.tone || '친근한' } }, '품질점수': { number: Number($json.quality_score) || 0 }, '반복횟수': { number: 3 }, '작성일': { date: { start: $json.date_str || new Date().toISOString().slice(0,10) } }, '해시태그': { rich_text: [{ text: { content: ($json.draft_hashtags || '').slice(0,2000) } }] }, '참고URL': { rich_text: [{ text: { content: ($json.url_list || '').slice(0,2000) } }] } }, children: [ { object: 'block', type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: '📝 블로그 본문 (3차 gemma-4-31b)' } }] } }, ...($json.bodyChunks || [($json.draft_content||'').slice(0,1900)]).map(chunk => ({ object: 'block', type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: chunk } }] } })), { object: 'block', type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: '🏷️ 해시태그' } }] } }, { object: 'block', type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: ($json.draft_hashtags || '').slice(0,2000) } }] } } ] }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-complete-pass",
+      "name": "완료 (품질통과)",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        3060,
+        3840,
         240
       ],
       "parameters": {
-        "mode": "manual",
         "assignments": {
           "assignments": [
             {
               "id": "f1",
-              "name": "status",
-              "value": "완성",
-              "type": "string"
+              "name": "result",
+              "type": "string",
+              "value": "={{ '🎉 [' + $json.draft_title + '] 2차 보강 품질통과! 노션에 저장됐어요.' }}"
             },
             {
               "id": "f2",
-              "name": "final_blog_post",
-              "value": "={{ $json.draft_content }}",
-              "type": "string"
-            },
-            {
-              "id": "f3",
-              "name": "quality_score",
-              "value": "={{ $json.quality_score }}",
-              "type": "string"
-            },
-            {
-              "id": "f4",
-              "name": "total_loops",
-              "value": "={{ $json.loop_count }}",
-              "type": "string"
-            },
-            {
-              "id": "f5",
-              "name": "blog_topic",
-              "value": "={{ $json.blog_topic }}",
-              "type": "string"
+              "name": "stage",
+              "type": "string",
+              "value": "2차 (gemma-3-27b)"
             }
           ]
         },
-        "includeOtherFields": false
+        "options": {}
       }
     },
     {
-      "id": "node-respond",
-      "name": "결과 응답",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.5,
+      "id": "node-complete-3rd",
+      "name": "완료 (3차 보강)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
       "position": [
-        3280,
+        4560,
+        560
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f1",
+              "name": "result",
+              "type": "string",
+              "value": "={{ '🎉 [' + $json.draft_title + '] 3차 보강 완료! 노션에 저장됐어요.' }}"
+            },
+            {
+              "id": "f2",
+              "name": "stage",
+              "type": "string",
+              "value": "3차 (gemma-4-31b)"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "status-success-pass",
+      "name": "✅ 상태 업데이트 (성공-2차)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        4080,
         240
       ],
       "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ JSON.stringify({status:'success',blog_topic:$json.blog_topic,final_blog_post:$json.final_blog_post,quality_score:$json.quality_score,total_loops:$json.total_loops}) }}"
+        "workflowId": "eOopB5bbEEO9rjrg",
+        "options": {}
+      }
+    },
+    {
+      "id": "status-success-3rd",
+      "name": "✅ 상태 업데이트 (성공-3차)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        4800,
+        560
+      ],
+      "parameters": {
+        "workflowId": "eOopB5bbEEO9rjrg",
+        "options": {}
+      }
+    },
+    {
+      "id": "error-trigger",
+      "name": "❌ 에러 감지",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        600
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "status-error",
+      "name": "❌ 상태 업데이트 (에러)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        1440,
+        600
+      ],
+      "parameters": {
+        "workflowId": "eOopB5bbEEO9rjrg",
+        "options": {}
+      }
+    },
+    {
+      "id": "manual-note",
+      "name": "📋 워크플로우 메뉴얼",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        160
+      ],
+      "parameters": {
+        "color": 4,
+        "content": "## 📋 Math4U 학원 블로그 자동작성 메뉴얼\n\n### ⚙️ 워크플로우 구조\n1️⃣ **1차 초안**: gemma-3-12b-it (1200~1500자)\n2️⃣ **2차 보강 (무조건)**: gemma-3-27b-it (1800~2200자)\n3️⃣ **품질 평가**: gemma-4-26b-a4b-it\n  - 통과 → 노션 저장\n  - 미달 → 3차 보강\n4️⃣ **3차 보강 (미달 시)**: gemma-4-31b-it (2000~2500자)\n\n### 🔧 수정이 필요할 때\n1. 학원 정보 → `1차 프롬프트 조립` 노드\n2. 품질 기준 → `품질평가 프롬프트 조립` 노드\n\n### ⚠️ 주의사항\n- API 키: 환경변수 GEMINI_API_KEY\n- Gemma 4 모델 무료 티어 가용 여부 확인 필요",
+        "height": 400,
+        "width": 400
       }
     }
   ],
   "connections": {
-    "웹훅 트리거": {
+    "📝 블로그 작성 폼": {
       "main": [
         [
           {
@@ -564,32 +677,7 @@
       "main": [
         [
           {
-            "node": "URL 목록 분리",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "URL 목록 분리": {
-      "main": [
-        [
-          {
             "node": "URL 콘텐츠 수집",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "노션 페이지 읽기",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "옵시디언 파일 읽기",
             "type": "main",
             "index": 0
           }
@@ -611,124 +699,102 @@
       "main": [
         [
           {
-            "node": "URL 결과 정리",
+            "node": "URL 자료 통합",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "URL 결과 정리": {
+    "URL 자료 통합": {
       "main": [
         [
           {
-            "node": "자료 통합",
+            "node": "1차 프롬프트 조립",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "노션 페이지 읽기": {
+    "1차 프롬프트 조립": {
       "main": [
         [
           {
-            "node": "노션 API 호출",
+            "node": "1차 AI 초안 (gemma-3-12b)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "노션 API 호출": {
+    "1차 AI 초안 (gemma-3-12b)": {
       "main": [
         [
           {
-            "node": "노션 내용 파싱",
+            "node": "1차 초안 추출",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "노션 내용 파싱": {
+    "1차 초안 추출": {
       "main": [
         [
           {
-            "node": "자료 통합",
-            "type": "main",
-            "index": 1
-          }
-        ]
-      ]
-    },
-    "옵시디언 파일 읽기": {
-      "main": [
-        [
-          {
-            "node": "옵시디언 파일 실행",
+            "node": "2차 프롬프트 조립",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "옵시디언 파일 실행": {
+    "2차 프롬프트 조립": {
       "main": [
         [
           {
-            "node": "옵시디언 내용 정리",
+            "node": "2차 보강 (gemma-3-27b)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "옵시디언 내용 정리": {
+    "2차 보강 (gemma-3-27b)": {
       "main": [
         [
           {
-            "node": "자료 통합",
-            "type": "main",
-            "index": 2
-          }
-        ]
-      ]
-    },
-    "자료 통합": {
-      "main": [
-        [
-          {
-            "node": "AI 초안 작성",
+            "node": "2차 보강 추출",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "AI 초안 작성": {
+    "2차 보강 추출": {
       "main": [
         [
           {
-            "node": "초안 텍스트 추출",
+            "node": "품질평가 프롬프트 조립",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "초안 텍스트 추출": {
+    "품질평가 프롬프트 조립": {
       "main": [
         [
           {
-            "node": "AI 품질 평가",
+            "node": "품질 평가 (gemma-4-26b)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "AI 품질 평가": {
+    "품질 평가 (gemma-4-26b)": {
       "main": [
         [
           {
@@ -754,58 +820,102 @@
       "main": [
         [
           {
-            "node": "노션에 초안 저장",
+            "node": "노션 저장 (품질통과)",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "AI 글 보강",
+            "node": "3차 프롬프트 조립",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "AI 글 보강": {
+    "노션 저장 (품질통과)": {
       "main": [
         [
           {
-            "node": "보강된 초안 업데이트",
+            "node": "완료 (품질통과)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "보강된 초안 업데이트": {
+    "완료 (품질통과)": {
       "main": [
         [
           {
-            "node": "AI 품질 평가",
+            "node": "✅ 상태 업데이트 (성공-2차)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "노션에 초안 저장": {
+    "3차 프롬프트 조립": {
       "main": [
         [
           {
-            "node": "완성 결과",
+            "node": "3차 보강 (gemma-4-31b)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "완성 결과": {
+    "3차 보강 (gemma-4-31b)": {
       "main": [
         [
           {
-            "node": "결과 응답",
+            "node": "3차 보강 추출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3차 보강 추출": {
+      "main": [
+        [
+          {
+            "node": "노션 저장 (3차 보강)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "노션 저장 (3차 보강)": {
+      "main": [
+        [
+          {
+            "node": "완료 (3차 보강)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "완료 (3차 보강)": {
+      "main": [
+        [
+          {
+            "node": "✅ 상태 업데이트 (성공-3차)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "❌ 에러 감지": {
+      "main": [
+        [
+          {
+            "node": "❌ 상태 업데이트 (에러)",
             "type": "main",
             "index": 0
           }
@@ -818,15 +928,18 @@
     "timezone": "Asia/Seoul",
     "saveManualExecutions": true,
     "callerPolicy": "workflowsFromSameOwner",
-    "availableInMCP": false
+    "availableInMCP": false,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": true
   },
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "e6111ce8-631e-4675-880b-768f790947da",
-  "activeVersionId": null,
-  "versionCounter": 3,
-  "triggerCount": 0,
+  "versionId": "71137643-b5d6-426e-9ed4-d52e474353bf",
+  "activeVersionId": "71137643-b5d6-426e-9ed4-d52e474353bf",
+  "versionCounter": 38,
+  "triggerCount": 1,
   "shared": [
     {
       "updatedAt": "2026-03-03T18:16:19.962Z",
@@ -847,5 +960,949 @@
     }
   ],
   "tags": [],
-  "activeVersion": null
+  "activeVersion": {
+    "updatedAt": "2026-04-06T16:38:58.667Z",
+    "createdAt": "2026-04-06T16:38:58.667Z",
+    "versionId": "71137643-b5d6-426e-9ed4-d52e474353bf",
+    "workflowId": "L6uRu2oqasHrOIQR",
+    "nodes": [
+      {
+        "id": "node-form",
+        "name": "📝 블로그 작성 폼",
+        "type": "n8n-nodes-base.formTrigger",
+        "typeVersion": 2.2,
+        "position": [
+          0,
+          400
+        ],
+        "parameters": {
+          "formTitle": "📚 Math4U 학원 블로그 자동작성",
+          "formDescription": "주제와 옵션을 입력하면 네이버 블로그 초안을 자동으로 작성해드립니다.",
+          "formFields": {
+            "values": [
+              {
+                "fieldLabel": "블로그 주제",
+                "fieldType": "textarea",
+                "placeholder": "예: 고3 수능 수학 막판 점수 올리는 법, 동탄 수학학원 선택 기준",
+                "requiredField": true
+              },
+              {
+                "fieldLabel": "대상 독자",
+                "fieldType": "dropdown",
+                "fieldOptions": {
+                  "values": [
+                    {
+                      "option": "학부모"
+                    },
+                    {
+                      "option": "고등학생"
+                    },
+                    {
+                      "option": "중학생"
+                    },
+                    {
+                      "option": "수험생"
+                    }
+                  ]
+                },
+                "requiredField": true
+              },
+              {
+                "fieldLabel": "글 톤",
+                "fieldType": "dropdown",
+                "fieldOptions": {
+                  "values": [
+                    {
+                      "option": "친근한"
+                    },
+                    {
+                      "option": "전문적인"
+                    },
+                    {
+                      "option": "신뢰감있는"
+                    }
+                  ]
+                },
+                "requiredField": true
+              },
+              {
+                "fieldLabel": "참고 URL (선택)",
+                "fieldType": "textarea",
+                "placeholder": "참고할 블로그나 자료 URL (줄바꿈으로 여러 개 입력 가능)"
+              },
+              {
+                "fieldLabel": "추가 메모",
+                "fieldType": "textarea",
+                "placeholder": "특별히 강조하고 싶은 내용, 포함할 키워드 등"
+              }
+            ]
+          },
+          "responseMode": "lastNode",
+          "options": {}
+        },
+        "webhookId": "a8235c14-93a5-416c-b209-a669e87f7704"
+      },
+      {
+        "id": "node-parse",
+        "name": "입력값 파싱",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          240,
+          400
+        ],
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "p1",
+                "name": "blog_topic",
+                "value": "={{ $json['블로그 주제'] }}",
+                "type": "string"
+              },
+              {
+                "id": "p2",
+                "name": "target_reader",
+                "value": "={{ $json['대상 독자'] }}",
+                "type": "string"
+              },
+              {
+                "id": "p3",
+                "name": "tone",
+                "value": "={{ $json['글 톤'] }}",
+                "type": "string"
+              },
+              {
+                "id": "p4",
+                "name": "url_list",
+                "value": "={{ $json['참고 URL (선택)'] || '' }}",
+                "type": "string"
+              },
+              {
+                "id": "p5",
+                "name": "memo",
+                "value": "={{ $json['추가 메모'] || '' }}",
+                "type": "string"
+              },
+              {
+                "id": "p6",
+                "name": "date_str",
+                "value": "={{ new Date().toISOString().slice(0,10) }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "node-url-prep",
+        "name": "URL 콘텐츠 수집",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          480,
+          400
+        ],
+        "parameters": {
+          "jsCode": "const input = $input.first().json;\nconst urls = (input.url_list || '').split('\\n').map(u => u.trim()).filter(u => u.length > 0);\nif (urls.length === 0) return [{ json: { ...input, url_contents: '' } }];\nreturn urls.map(url => ({ json: { ...input, fetch_url: 'https://r.jina.ai/' + url, source_url: url } }));"
+        }
+      },
+      {
+        "id": "node-jina",
+        "name": "Jina URL 읽기",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          720,
+          400
+        ],
+        "onError": "continueRegularOutput",
+        "parameters": {
+          "url": "={{ $json.fetch_url }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Accept",
+                "value": "text/plain"
+              }
+            ]
+          },
+          "options": {
+            "response": {
+              "response": {
+                "responseFormat": "text"
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "node-url-merge",
+        "name": "URL 자료 통합",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          960,
+          400
+        ],
+        "parameters": {
+          "jsCode": "const items = $input.all();\nconst base = $('입력값 파싱').first().json;\nlet urlContents = '';\nfor (const item of items) {\n  if (!item.json.fetch_url) continue;\n  const content = (item.json.data || item.json.body || '').substring(0, 3000);\n  if (content) urlContents += '[출처: ' + item.json.source_url + ']\\n' + content + '\\n\\n---\\n\\n';\n}\nreturn [{ json: { ...base, url_contents: urlContents } }];"
+        }
+      },
+      {
+        "id": "node-prompt1",
+        "name": "1차 프롬프트 조립",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1200,
+          400
+        ],
+        "parameters": {
+          "jsCode": "const d = $input.first().json;\nconst refSection = d.url_contents ? '\\n\\n## 참고 자료\\n' + d.url_contents : '';\nconst memoSection = d.memo ? '\\n\\n## 추가 요청사항\\n' + d.memo : '';\nconst prompt = [\n  '너는 대치Math4U 동탄캠 수학학원의 네이버 블로그 작가야.',\n  '아래 주제로 학원 블로그 초안을 작성해줘.',\n  '',\n  '## 블로그 주제',\n  d.blog_topic,\n  '',\n  '## 독자 및 톤',\n  '대상 독자: ' + d.target_reader,\n  '글 톤: ' + d.tone,\n  '',\n  '## 학원 기본 정보 (자연스럽게 1~2회 녹여넣기)',\n  '학원명: 대치Math4U 동탄캠',\n  '위치: 동탄 반송동 북광장',\n  '특징: 고등수학 전문, 고3 수능 수학 특화, 소수 정예',\n  refSection,\n  memoSection,\n  '',\n  '## 작성 규칙',\n  '1. 본문: 1200~1500자',\n  '2. 소제목(##) 3개 이상',\n  '3. 구체적 예시 또는 팁 포함',\n  '4. 독자 행동 유도 문구 (상담 문의 등)',\n  '5. 해시태그 10~15개 (동탄수학학원, 대치math4u 등 포함)',\n  '6. JSON으로만 응답 (백틱 없이): {\"title\":\"...\",\"body\":\"...\",\"hashtags\":\"...\"}'\n].join('\\n');\nconst body = JSON.stringify({\n  contents: [{ parts: [{ text: prompt }] }],\n  generationConfig: { temperature: 0.8, maxOutputTokens: 2000 }\n});\nreturn [{ json: { ...d, prompt1_body: body } }];"
+        }
+      },
+      {
+        "id": "node-ai1",
+        "name": "1차 AI 초안 (gemma-3-12b)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1440,
+          400
+        ],
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 8000,
+        "parameters": {
+          "method": "POST",
+          "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemma-3-12b-it:generateContent?key={{ $env.GEMINI_API_KEY }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ $json.prompt1_body }}",
+          "options": {
+            "timeout": 120000
+          }
+        }
+      },
+      {
+        "id": "node-extract1",
+        "name": "1차 초안 추출",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1680,
+          400
+        ],
+        "parameters": {
+          "jsCode": "const d = $input.first().json;\nconst prev = $('1차 프롬프트 조립').first().json;\nlet raw = '';\nif (d.candidates && d.candidates[0]) raw = d.candidates[0]['content']['parts'][0]['text'] || '';\nraw = raw.replace(/```json\\s*/g,'').replace(/```\\s*/g,'').trim();\nlet title = '[Blog] ' + prev.blog_topic, body = raw, hashtags = '';\ntry {\n  const p = JSON.parse(raw);\n  title = p.title || title;\n  body = p.body || raw;\n  if (Array.isArray(p.hashtags)) hashtags = p.hashtags.join(' ');\n  else hashtags = p.hashtags || '';\n} catch(e) {}\nreturn [{ json: { ...prev, draft_content: body, draft_title: title, draft_hashtags: hashtags } }];"
+        }
+      },
+      {
+        "id": "node-prompt2",
+        "name": "2차 프롬프트 조립",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1920,
+          400
+        ],
+        "parameters": {
+          "jsCode": "const d = $input.first().json;\nconst prompt = [\n  '너는 대치Math4U 동탄캠 수학학원의 시니어 블로그 마케터야.',\n  '아래 초안을 더 풍성하고 완성도 높은 네이버 블로그 포스팅으로 업그레이드해줘.',\n  '',\n  '## 초안 제목',\n  d.draft_title,\n  '',\n  '## 초안 본문',\n  d.draft_content,\n  '',\n  '## 업그레이드 규칙',\n  '1. 본문: 1800~2200자로 확장',\n  '2. 소제목(##) 4개 이상으로 구조화',\n  '3. SEO 키워드 (동탄수학학원, 반송동수학학원, 대치math4u, 고등수학, 수능수학) 자연스럽게 3~5회 삽입',\n  '4. 구체적 학습 팁이나 사례 추가',\n  '5. 독자 행동 유도 문구 강화 (상담 문의, 방문 등)',\n  '6. 해시태그: 15~20개로 확장',\n  '7. 학원명(대치Math4U 동탄캠), 위치(동탄 반송동 북광장) 자연스럽게 유지',\n  '8. 대상 독자: ' + d.target_reader + ' / 글 톤: ' + d.tone,\n  '9. JSON으로만 응답 (백틱 없이): {\"title\":\"...\",\"body\":\"...\",\"hashtags\":\"...\"}'\n].join('\\n');\nconst body = JSON.stringify({\n  contents: [{ parts: [{ text: prompt }] }],\n  generationConfig: { temperature: 0.8, maxOutputTokens: 3000 }\n});\nreturn [{ json: { ...d, prompt2_body: body } }];"
+        }
+      },
+      {
+        "id": "node-ai2",
+        "name": "2차 보강 (gemma-3-27b)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2160,
+          400
+        ],
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 8000,
+        "parameters": {
+          "method": "POST",
+          "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key={{ $env.GEMINI_API_KEY }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ $json.prompt2_body }}",
+          "options": {
+            "timeout": 120000
+          }
+        }
+      },
+      {
+        "id": "node-extract2",
+        "name": "2차 보강 추출",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2400,
+          400
+        ],
+        "parameters": {
+          "jsCode": "const d = $input.first().json;\nconst prev = $('2차 프롬프트 조립').first().json;\nlet raw = '';\nif (d.candidates && d.candidates[0]) raw = d.candidates[0]['content']['parts'][0]['text'] || '';\nraw = raw.replace(/```json\\s*/g,'').replace(/```\\s*/g,'').trim();\nlet title = prev.draft_title, body = raw, hashtags = prev.draft_hashtags;\ntry {\n  const p = JSON.parse(raw);\n  title = p.title || title;\n  body = p.body || raw;\n  if (Array.isArray(p.hashtags)) hashtags = p.hashtags.join(' ');\n  else hashtags = p.hashtags || hashtags;\n} catch(e) {}\nreturn [{ json: { ...prev, draft_content: body, draft_title: title, draft_hashtags: hashtags } }];"
+        }
+      },
+      {
+        "id": "node-eval-prompt",
+        "name": "품질평가 프롬프트 조립",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2640,
+          400
+        ],
+        "parameters": {
+          "jsCode": "const d = $input.first().json;\nconst prompt = '블로그 품질 평가자야. 아래 기준으로 평가 후 JSON만 반환해 (백틱 없이): {\"passed\":true,\"score\":0,\"improvements\":\"\"}\\n\\n평가기준:\\n(1) 본문 1500자 이상\\n(2) 소제목 4개 이상\\n(3) 구체적 예시 또는 팁 포함\\n(4) SEO 키워드 포함 (동탄수학학원 등)\\n(5) 독자 행동 유도 문구 포함\\n(6) 해시태그 15개 이상\\n5개 이상 충족 시 passed:true, improvements는 미달 항목 개선 방향\\n\\n[평가할 글]\\n제목: ' + d.draft_title + '\\n\\n' + (d.draft_content || '').slice(0, 1000);\nconst body = JSON.stringify({\n  contents: [{ parts: [{ text: prompt }] }],\n  generationConfig: { temperature: 0.2, maxOutputTokens: 400 }\n});\nreturn [{ json: { ...d, eval_body: body } }];"
+        }
+      },
+      {
+        "id": "node-ai-eval",
+        "name": "품질 평가 (gemma-4-26b)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2880,
+          400
+        ],
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 8000,
+        "parameters": {
+          "method": "POST",
+          "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemma-4-26b-a4b-it:generateContent?key={{ $env.GEMINI_API_KEY }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ $json.eval_body }}",
+          "options": {
+            "timeout": 60000
+          }
+        }
+      },
+      {
+        "id": "node-parse-q",
+        "name": "품질 결과 파싱",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3120,
+          400
+        ],
+        "parameters": {
+          "jsCode": "const item = $input.first().json;\nconst prev = $('품질평가 프롬프트 조립').first().json;\nlet raw = '';\nif (item.json && item.json.candidates && item.json.candidates[0]) raw = item.json.candidates[0]['content']['parts'][0]['text'] || '{}';\nelse if (item.candidates && item.candidates[0]) raw = item.candidates[0]['content']['parts'][0]['text'] || '{}';\nraw = raw.replace(/```json\\s*/g,'').replace(/```\\s*/g,'').trim();\nlet q = {};\ntry { q = JSON.parse(raw); } catch(e) { q = { passed: true, score: 70, improvements: '' }; }\nreturn [{ json: { ...prev, quality_passed: q.passed || false, quality_score: q.score || 0, improvements: q.improvements || '' } }];"
+        }
+      },
+      {
+        "id": "node-if-q",
+        "name": "품질 기준 충족?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          3360,
+          400
+        ],
+        "parameters": {
+          "conditions": {
+            "combinator": "and",
+            "conditions": [
+              {
+                "id": "c1",
+                "leftValue": "={{ $json.quality_passed }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            }
+          },
+          "looseTypeValidation": false
+        }
+      },
+      {
+        "id": "node-prompt3",
+        "name": "3차 프롬프트 조립",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3600,
+          560
+        ],
+        "parameters": {
+          "jsCode": "const d = $input.first().json;\nconst prompt = [\n  '너는 대치Math4U 동탄캠 학원 블로그 최고 전문 편집장이야.',\n  '아래 보완 지시사항에 따라 블로그 글을 최종 완성본으로 다듬어줘.',\n  '',\n  '[보완 지시사항]',\n  d.improvements || '전체적으로 더 전문적이고 SEO에 최적화된 글로 개선',\n  '',\n  '[현재 글]',\n  '제목: ' + d.draft_title,\n  '',\n  d.draft_content,\n  '',\n  '## 최종 완성 기준',\n  '1. 본문: 2000~2500자 완성본',\n  '2. 소제목(##) 4~5개',\n  '3. SEO 키워드 (동탄수학학원, 반송동수학학원, 대치math4u, 고등수학, 수능수학) 자연스럽게 삽입',\n  '4. 독자 행동 유도 문구 (상담 문의 등) 포함',\n  '5. 해시태그 20개',\n  '6. 학원명(대치Math4U 동탄캠), 위치(동탄 반송동 북광장) 유지',\n  '7. 대상 독자: ' + d.target_reader + ' / 글 톤: ' + d.tone,\n  '8. JSON으로만 응답 (백틱 없이): {\"title\":\"...\",\"body\":\"...\",\"hashtags\":\"...\"}'\n].join('\\n');\nconst body = JSON.stringify({\n  contents: [{ parts: [{ text: prompt }] }],\n  generationConfig: { temperature: 0.7, maxOutputTokens: 4000 }\n});\nreturn [{ json: { ...d, prompt3_body: body } }];"
+        }
+      },
+      {
+        "id": "node-ai3",
+        "name": "3차 보강 (gemma-4-31b)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3840,
+          560
+        ],
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 8000,
+        "parameters": {
+          "method": "POST",
+          "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemma-4-31b-it:generateContent?key={{ $env.GEMINI_API_KEY }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ $json.prompt3_body }}",
+          "options": {
+            "timeout": 120000
+          }
+        }
+      },
+      {
+        "id": "node-extract3",
+        "name": "3차 보강 추출",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4080,
+          560
+        ],
+        "parameters": {
+          "jsCode": "const d = $input.first().json;\nconst prev = $('3차 프롬프트 조립').first().json;\nlet raw = '';\nif (d.candidates && d.candidates[0]) raw = d.candidates[0]['content']['parts'][0]['text'] || '';\nraw = raw.replace(/```json\\s*/g,'').replace(/```\\s*/g,'').trim();\nlet title = prev.draft_title, body = raw, hashtags = prev.draft_hashtags;\ntry {\n  const p = JSON.parse(raw);\n  title = p.title || title;\n  body = p.body || raw;\n  if (Array.isArray(p.hashtags)) hashtags = p.hashtags.join(' ');\n  else hashtags = p.hashtags || hashtags;\n} catch(e) {}\nconst MAX = 1900;\nconst bodyChunks = [];\nfor (let i = 0; i < body.length; i += MAX) bodyChunks.push(body.slice(i, i + MAX));\nreturn [{ json: { ...prev, draft_content: body, bodyChunks, draft_title: title, draft_hashtags: hashtags, final_stage: '3차(gemma-4-31b)' } }];"
+        }
+      },
+      {
+        "id": "node-notion-save-pass",
+        "name": "노션 저장 (품질통과)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3600,
+          240
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.notion.com/v1/pages",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer ntn_MASKED"
+              },
+              {
+                "name": "Notion-Version",
+                "value": "2022-06-28"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify({ parent: { database_id: '925413d91bd64c4abfd7904bf353f99d' }, properties: { '제목': { title: [{ text: { content: ($json.draft_title || '[제목 없음]').slice(0,2000) } }] }, '주제': { rich_text: [{ text: { content: ($json.blog_topic || '').slice(0,2000) } }] }, '상태': { select: { name: '품질통과' } }, '대상독자': { select: { name: $json.target_reader || '학부모' } }, '톤': { select: { name: $json.tone || '친근한' } }, '품질점수': { number: Number($json.quality_score) || 0 }, '반복횟수': { number: 2 }, '작성일': { date: { start: $json.date_str || new Date().toISOString().slice(0,10) } }, '해시태그': { rich_text: [{ text: { content: ($json.draft_hashtags || '').slice(0,2000) } }] }, '참고URL': { rich_text: [{ text: { content: ($json.url_list || '').slice(0,2000) } }] } }, children: [ { object: 'block', type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: '📝 블로그 본문 (2차 gemma-3-27b)' } }] } }, ...($json.bodyChunks || [($json.draft_content||'').slice(0,1900)]).map(chunk => ({ object: 'block', type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: chunk } }] } })), { object: 'block', type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: '🏷️ 해시태그' } }] } }, { object: 'block', type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: ($json.draft_hashtags || '').slice(0,2000) } }] } } ] }) }}",
+          "options": {}
+        }
+      },
+      {
+        "id": "node-notion-save-3rd",
+        "name": "노션 저장 (3차 보강)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          4320,
+          560
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.notion.com/v1/pages",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer ntn_MASKED"
+              },
+              {
+                "name": "Notion-Version",
+                "value": "2022-06-28"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify({ parent: { database_id: '925413d91bd64c4abfd7904bf353f99d' }, properties: { '제목': { title: [{ text: { content: ($json.draft_title || '[제목 없음]').slice(0,2000) } }] }, '주제': { rich_text: [{ text: { content: ($json.blog_topic || '').slice(0,2000) } }] }, '상태': { select: { name: '품질통과' } }, '대상독자': { select: { name: $json.target_reader || '학부모' } }, '톤': { select: { name: $json.tone || '친근한' } }, '품질점수': { number: Number($json.quality_score) || 0 }, '반복횟수': { number: 3 }, '작성일': { date: { start: $json.date_str || new Date().toISOString().slice(0,10) } }, '해시태그': { rich_text: [{ text: { content: ($json.draft_hashtags || '').slice(0,2000) } }] }, '참고URL': { rich_text: [{ text: { content: ($json.url_list || '').slice(0,2000) } }] } }, children: [ { object: 'block', type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: '📝 블로그 본문 (3차 gemma-4-31b)' } }] } }, ...($json.bodyChunks || [($json.draft_content||'').slice(0,1900)]).map(chunk => ({ object: 'block', type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: chunk } }] } })), { object: 'block', type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: '🏷️ 해시태그' } }] } }, { object: 'block', type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: ($json.draft_hashtags || '').slice(0,2000) } }] } } ] }) }}",
+          "options": {}
+        }
+      },
+      {
+        "id": "node-complete-pass",
+        "name": "완료 (품질통과)",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          3840,
+          240
+        ],
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "f1",
+                "name": "result",
+                "type": "string",
+                "value": "={{ '🎉 [' + $json.draft_title + '] 2차 보강 품질통과! 노션에 저장됐어요.' }}"
+              },
+              {
+                "id": "f2",
+                "name": "stage",
+                "type": "string",
+                "value": "2차 (gemma-3-27b)"
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "node-complete-3rd",
+        "name": "완료 (3차 보강)",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          4560,
+          560
+        ],
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "f1",
+                "name": "result",
+                "type": "string",
+                "value": "={{ '🎉 [' + $json.draft_title + '] 3차 보강 완료! 노션에 저장됐어요.' }}"
+              },
+              {
+                "id": "f2",
+                "name": "stage",
+                "type": "string",
+                "value": "3차 (gemma-4-31b)"
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "status-success-pass",
+        "name": "✅ 상태 업데이트 (성공-2차)",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          4080,
+          240
+        ],
+        "parameters": {
+          "workflowId": "eOopB5bbEEO9rjrg",
+          "options": {}
+        }
+      },
+      {
+        "id": "status-success-3rd",
+        "name": "✅ 상태 업데이트 (성공-3차)",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          4800,
+          560
+        ],
+        "parameters": {
+          "workflowId": "eOopB5bbEEO9rjrg",
+          "options": {}
+        }
+      },
+      {
+        "id": "error-trigger",
+        "name": "❌ 에러 감지",
+        "type": "n8n-nodes-base.errorTrigger",
+        "typeVersion": 1,
+        "position": [
+          1200,
+          600
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "status-error",
+        "name": "❌ 상태 업데이트 (에러)",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          1440,
+          600
+        ],
+        "parameters": {
+          "workflowId": "eOopB5bbEEO9rjrg",
+          "options": {}
+        }
+      },
+      {
+        "id": "manual-note",
+        "name": "📋 워크플로우 메뉴얼",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -240,
+          160
+        ],
+        "parameters": {
+          "color": 4,
+          "content": "## 📋 Math4U 학원 블로그 자동작성 메뉴얼\n\n### ⚙️ 워크플로우 구조\n1️⃣ **1차 초안**: gemma-3-12b-it (1200~1500자)\n2️⃣ **2차 보강 (무조건)**: gemma-3-27b-it (1800~2200자)\n3️⃣ **품질 평가**: gemma-4-26b-a4b-it\n  - 통과 → 노션 저장\n  - 미달 → 3차 보강\n4️⃣ **3차 보강 (미달 시)**: gemma-4-31b-it (2000~2500자)\n\n### 🔧 수정이 필요할 때\n1. 학원 정보 → `1차 프롬프트 조립` 노드\n2. 품질 기준 → `품질평가 프롬프트 조립` 노드\n\n### ⚠️ 주의사항\n- API 키: 환경변수 GEMINI_API_KEY\n- Gemma 4 모델 무료 티어 가용 여부 확인 필요",
+          "height": 400,
+          "width": 400
+        }
+      }
+    ],
+    "connections": {
+      "📝 블로그 작성 폼": {
+        "main": [
+          [
+            {
+              "node": "입력값 파싱",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "입력값 파싱": {
+        "main": [
+          [
+            {
+              "node": "URL 콘텐츠 수집",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "URL 콘텐츠 수집": {
+        "main": [
+          [
+            {
+              "node": "Jina URL 읽기",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Jina URL 읽기": {
+        "main": [
+          [
+            {
+              "node": "URL 자료 통합",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "URL 자료 통합": {
+        "main": [
+          [
+            {
+              "node": "1차 프롬프트 조립",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "1차 프롬프트 조립": {
+        "main": [
+          [
+            {
+              "node": "1차 AI 초안 (gemma-3-12b)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "1차 AI 초안 (gemma-3-12b)": {
+        "main": [
+          [
+            {
+              "node": "1차 초안 추출",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "1차 초안 추출": {
+        "main": [
+          [
+            {
+              "node": "2차 프롬프트 조립",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "2차 프롬프트 조립": {
+        "main": [
+          [
+            {
+              "node": "2차 보강 (gemma-3-27b)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "2차 보강 (gemma-3-27b)": {
+        "main": [
+          [
+            {
+              "node": "2차 보강 추출",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "2차 보강 추출": {
+        "main": [
+          [
+            {
+              "node": "품질평가 프롬프트 조립",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "품질평가 프롬프트 조립": {
+        "main": [
+          [
+            {
+              "node": "품질 평가 (gemma-4-26b)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "품질 평가 (gemma-4-26b)": {
+        "main": [
+          [
+            {
+              "node": "품질 결과 파싱",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "품질 결과 파싱": {
+        "main": [
+          [
+            {
+              "node": "품질 기준 충족?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "품질 기준 충족?": {
+        "main": [
+          [
+            {
+              "node": "노션 저장 (품질통과)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "3차 프롬프트 조립",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "노션 저장 (품질통과)": {
+        "main": [
+          [
+            {
+              "node": "완료 (품질통과)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "완료 (품질통과)": {
+        "main": [
+          [
+            {
+              "node": "✅ 상태 업데이트 (성공-2차)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "3차 프롬프트 조립": {
+        "main": [
+          [
+            {
+              "node": "3차 보강 (gemma-4-31b)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "3차 보강 (gemma-4-31b)": {
+        "main": [
+          [
+            {
+              "node": "3차 보강 추출",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "3차 보강 추출": {
+        "main": [
+          [
+            {
+              "node": "노션 저장 (3차 보강)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "노션 저장 (3차 보강)": {
+        "main": [
+          [
+            {
+              "node": "완료 (3차 보강)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "완료 (3차 보강)": {
+        "main": [
+          [
+            {
+              "node": "✅ 상태 업데이트 (성공-3차)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "❌ 에러 감지": {
+        "main": [
+          [
+            {
+              "node": "❌ 상태 업데이트 (에러)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Seung Hyeon Kim",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-06T16:38:58.906Z",
+        "id": 495,
+        "workflowId": "L6uRu2oqasHrOIQR",
+        "versionId": "71137643-b5d6-426e-9ed4-d52e474353bf",
+        "event": "activated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      },
+      {
+        "createdAt": "2026-04-06T16:38:58.782Z",
+        "id": 494,
+        "workflowId": "L6uRu2oqasHrOIQR",
+        "versionId": "71137643-b5d6-426e-9ed4-d52e474353bf",
+        "event": "deactivated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
+    ]
+  }
 }
