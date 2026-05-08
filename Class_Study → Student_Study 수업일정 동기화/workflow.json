@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-07T11:23:03.000Z",
+  "updatedAt": "2026-05-08T07:41:41.990Z",
   "createdAt": "2026-03-02T09:18:28.694Z",
   "id": "G5k8fgeviVCR8ixe",
   "name": "Class_Study → Student_Study 수업일정 동기화",
@@ -8,15 +8,14 @@
   "isArchived": false,
   "nodes": [
     {
-      "id": "node-trigger",
-      "name": "Class_Study 변경 감지",
-      "type": "n8n-nodes-base.notionTrigger",
-      "typeVersion": 1,
-      "position": [
-        200,
-        300
-      ],
       "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
         "event": "pagedUpdatedInDatabase",
         "databaseId": {
           "__rl": true,
@@ -24,30 +23,33 @@
           "mode": "id"
         },
         "simple": false
-      }
+      },
+      "id": "node-trigger",
+      "name": "Class_Study 변경 감지",
+      "type": "n8n-nodes-base.notionTrigger",
+      "typeVersion": 1,
+      "position": [
+        208,
+        304
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 8000
     },
     {
+      "parameters": {
+        "jsCode": "const page = $input.first().json;\n\nconst scheduleProp = page.properties?.['수업일정'];\nlet startDate = null;\nlet endDate = null;\n\nif (scheduleProp?.type === 'date' && scheduleProp?.date) {\n  startDate = scheduleProp.date.start;\n  endDate = scheduleProp.date.end || null;\n}\n\nif (!startDate) {\n  return [{ json: { skip: true, reason: '수업일정 날짜 없음', studentIds: [] } }];\n}\n\nconst studentStudyProp = page.properties?.['Student_Study'];\nlet studentIds = [];\nif (studentStudyProp?.type === 'relation' && studentStudyProp?.relation?.length > 0) {\n  studentIds = studentStudyProp.relation.map(r => r.id);\n}\n\nif (studentIds.length === 0) {\n  return [{ json: { skip: true, reason: '연결된 Student_Study 레코드 없음', studentIds: [] } }];\n}\n\nreturn studentIds.map(id => ({\n  json: { skip: false, studentPageId: id, startDate, endDate }\n}));"
+      },
       "id": "node-extract",
       "name": "수업일정 및 학생ID 추출",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        440,
-        300
-      ],
-      "parameters": {
-        "jsCode": "const page = $input.first().json;\n\nconst scheduleProp = page.properties?.['수업일정'];\nlet startDate = null;\nlet endDate = null;\n\nif (scheduleProp?.type === 'date' && scheduleProp?.date) {\n  startDate = scheduleProp.date.start;\n  endDate = scheduleProp.date.end || null;\n}\n\nif (!startDate) {\n  return [{ json: { skip: true, reason: '수업일정 날짜 없음', studentIds: [] } }];\n}\n\nlet studentIds = [];\nfor (const [key, value] of Object.entries(page.properties || {})) {\n  if (value.type === 'relation' && value.relation && value.relation.length > 0) {\n    studentIds = value.relation.map(r => r.id);\n    break;\n  }\n}\n\nif (studentIds.length === 0) {\n  return [{ json: { skip: true, reason: '연결된 학생 레코드 없음', studentIds: [] } }];\n}\n\nreturn studentIds.map(id => ({\n  json: { skip: false, studentPageId: id, startDate, endDate }\n}));"
-      }
+        448,
+        304
+      ]
     },
     {
-      "id": "node-if",
-      "name": "업데이트 필요 여부",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        680,
-        300
-      ],
       "parameters": {
         "conditions": {
           "options": {
@@ -68,18 +70,19 @@
             }
           ],
           "combinator": "and"
-        }
-      }
+        },
+        "options": {}
+      },
+      "id": "node-if",
+      "name": "업데이트 필요 여부",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        688,
+        304
+      ]
     },
     {
-      "id": "node-update",
-      "name": "Student_Study 수업일시 업데이트",
-      "type": "n8n-nodes-base.notion",
-      "typeVersion": 2.2,
-      "position": [
-        920,
-        180
-      ],
       "parameters": {
         "resource": "databasePage",
         "operation": "update",
@@ -92,24 +95,172 @@
           "propertyValues": [
             {
               "key": "수업일시|date",
-              "date": "={{ $json.startDate }}",
-              "includeTime": true,
-              "dateEnd": "={{ $json.endDate !== null ? $json.endDate : '' }}"
+              "date": "={{ $json.startDate }}"
             }
           ]
-        }
-      }
+        },
+        "options": {}
+      },
+      "id": "node-update",
+      "name": "Student_Study 수업일시 업데이트",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        928,
+        192
+      ]
     },
     {
+      "parameters": {},
       "id": "node-skip-log",
       "name": "스킵 로그",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        920,
-        420
-      ],
-      "parameters": {}
+        928,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "s1",
+              "name": "workflowId",
+              "type": "string",
+              "value": "G5k8fgeviVCR8ixe"
+            },
+            {
+              "id": "s2",
+              "name": "workflowName",
+              "type": "string",
+              "value": "Class_Study → Student_Study 수업일정 동기화"
+            },
+            {
+              "id": "s3",
+              "name": "notionPageId",
+              "type": "string",
+              "value": "337c6a06e17e81628c32cf62c8a3f3da"
+            },
+            {
+              "id": "s4",
+              "name": "status",
+              "type": "string",
+              "value": "✅ 정상"
+            },
+            {
+              "id": "s5",
+              "name": "errorMessage",
+              "type": "string",
+              "value": ""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-set-success",
+      "name": "Set - 성공 데이터",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1168,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "eOopB5bbEEO9rjrg",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "node-status-success",
+      "name": "✅ 상태 업데이트 (성공)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        1408,
+        192
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "node-error-trigger",
+      "name": "❌ 에러 감지",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        688,
+        576
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e1",
+              "name": "workflowId",
+              "type": "string",
+              "value": "G5k8fgeviVCR8ixe"
+            },
+            {
+              "id": "e2",
+              "name": "workflowName",
+              "type": "string",
+              "value": "Class_Study → Student_Study 수업일정 동기화"
+            },
+            {
+              "id": "e3",
+              "name": "notionPageId",
+              "type": "string",
+              "value": "337c6a06e17e81628c32cf62c8a3f3da"
+            },
+            {
+              "id": "e4",
+              "name": "status",
+              "type": "string",
+              "value": "❌ 에러"
+            },
+            {
+              "id": "e5",
+              "name": "errorMessage",
+              "type": "string",
+              "value": "={{ $json.execution.error.message }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-set-error",
+      "name": "Set - 에러 데이터",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        928,
+        576
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "eOopB5bbEEO9rjrg",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "node-status-error",
+      "name": "❌ 상태 업데이트 (에러)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        1168,
+        576
+      ]
     }
   ],
   "connections": {
@@ -152,6 +303,61 @@
           }
         ]
       ]
+    },
+    "Student_Study 수업일시 업데이트": {
+      "main": [
+        [
+          {
+            "node": "Set - 성공 데이터",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - 성공 데이터": {
+      "main": [
+        [
+          {
+            "node": "✅ 상태 업데이트 (성공)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "❌ 에러 감지": {
+      "main": [
+        [
+          {
+            "node": "Set - 에러 데이터",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - 에러 데이터": {
+      "main": [
+        [
+          {
+            "node": "❌ 상태 업데이트 (에러)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "스킵 로그": {
+      "main": [
+        [
+          {
+            "node": "Set - 성공 데이터",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -163,37 +369,17 @@
   },
   "staticData": {
     "node:Class_Study 변경 감지": {
-      "lastTimeChecked": "2026-04-02T09:01:00.000Z",
+      "lastTimeChecked": "2026-05-08T07:41:00.000Z",
       "possibleDuplicates": [
-        "333c6a06-e17e-8102-972e-d169273fae62",
-        "333c6a06-e17e-81d3-a2b6-db12734441b5",
-        "333c6a06-e17e-81de-bc3c-d5778d5f0857",
-        "333c6a06-e17e-81c7-8197-e42fdb812343",
-        "333c6a06-e17e-8156-9ab1-f476a7cd029c",
-        "333c6a06-e17e-81a6-9c6a-e021b7de480f",
-        "333c6a06-e17e-81ef-a738-eec0ab4ef3fa",
-        "333c6a06-e17e-8195-bd83-d64b8a2f9032",
-        "333c6a06-e17e-8168-8870-fcf050830d3b",
-        "333c6a06-e17e-81f4-877a-f992c963e888",
-        "333c6a06-e17e-8136-a96f-d9cc0e284718",
-        "333c6a06-e17e-81e1-9660-ec3aa10dc864",
-        "333c6a06-e17e-8193-9ddd-c72482da6627",
-        "333c6a06-e17e-81b1-adae-f4d93082dd57",
-        "333c6a06-e17e-81ee-a33c-e663c1b68ede",
-        "333c6a06-e17e-8129-a8ae-e0b4cfd5026d",
-        "333c6a06-e17e-8173-881b-d98f0660ec17",
-        "333c6a06-e17e-8163-b381-de37fbedd416",
-        "333c6a06-e17e-8148-867d-df167474e62d",
-        "333c6a06-e17e-8110-a752-da9a28aabfe6",
-        "333c6a06-e17e-811f-9e42-c3b165e13318"
+        "34cc6a06-e17e-815c-80a1-e0b2b8c6f9ca"
       ]
     }
   },
   "meta": null,
-  "pinData": null,
-  "versionId": "a97e5d82-0e32-4f13-8565-bf933878fb4c",
-  "activeVersionId": "a97e5d82-0e32-4f13-8565-bf933878fb4c",
-  "versionCounter": 87,
+  "pinData": {},
+  "versionId": "34afd9b4-2b4e-417a-9c4e-a94b7bda6ef7",
+  "activeVersionId": "34afd9b4-2b4e-417a-9c4e-a94b7bda6ef7",
+  "versionCounter": 247,
   "triggerCount": 1,
   "shared": [
     {
@@ -216,21 +402,20 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-16T00:18:25.000Z",
-    "createdAt": "2026-03-02T09:49:00.335Z",
-    "versionId": "a97e5d82-0e32-4f13-8565-bf933878fb4c",
+    "updatedAt": "2026-05-08T07:41:41.991Z",
+    "createdAt": "2026-05-08T07:41:41.991Z",
+    "versionId": "34afd9b4-2b4e-417a-9c4e-a94b7bda6ef7",
     "workflowId": "G5k8fgeviVCR8ixe",
     "nodes": [
       {
-        "id": "node-trigger",
-        "name": "Class_Study 변경 감지",
-        "type": "n8n-nodes-base.notionTrigger",
-        "typeVersion": 1,
-        "position": [
-          200,
-          300
-        ],
         "parameters": {
+          "pollTimes": {
+            "item": [
+              {
+                "mode": "everyMinute"
+              }
+            ]
+          },
           "event": "pagedUpdatedInDatabase",
           "databaseId": {
             "__rl": true,
@@ -239,35 +424,38 @@
           },
           "simple": false
         },
+        "id": "node-trigger",
+        "name": "Class_Study 변경 감지",
+        "type": "n8n-nodes-base.notionTrigger",
+        "typeVersion": 1,
+        "position": [
+          208,
+          304
+        ],
         "credentials": {
           "notionApi": {
             "id": "MAYBu1lbKiMiquHV",
             "name": "n8n-Math4U"
           }
-        }
+        },
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 8000
       },
       {
+        "parameters": {
+          "jsCode": "const page = $input.first().json;\n\nconst scheduleProp = page.properties?.['수업일정'];\nlet startDate = null;\nlet endDate = null;\n\nif (scheduleProp?.type === 'date' && scheduleProp?.date) {\n  startDate = scheduleProp.date.start;\n  endDate = scheduleProp.date.end || null;\n}\n\nif (!startDate) {\n  return [{ json: { skip: true, reason: '수업일정 날짜 없음', studentIds: [] } }];\n}\n\nconst studentStudyProp = page.properties?.['Student_Study'];\nlet studentIds = [];\nif (studentStudyProp?.type === 'relation' && studentStudyProp?.relation?.length > 0) {\n  studentIds = studentStudyProp.relation.map(r => r.id);\n}\n\nif (studentIds.length === 0) {\n  return [{ json: { skip: true, reason: '연결된 Student_Study 레코드 없음', studentIds: [] } }];\n}\n\nreturn studentIds.map(id => ({\n  json: { skip: false, studentPageId: id, startDate, endDate }\n}));"
+        },
         "id": "node-extract",
         "name": "수업일정 및 학생ID 추출",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          440,
-          300
-        ],
-        "parameters": {
-          "jsCode": "const page = $input.first().json;\n\nconst scheduleProp = page.properties?.['수업일정'];\nlet startDate = null;\nlet endDate = null;\n\nif (scheduleProp?.type === 'date' && scheduleProp?.date) {\n  startDate = scheduleProp.date.start;\n  endDate = scheduleProp.date.end || null;\n}\n\nif (!startDate) {\n  return [{ json: { skip: true, reason: '수업일정 날짜 없음', studentIds: [] } }];\n}\n\nlet studentIds = [];\nfor (const [key, value] of Object.entries(page.properties || {})) {\n  if (value.type === 'relation' && value.relation && value.relation.length > 0) {\n    studentIds = value.relation.map(r => r.id);\n    break;\n  }\n}\n\nif (studentIds.length === 0) {\n  return [{ json: { skip: true, reason: '연결된 학생 레코드 없음', studentIds: [] } }];\n}\n\nreturn studentIds.map(id => ({\n  json: { skip: false, studentPageId: id, startDate, endDate }\n}));"
-        }
+          448,
+          304
+        ]
       },
       {
-        "id": "node-if",
-        "name": "업데이트 필요 여부",
-        "type": "n8n-nodes-base.if",
-        "typeVersion": 2.3,
-        "position": [
-          680,
-          300
-        ],
         "parameters": {
           "conditions": {
             "options": {
@@ -288,18 +476,19 @@
               }
             ],
             "combinator": "and"
-          }
-        }
+          },
+          "options": {}
+        },
+        "id": "node-if",
+        "name": "업데이트 필요 여부",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          688,
+          304
+        ]
       },
       {
-        "id": "node-update",
-        "name": "Student_Study 수업일시 업데이트",
-        "type": "n8n-nodes-base.notion",
-        "typeVersion": 2.2,
-        "position": [
-          920,
-          180
-        ],
         "parameters": {
           "resource": "databasePage",
           "operation": "update",
@@ -312,13 +501,20 @@
             "propertyValues": [
               {
                 "key": "수업일시|date",
-                "date": "={{ $json.startDate }}",
-                "includeTime": true,
-                "dateEnd": "={{ $json.endDate !== null ? $json.endDate : '' }}"
+                "date": "={{ $json.startDate }}"
               }
             ]
-          }
+          },
+          "options": {}
         },
+        "id": "node-update",
+        "name": "Student_Study 수업일시 업데이트",
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2,
+        "position": [
+          928,
+          192
+        ],
         "credentials": {
           "notionApi": {
             "id": "MAYBu1lbKiMiquHV",
@@ -327,15 +523,156 @@
         }
       },
       {
+        "parameters": {},
         "id": "node-skip-log",
         "name": "스킵 로그",
         "type": "n8n-nodes-base.noOp",
         "typeVersion": 1,
         "position": [
-          920,
-          420
-        ],
-        "parameters": {}
+          928,
+          432
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "s1",
+                "name": "workflowId",
+                "type": "string",
+                "value": "G5k8fgeviVCR8ixe"
+              },
+              {
+                "id": "s2",
+                "name": "workflowName",
+                "type": "string",
+                "value": "Class_Study → Student_Study 수업일정 동기화"
+              },
+              {
+                "id": "s3",
+                "name": "notionPageId",
+                "type": "string",
+                "value": "337c6a06e17e81628c32cf62c8a3f3da"
+              },
+              {
+                "id": "s4",
+                "name": "status",
+                "type": "string",
+                "value": "✅ 정상"
+              },
+              {
+                "id": "s5",
+                "name": "errorMessage",
+                "type": "string",
+                "value": ""
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "node-set-success",
+        "name": "Set - 성공 데이터",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1168,
+          192
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "eOopB5bbEEO9rjrg",
+            "mode": "id"
+          },
+          "options": {}
+        },
+        "id": "node-status-success",
+        "name": "✅ 상태 업데이트 (성공)",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          1408,
+          192
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "node-error-trigger",
+        "name": "❌ 에러 감지",
+        "type": "n8n-nodes-base.errorTrigger",
+        "typeVersion": 1,
+        "position": [
+          688,
+          576
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "e1",
+                "name": "workflowId",
+                "type": "string",
+                "value": "G5k8fgeviVCR8ixe"
+              },
+              {
+                "id": "e2",
+                "name": "workflowName",
+                "type": "string",
+                "value": "Class_Study → Student_Study 수업일정 동기화"
+              },
+              {
+                "id": "e3",
+                "name": "notionPageId",
+                "type": "string",
+                "value": "337c6a06e17e81628c32cf62c8a3f3da"
+              },
+              {
+                "id": "e4",
+                "name": "status",
+                "type": "string",
+                "value": "❌ 에러"
+              },
+              {
+                "id": "e5",
+                "name": "errorMessage",
+                "type": "string",
+                "value": "={{ $json.execution.error.message }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "node-set-error",
+        "name": "Set - 에러 데이터",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          928,
+          576
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "eOopB5bbEEO9rjrg",
+            "mode": "id"
+          },
+          "options": {}
+        },
+        "id": "node-status-error",
+        "name": "❌ 상태 업데이트 (에러)",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          1168,
+          576
+        ]
       }
     ],
     "connections": {
@@ -378,42 +715,81 @@
             }
           ]
         ]
+      },
+      "Student_Study 수업일시 업데이트": {
+        "main": [
+          [
+            {
+              "node": "Set - 성공 데이터",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set - 성공 데이터": {
+        "main": [
+          [
+            {
+              "node": "✅ 상태 업데이트 (성공)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "❌ 에러 감지": {
+        "main": [
+          [
+            {
+              "node": "Set - 에러 데이터",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set - 에러 데이터": {
+        "main": [
+          [
+            {
+              "node": "❌ 상태 업데이트 (에러)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "스킵 로그": {
+        "main": [
+          [
+            {
+              "node": "Set - 성공 데이터",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
     "authors": "Seung Hyeon Kim",
-    "name": "Version a97e5d82",
-    "description": "",
+    "name": null,
+    "description": null,
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-02T09:49:00.940Z",
-        "id": 33,
+        "createdAt": "2026-05-08T07:41:42.447Z",
+        "id": 533,
         "workflowId": "G5k8fgeviVCR8ixe",
-        "versionId": "a97e5d82-0e32-4f13-8565-bf933878fb4c",
+        "versionId": "34afd9b4-2b4e-417a-9c4e-a94b7bda6ef7",
         "event": "activated",
         "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
       },
       {
-        "createdAt": "2026-03-16T00:18:25.240Z",
-        "id": 315,
+        "createdAt": "2026-05-08T07:41:42.082Z",
+        "id": 532,
         "workflowId": "G5k8fgeviVCR8ixe",
-        "versionId": "a97e5d82-0e32-4f13-8565-bf933878fb4c",
-        "event": "activated",
-        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
-      },
-      {
-        "createdAt": "2026-03-02T09:49:00.471Z",
-        "id": 32,
-        "workflowId": "G5k8fgeviVCR8ixe",
-        "versionId": "a97e5d82-0e32-4f13-8565-bf933878fb4c",
-        "event": "deactivated",
-        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
-      },
-      {
-        "createdAt": "2026-03-05T09:07:03.393Z",
-        "id": 46,
-        "workflowId": "G5k8fgeviVCR8ixe",
-        "versionId": "a97e5d82-0e32-4f13-8565-bf933878fb4c",
+        "versionId": "34afd9b4-2b4e-417a-9c4e-a94b7bda6ef7",
         "event": "deactivated",
         "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
       }
