@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-04T07:50:16.925Z",
+  "updatedAt": "2026-04-04T08:19:49.485Z",
   "createdAt": "2025-12-01T21:37:22.774Z",
   "id": "gRhv6ri8Nq5sE1Ol",
   "name": "n8n Github Sync (노션 메뉴얼 → README)",
@@ -66,7 +66,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer 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"
+              "value": "Bearer ntn_MASKED"
             },
             {
               "name": "Notion-Version",
@@ -148,7 +148,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer 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"
+              "value": "Bearer ntn_MASKED"
             },
             {
               "name": "Notion-Version",
@@ -185,7 +185,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer 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"
+              "value": "Bearer ntn_MASKED"
             },
             {
               "name": "Notion-Version",
@@ -254,7 +254,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer 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"
+              "value": "Bearer ntn_MASKED"
             },
             {
               "name": "Notion-Version",
@@ -275,8 +275,8 @@
       "id": "notion-add",
       "name": "노션 DB에 신규 추가",
       "position": [
-        304,
-        496
+        320,
+        416
       ],
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -291,7 +291,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer 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"
+              "value": "Bearer ntn_MASKED"
             },
             {
               "name": "Notion-Version",
@@ -312,8 +312,8 @@
       "id": "notion-db2",
       "name": "노션 DB 재조회",
       "position": [
-        480,
-        384
+        496,
+        240
       ],
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2
@@ -325,7 +325,7 @@
       "id": "prepare",
       "name": "목록 준비",
       "position": [
-        608,
+        672,
         16
       ],
       "type": "n8n-nodes-base.code",
@@ -418,7 +418,7 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
       "position": [
-        800,
+        848,
         16
       ]
     },
@@ -432,19 +432,11 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
       "position": [
-        992,
+        1216,
         16
       ]
     },
     {
-      "id": "set-success",
-      "name": "Set - 성공 데이터",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        896,
-        120
-      ],
       "parameters": {
         "assignments": {
           "assignments": [
@@ -481,7 +473,15 @@
           ]
         },
         "options": {}
-      }
+      },
+      "id": "set-success",
+      "name": "Set - 성공 데이터",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1024,
+        16
+      ]
     }
   ],
   "connections": {
@@ -678,9 +678,9 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "888680bf-5a46-4f7d-8351-be0ce7644b7f",
+  "versionId": "ea4fc343-18ee-4578-a332-d7903861056e",
   "activeVersionId": "888680bf-5a46-4f7d-8351-be0ce7644b7f",
-  "versionCounter": 284,
+  "versionCounter": 291,
   "triggerCount": 0,
   "shared": [
     {
@@ -767,7 +767,7 @@
             "parameters": [
               {
                 "name": "Authorization",
-                "value": "Bearer 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"
+                "value": "Bearer ntn_MASKED"
               },
               {
                 "name": "Notion-Version",
@@ -849,7 +849,7 @@
             "parameters": [
               {
                 "name": "Authorization",
-                "value": "Bearer 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"
+                "value": "Bearer ntn_MASKED"
               },
               {
                 "name": "Notion-Version",
@@ -886,7 +886,7 @@
             "parameters": [
               {
                 "name": "Authorization",
-                "value": "Bearer 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"
+                "value": "Bearer ntn_MASKED"
               },
               {
                 "name": "Notion-Version",
@@ -955,7 +955,7 @@
             "parameters": [
               {
                 "name": "Authorization",
-                "value": "Bearer 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"
+                "value": "Bearer ntn_MASKED"
               },
               {
                 "name": "Notion-Version",
@@ -992,7 +992,7 @@
             "parameters": [
               {
                 "name": "Authorization",
-                "value": "Bearer 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"
+                "value": "Bearer ntn_MASKED"
               },
               {
                 "name": "Notion-Version",
