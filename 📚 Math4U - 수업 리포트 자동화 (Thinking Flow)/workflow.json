@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-17T12:35:50.981Z",
+  "updatedAt": "2026-04-04T08:38:57.829Z",
   "createdAt": "2026-03-17T12:27:15.787Z",
   "id": "fLXAn8mq5xsr5GNE",
   "name": "📚 Math4U - 수업 리포트 자동화 (Thinking Flow)",
@@ -8,22 +8,27 @@
   "isArchived": false,
   "nodes": [
     {
+      "parameters": {
+        "content": "## 📋 수업 리포트 자동화 - The Thinking Flow\n\n### 🎯 목적\n강사(카이)가 수업 후 모바일 폼 제출 → n8n이 AI 리포트 생성 → 학부모에게 카카오알림톡 발송\n\n### 🔄 플로우\n1. **Webhook 수신**: 모바일 폼(구글폼) 제출 데이터 수신\n2. **데이터 파싱**: 학생 이름, 사고력 지표, 유레카 모먼트 추출\n3. **Notion 학생 조회**: 학부모 연락처 및 학생 정보 조회\n4. **AI 리포트 생성**: GPT가 VIP 톤앤매너로 리포트 문장 생성\n5. **알림톡 발송**: 학부모에게 The Thinking Flow 리포트 발송\n6. **Notion 기록**: 발송 이력 노션 DB에 자동 저장\n7. **Slack 알림**: 카이에게 발송 완료 알림\n\n### ⚙️ 모바일 폼 연동\n- Google Forms 또는 Tally 사용\n- Webhook URL을 폼 응답 대상으로 설정",
+        "height": 500,
+        "width": 400,
+        "color": 4
+      },
       "id": "manual-note",
       "name": "📋 워크플로우 메뉴얼",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -900,
-        -300
-      ],
-      "parameters": {
-        "content": "## 📋 수업 리포트 자동화 - The Thinking Flow\n\n### 🎯 목적\n강사(카이)가 수업 후 모바일 폼 제출 → n8n이 AI 리포트 생성 → 학부모에게 카카오알림톡 발송\n\n### 🔄 플로우\n1. **Webhook 수신**: 모바일 폼(구글폼) 제출 데이터 수신\n2. **데이터 파싱**: 학생 이름, 사고력 지표, 유레카 모먼트 추출\n3. **Notion 학생 조회**: 학부모 연락처 및 학생 정보 조회\n4. **AI 리포트 생성**: GPT가 VIP 톤앤매너로 리포트 문장 생성\n5. **알림톡 발송**: 학부모에게 The Thinking Flow 리포트 발송\n6. **Notion 기록**: 발송 이력 노션 DB에 자동 저장\n7. **Slack 알림**: 카이에게 발송 완료 알림\n\n### ⚙️ 모바일 폼 연동\n- Google Forms 또는 Tally 사용\n- Webhook URL을 폼 응답 대상으로 설정",
-        "height": 340,
-        "width": 400,
-        "color": 4
-      }
+        -896,
+        -304
+      ]
     },
     {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "math4u-lesson-report",
+        "options": {}
+      },
       "id": "webhook-trigger",
       "name": "📱 폼 데이터 수신 (Webhook)",
       "type": "n8n-nodes-base.webhook",
@@ -32,25 +37,10 @@
         -400,
         0
       ],
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "math4u-lesson-report",
-        "responseMode": "onReceived",
-        "responseData": "firstEntryJson",
-        "options": {}
-      }
+      "webhookId": "8438433a-90f5-42d5-abfa-32ed39c14d5d"
     },
     {
-      "id": "parse-data",
-      "name": "📊 데이터 파싱",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        -160,
-        0
-      ],
       "parameters": {
-        "mode": "manual",
         "assignments": {
           "assignments": [
             {
@@ -110,17 +100,17 @@
           ]
         },
         "options": {}
-      }
+      },
+      "id": "parse-data",
+      "name": "📊 데이터 파싱",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -160,
+        0
+      ]
     },
     {
-      "id": "notion-student-lookup",
-      "name": "🔍 Notion 학생 조회",
-      "type": "n8n-nodes-base.notion",
-      "typeVersion": 2.2,
-      "position": [
-        80,
-        0
-      ],
       "parameters": {
         "resource": "databasePage",
         "operation": "getAll",
@@ -129,7 +119,6 @@
           "value": "229c6a06-e17e-8083-bf21-ec602b6a3033",
           "mode": "id"
         },
-        "returnAll": false,
         "limit": 1,
         "simple": false,
         "filterType": "manual",
@@ -137,28 +126,25 @@
           "conditions": [
             {
               "key": "학생이름|title",
-              "condition": "equals",
-              "value": "={{ $('📊 데이터 파싱').item.json.studentName }}"
+              "condition": "equals"
             }
           ]
         },
         "options": {}
-      }
+      },
+      "id": "notion-student-lookup",
+      "name": "🔍 Notion 학생 조회",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        80,
+        0
+      ]
     },
     {
-      "id": "ai-report-generate",
-      "name": "🤖 AI 리포트 생성",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
-      "position": [
-        320,
-        0
-      ],
       "parameters": {
         "method": "POST",
         "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={{ $env.GEMINI_API_KEY }}",
-        "sendQuery": false,
-        "queryParameters": {},
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -175,9 +161,20 @@
         "options": {
           "timeout": 60000
         }
-      }
+      },
+      "id": "ai-report-generate",
+      "name": "🤖 AI 리포트 생성",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        320,
+        0
+      ]
     },
     {
+      "parameters": {
+        "jsCode": "const geminiResponse = $input.item.json;\n\n// Gemini 응답 구조: candidates[0].content.parts[0].text\nlet rawText = '';\ntry {\n  rawText = geminiResponse.candidates[0].content.parts[0].text;\n} catch(e) {\n  rawText = '{\"reportBody\": \"리포트 생성 중 오류가 발생했습니다.\"}';\n}\n\n// JSON 파싱 (마크다운 코드블록 제거 후)\nlet reportBody = '';\ntry {\n  const cleaned = rawText.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  const parsed = JSON.parse(cleaned);\n  reportBody = parsed.reportBody;\n} catch(e) {\n  reportBody = rawText;\n}\n\nconst studentData = $('📊 데이터 파싱').item.json;\nconst notionData = $('🔍 Notion 학생 조회').item.json;\n\n// 학부모 연락처 추출\nlet parentPhone = '';\ntry {\n  parentPhone = notionData.properties?.['상담연락처']?.phone_number ??\n                notionData.properties?.['학부모연락처']?.phone_number ??\n                notionData.properties?.['연락처']?.phone_number ?? '';\n} catch(e) {\n  parentPhone = '';\n}\n\nreturn [{\n  json: {\n    studentName: studentData.studentName,\n    lessonDate: studentData.lessonDate,\n    parentPhone: parentPhone,\n    reportBody: reportBody,\n    notionPageId: notionData.id ?? ''\n  }\n}];"
+      },
       "id": "parse-ai-response",
       "name": "🔧 AI 응답 파싱",
       "type": "n8n-nodes-base.code",
@@ -185,20 +182,9 @@
       "position": [
         560,
         0
-      ],
-      "parameters": {
-        "jsCode": "const geminiResponse = $input.item.json;\n\n// Gemini 응답 구조: candidates[0].content.parts[0].text\nlet rawText = '';\ntry {\n  rawText = geminiResponse.candidates[0].content.parts[0].text;\n} catch(e) {\n  rawText = '{\"reportBody\": \"리포트 생성 중 오류가 발생했습니다.\"}';\n}\n\n// JSON 파싱 (마크다운 코드블록 제거 후)\nlet reportBody = '';\ntry {\n  const cleaned = rawText.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  const parsed = JSON.parse(cleaned);\n  reportBody = parsed.reportBody;\n} catch(e) {\n  reportBody = rawText;\n}\n\nconst studentData = $('📊 데이터 파싱').item.json;\nconst notionData = $('🔍 Notion 학생 조회').item.json;\n\n// 학부모 연락처 추출\nlet parentPhone = '';\ntry {\n  parentPhone = notionData.properties?.['상담연락처']?.phone_number ??\n                notionData.properties?.['학부모연락처']?.phone_number ??\n                notionData.properties?.['연락처']?.phone_number ?? '';\n} catch(e) {\n  parentPhone = '';\n}\n\nreturn [{\n  json: {\n    studentName: studentData.studentName,\n    lessonDate: studentData.lessonDate,\n    parentPhone: parentPhone,\n    reportBody: reportBody,\n    notionPageId: notionData.id ?? ''\n  }\n}];"
-      }
+      ]
     },
     {
-      "id": "alimtalk-send",
-      "name": "📨 알림톡 발송 (학부모)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
-      "position": [
-        800,
-        0
-      ],
       "parameters": {
         "method": "POST",
         "url": "https://api-alimtalk.cloud.toast.com/alimtalk/v2.0/appkeys/YuIB1lEDj8vuqME2/messages",
@@ -223,20 +209,19 @@
         "specifyBody": "json",
         "jsonBody": "={\n  \"senderKey\": \"7780249050d98477b04a1b589e4794c8ac1f7a78\",\n  \"templateCode\": \"Math4U-report-001\",\n  \"recipientList\": [\n    {\n      \"recipientNo\": \"{{ $json.parentPhone }}\",\n      \"templateParameter\": {\n        \"student_name\": \"{{ $json.studentName }}\",\n        \"lesson_date\": \"{{ $json.lessonDate }}\",\n        \"report_body\": \"{{ $json.reportBody }}\"\n      }\n    }\n  ]\n}",
         "options": {}
-      }
+      },
+      "id": "alimtalk-send",
+      "name": "📨 알림톡 발송 (학부모)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        800,
+        0
+      ]
     },
     {
-      "id": "notion-log",
-      "name": "📝 Notion 발송 이력 저장",
-      "type": "n8n-nodes-base.notion",
-      "typeVersion": 2.2,
-      "position": [
-        1040,
-        0
-      ],
       "parameters": {
         "resource": "databasePage",
-        "operation": "create",
         "databaseId": {
           "__rl": true,
           "value": "LESSON_REPORT_DB_ID",
@@ -246,12 +231,10 @@
         "propertiesUi": {
           "propertyValues": [
             {
-              "key": "학생이름|title",
-              "titleValue": "={{ $('🔧 AI 응답 파싱').item.json.studentName + ' - ' + $('🔧 AI 응답 파싱').item.json.lessonDate }}"
+              "key": "학생이름|title"
             },
             {
-              "key": "수업일|date",
-              "dateValue": "={{ $('🔧 AI 응답 파싱').item.json.lessonDate }}"
+              "key": "수업일|date"
             },
             {
               "key": "단원|rich_text",
@@ -284,19 +267,18 @@
           ]
         },
         "options": {}
-      }
+      },
+      "id": "notion-log",
+      "name": "📝 Notion 발송 이력 저장",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        1040,
+        0
+      ]
     },
     {
-      "id": "slack-notify",
-      "name": "🔔 Slack 발송 완료 알림",
-      "type": "n8n-nodes-base.slack",
-      "typeVersion": 2.4,
-      "position": [
-        1280,
-        0
-      ],
       "parameters": {
-        "operation": "post",
         "select": "channel",
         "channelId": {
           "__rl": true,
@@ -305,9 +287,19 @@
         },
         "text": "=✅ 수업 리포트 발송 완료!\n\n👤 학생: {{ $('🔧 AI 응답 파싱').item.json.studentName }}\n📅 수업일: {{ $('🔧 AI 응답 파싱').item.json.lessonDate }}\n📱 발송 번호: {{ $('🔧 AI 응답 파싱').item.json.parentPhone }}\n\n📄 리포트 미리보기:\n{{ $('🔧 AI 응답 파싱').item.json.reportBody.substring(0, 200) }}...",
         "otherOptions": {}
-      }
+      },
+      "id": "slack-notify",
+      "name": "🔔 Slack 발송 완료 알림",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        1280,
+        0
+      ],
+      "webhookId": "cd5770d4-3f65-4ca7-9491-6fe58bf9c8b8"
     },
     {
+      "parameters": {},
       "id": "error-trigger",
       "name": "❌ 에러 감지",
       "type": "n8n-nodes-base.errorTrigger",
@@ -315,18 +307,9 @@
       "position": [
         320,
         240
-      ],
-      "parameters": {}
+      ]
     },
     {
-      "id": "status-error",
-      "name": "❌ 상태 업데이트 (에러)",
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.3,
-      "position": [
-        560,
-        240
-      ],
       "parameters": {
         "workflowId": "eOopB5bbEEO9rjrg",
         "workflowInputs": {
@@ -337,72 +320,81 @@
             "status": "❌ 에러",
             "errorMessage": "={{ $json.error.message }}"
           }
-        }
-      }
+        },
+        "options": {}
+      },
+      "id": "status-error",
+      "name": "❌ 상태 업데이트 (에러)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        560,
+        240
+      ]
     },
     {
+      "parameters": {
+        "content": "## 📱 모바일 폼 연동\n구글폼 또는 Tally에서\n이 Webhook URL로 POST 전송\n\n**필수 필드:**\n- studentName (학생이름)\n- lessonDate (수업날짜)\n- subjectUnit (단원)\n- discovery (상/중/하)\n- generalization (성공/진행/미흡)\n- concentration (높음/보통/낮음)\n- eureka (유레카 모먼트)\n- weakness (취약점)\n- presetMessage (프리셋 메시지)",
+        "height": 328,
+        "width": 260,
+        "color": 5
+      },
       "id": "note-webhook",
       "name": "📌 Webhook 설명",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -460,
-        -180
-      ],
-      "parameters": {
-        "content": "## 📱 모바일 폼 연동\n구글폼 또는 Tally에서\n이 Webhook URL로 POST 전송\n\n**필수 필드:**\n- studentName (학생이름)\n- lessonDate (수업날짜)\n- subjectUnit (단원)\n- discovery (상/중/하)\n- generalization (성공/진행/미흡)\n- concentration (높음/보통/낮음)\n- eureka (유레카 모먼트)\n- weakness (취약점)\n- presetMessage (프리셋 메시지)",
-        "height": 280,
-        "width": 260,
-        "color": 5
-      }
+        -464,
+        -368
+      ]
     },
     {
-      "id": "note-ai",
-      "name": "📌 AI 리포트 설명",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        260,
-        -180
-      ],
       "parameters": {
         "content": "## 🤖 AI 리포트 생성\nGemini 3.1 Flash Lite가\n'The Thinking Flow' 리포트 자동 생성\n\n⚠️ API 키 설정 필요:\nQuery Parameter의 key에\nGoogle Gemini API Key 입력",
         "height": 200,
         "width": 260,
         "color": 3
-      }
-    },
-    {
-      "id": "note-alimtalk",
-      "name": "📌 알림톡 설명",
+      },
+      "id": "note-ai",
+      "name": "📌 AI 리포트 설명",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        740,
-        -180
-      ],
+        240,
+        -240
+      ]
+    },
+    {
       "parameters": {
         "content": "## 📨 알림톡 발송\n⚠️ NHN Cloud에서\n템플릿 코드 등록 필요:\n**Math4U-report-001**\n\n템플릿 변수:\n- #{student_name}\n- #{lesson_date}\n- #{report_body}",
         "height": 200,
         "width": 260,
         "color": 6
-      }
-    },
-    {
-      "id": "note-notion-log",
-      "name": "📌 Notion DB 설명",
+      },
+      "id": "note-alimtalk",
+      "name": "📌 알림톡 설명",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        980,
-        -180
-      ],
+        752,
+        -176
+      ]
+    },
+    {
       "parameters": {
         "content": "## 📝 Notion 저장\n⚠️ 수업 리포트 전용\nNotion DB 생성 후\nDB ID 입력 필요\n\n**필요 컬럼:**\n학생이름, 수업일, 단원,\n원리발견, 일반화확장,\n논리지속성, 유레카모먼트,\n리포트내용, 발송완료",
         "height": 220,
         "width": 260,
         "color": 7
-      }
+      },
+      "id": "note-notion-log",
+      "name": "📌 Notion DB 설명",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        992,
+        -176
+      ]
     }
   ],
   "connections": {
@@ -502,10 +494,10 @@
   },
   "staticData": null,
   "meta": null,
-  "pinData": null,
-  "versionId": "3323b9b4-3438-4d34-9e9b-e18c669761bd",
+  "pinData": {},
+  "versionId": "7186e42e-15f2-4b99-9cc4-ac76b9107ffc",
   "activeVersionId": null,
-  "versionCounter": 4,
+  "versionCounter": 9,
   "triggerCount": 0,
   "shared": [
     {
