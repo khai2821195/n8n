@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-19T10:43:35.440Z",
+  "updatedAt": "2026-04-06T10:54:59.393Z",
   "createdAt": "2026-03-10T08:47:40.555Z",
   "id": "ruLfwzGZtsmLSD3k",
   "name": "Biz-mecca 납품사례 블로그 자동작성 260310",
@@ -223,7 +223,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer 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"
+              "value": "Bearer ntn_MASKED"
             },
             {
               "name": "Notion-Version",
@@ -288,7 +288,7 @@
       ],
       "parameters": {
         "method": "POST",
-        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key={{ $env.GEMINI_API_KEY }}",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemma-3-12b-it:generateContent?key={{ $env.GEMINI_API_KEY }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -331,7 +331,7 @@
       ],
       "parameters": {
         "method": "POST",
-        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key={{ $env.GEMINI_API_KEY }}",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key={{ $env.GEMINI_API_KEY }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -380,7 +380,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer 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"
+              "value": "Bearer ntn_MASKED"
             },
             {
               "name": "Notion-Version",
@@ -416,7 +416,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer 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"
+              "value": "Bearer ntn_MASKED"
             },
             {
               "name": "Notion-Version",
@@ -675,9 +675,9 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "31f58fc5-0e18-4b71-9c7b-4f53cac48f7c",
-  "activeVersionId": "31f58fc5-0e18-4b71-9c7b-4f53cac48f7c",
-  "versionCounter": 130,
+  "versionId": "a952adb6-8677-48b3-8b9e-648155e03533",
+  "activeVersionId": "a952adb6-8677-48b3-8b9e-648155e03533",
+  "versionCounter": 133,
   "triggerCount": 1,
   "shared": [
     {
@@ -700,9 +700,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-19T10:43:35.442Z",
-    "createdAt": "2026-03-19T10:43:35.442Z",
-    "versionId": "31f58fc5-0e18-4b71-9c7b-4f53cac48f7c",
+    "updatedAt": "2026-04-06T10:54:59.395Z",
+    "createdAt": "2026-04-06T10:54:59.395Z",
+    "versionId": "a952adb6-8677-48b3-8b9e-648155e03533",
     "workflowId": "ruLfwzGZtsmLSD3k",
     "nodes": [
       {
@@ -921,7 +921,7 @@
             "parameters": [
               {
                 "name": "Authorization",
-                "value": "Bearer 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"
+                "value": "Bearer ntn_MASKED"
               },
               {
                 "name": "Notion-Version",
@@ -986,7 +986,7 @@
         ],
         "parameters": {
           "method": "POST",
-          "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key={{ $env.GEMINI_API_KEY }}",
+          "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemma-3-12b-it:generateContent?key={{ $env.GEMINI_API_KEY }}",
           "sendHeaders": true,
           "headerParameters": {
             "parameters": [
@@ -1029,7 +1029,7 @@
         ],
         "parameters": {
           "method": "POST",
-          "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key={{ $env.GEMINI_API_KEY }}",
+          "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key={{ $env.GEMINI_API_KEY }}",
           "sendHeaders": true,
           "headerParameters": {
             "parameters": [
@@ -1078,7 +1078,7 @@
             "parameters": [
               {
                 "name": "Authorization",
-                "value": "Bearer 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"
+                "value": "Bearer ntn_MASKED"
               },
               {
                 "name": "Notion-Version",
@@ -1114,7 +1114,7 @@
             "parameters": [
               {
                 "name": "Authorization",
-                "value": "Bearer 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"
+                "value": "Bearer ntn_MASKED"
               },
               {
                 "name": "Notion-Version",
@@ -1367,18 +1367,18 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-19T10:43:35.704Z",
-        "id": 388,
+        "createdAt": "2026-04-06T10:54:59.607Z",
+        "id": 472,
         "workflowId": "ruLfwzGZtsmLSD3k",
-        "versionId": "31f58fc5-0e18-4b71-9c7b-4f53cac48f7c",
+        "versionId": "a952adb6-8677-48b3-8b9e-648155e03533",
         "event": "activated",
         "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
       },
       {
-        "createdAt": "2026-03-19T10:43:35.605Z",
-        "id": 387,
+        "createdAt": "2026-04-06T10:54:59.517Z",
+        "id": 471,
         "workflowId": "ruLfwzGZtsmLSD3k",
-        "versionId": "31f58fc5-0e18-4b71-9c7b-4f53cac48f7c",
+        "versionId": "a952adb6-8677-48b3-8b9e-648155e03533",
         "event": "deactivated",
         "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
       }
