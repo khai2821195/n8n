@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-19T10:49:30.617Z",
+  "updatedAt": "2026-05-08T07:29:21.792Z",
   "createdAt": "2026-03-05T11:42:54.670Z",
   "id": "BrZ88oo3KRKccX0g",
   "name": "등록일원부 자동생성 - 수업종료",
@@ -10,118 +10,118 @@
     {
       "id": "trigger-01",
       "name": "Notion Trigger - Student_Study 변경 감지",
-      "type": "n8n-nodes-base.notionTrigger",
-      "typeVersion": 1,
-      "position": [
-        -600,
-        300
-      ],
       "parameters": {
-        "event": "pagedUpdatedInDatabase",
         "databaseId": {
           "__rl": true,
-          "value": "2d0c6a06e17e81188ce1dd2f76406aa1",
-          "mode": "id"
+          "mode": "id",
+          "value": "2d0c6a06e17e81188ce1dd2f76406aa1"
+        },
+        "event": "pagedUpdatedInDatabase",
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
         },
         "simple": false
-      }
+      },
+      "position": [
+        -608,
+        304
+      ],
+      "type": "n8n-nodes-base.notionTrigger",
+      "typeVersion": 1,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 8000
     },
     {
       "id": "code-01",
       "name": "Code - 종료 체크 및 데이터 추출",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -340,
-        300
-      ],
       "parameters": {
-        "jsCode": "const page = $input.first().json;\nconst props = page.properties || {};\n\nconst isEnded = props['수업완료']?.checkbox === true;\nif (!isEnded) return [];\n\nconst sessionItems = props['수업회차']?.multi_select || [];\nconst sessionItem = sessionItems.find(s => /\\d/.test(s.name));\nconst sessionCount = sessionItem ? parseInt(sessionItem.name) : null;\n\nconst bunArr = props['수업구분']?.rollup?.array || [];\nconst bunName = bunArr[0]?.select?.name || '';\nconst classCount = parseInt(bunName.replace(/[^0-9]/g, '')) || null;\n\nif (sessionCount === null || classCount === null) return [];\nif (sessionCount !== classCount) return [];\n\nconst studentPageId = props['Students']?.relation?.[0]?.id || '';\nif (!studentPageId) return [];\nconst classPageId = props['Class']?.relation?.[0]?.id || '';\nif (!classPageId) return [];\n\nconst rollupArr = props['다음수업일']?.rollup?.array || [];\nconst dateStr = rollupArr[0]?.formula?.string || '';\nlet isoDate = new Date().toISOString().split('T')[0];\nif (dateStr) {\n  const m = dateStr.match(/(\\d{4})년\\s*(\\d{1,2})월\\s*(\\d{1,2})일/);\n  if (m) isoDate = `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;\n}\n\nconst year = String(new Date().getFullYear()).slice(2);\nreturn [{ json: { studentPageId, classPageId, isoDate, year } }];"
-      }
+        "jsCode": "const page = $input.first().json;\nconst props = page.properties || {};\n\n// 수업완료 체크\nconst isEnded = props['수업완료']?.checkbox === true;\nif (!isEnded) return [];\n\n// ✅ 등록일원부생성 체크박스가 이미 true면 중단 (중복 방지 핵심)\nconst alreadyCreated = props['등록일원부생성']?.checkbox === true;\nif (alreadyCreated) return [];\n\nconst sessionItems = props['수업회차']?.multi_select || [];\nconst sessionItem = sessionItems.find(s => /\\d/.test(s.name));\nconst sessionCount = sessionItem ? parseInt(sessionItem.name) : null;\n\nconst bunArr = props['수업구분']?.rollup?.array || [];\nconst bunName = bunArr[0]?.select?.name || '';\nconst classCount = parseInt(bunName.replace(/[^0-9]/g, '')) || null;\n\nif (sessionCount === null || classCount === null) return [];\nif (sessionCount !== classCount) return [];\n\nconst studentStudyPageId = page.id;\nconst studentPageId = props['Students']?.relation?.[0]?.id || '';\nif (!studentPageId) return [];\nconst classPageId = props['Class']?.relation?.[0]?.id || '';\nif (!classPageId) return [];\n\nconst rollupArr = props['다음수업일']?.rollup?.array || [];\nconst dateStr = rollupArr[0]?.formula?.string || '';\nlet isoDate = new Date().toISOString().split('T')[0];\nif (dateStr) {\n  const m = dateStr.match(/(\\d{4})년\\s*(\\d{1,2})월\\s*(\\d{1,2})일/);\n  if (m) isoDate = `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;\n}\n\nconst year = String(new Date().getFullYear()).slice(2);\nreturn [{ json: { studentStudyPageId, studentPageId, classPageId, isoDate, year } }];"
+      },
+      "position": [
+        -336,
+        304
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
     },
     {
       "id": "notion-01",
       "name": "Notion - Class 수업료 조회",
-      "type": "n8n-nodes-base.notion",
-      "typeVersion": 2.2,
-      "position": [
-        -80,
-        300
-      ],
       "parameters": {
-        "resource": "databasePage",
         "operation": "get",
+        "options": {},
         "pageId": {
           "__rl": true,
-          "value": "={{ $json.classPageId }}",
-          "mode": "id"
+          "mode": "id",
+          "value": "={{ $json.classPageId }}"
         },
-        "simple": false,
-        "options": {}
-      }
+        "resource": "databasePage",
+        "simple": false
+      },
+      "position": [
+        -80,
+        304
+      ],
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2
     },
     {
       "id": "code-02",
       "name": "Code - 수업료 추출",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        180,
-        300
-      ],
       "parameters": {
         "jsCode": "const classData = $json;\nconst prev = $('Code - 종료 체크 및 데이터 추출').item.json;\nconst fee = classData.properties?.['수업료']?.number || 0;\nreturn [{ json: { ...prev, fee } }];"
-      }
+      },
+      "position": [
+        192,
+        304
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
     },
     {
       "id": "notion-01b",
       "name": "Notion - Students 이름 조회",
-      "type": "n8n-nodes-base.notion",
-      "typeVersion": 2.2,
-      "position": [
-        440,
-        300
-      ],
       "parameters": {
-        "resource": "databasePage",
         "operation": "get",
+        "options": {},
         "pageId": {
           "__rl": true,
-          "value": "={{ $json.studentPageId }}",
-          "mode": "id"
+          "mode": "id",
+          "value": "={{ $json.studentPageId }}"
         },
-        "simple": false,
-        "options": {}
-      }
+        "resource": "databasePage",
+        "simple": false
+      },
+      "position": [
+        448,
+        304
+      ],
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2
     },
     {
       "id": "code-02b",
       "name": "Code - 이름 병합",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        700,
-        300
-      ],
       "parameters": {
         "jsCode": "const studentData = $json;\nconst prev = $('Code - 수업료 추출').item.json;\nconst studentName = studentData.properties?.['이름']?.title?.[0]?.plain_text || '';\nreturn [{ json: { ...prev, studentName } }];"
-      }
+      },
+      "position": [
+        704,
+        304
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
     },
     {
       "id": "http-01",
       "name": "HTTP - 납부회차 조회",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        960,
-        300
-      ],
       "parameters": {
-        "method": "POST",
-        "url": "https://api.notion.com/v1/databases/55aac51e739c4f8e870903cb1eb252b6/query",
         "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "notionApi",
-        "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
@@ -130,40 +130,40 @@
             }
           ]
         },
-        "sendBody": true,
-        "specifyBody": "json",
         "jsonBody": "={\n  \"filter\": {\n    \"property\": \"Students\",\n    \"relation\": {\n      \"contains\": \"{{ $json.studentPageId }}\"\n    }\n  }\n}",
-        "options": {}
-      }
+        "method": "POST",
+        "nodeCredentialType": "notionApi",
+        "options": {},
+        "sendBody": true,
+        "sendHeaders": true,
+        "specifyBody": "json",
+        "url": "https://api.notion.com/v1/databases/55aac51e739c4f8e870903cb1eb252b6/query"
+      },
+      "position": [
+        960,
+        304
+      ],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2
     },
     {
       "id": "code-03",
       "name": "Code - 납부회차 계산",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "parameters": {
+        "jsCode": "const prev = $('Code - 이름 병합').item.json;\nconst { studentName, studentStudyPageId, studentPageId, isoDate, year, fee } = prev;\nconst pages = $input.first().json.results || [];\n\nconst records = pages.filter(p => (p.properties?.['납부회차']?.select?.name || '').startsWith(year));\nconst nums = records.map(p => parseInt((p.properties?.['납부회차']?.select?.name || '').slice(2), 10) || 0);\nconst maxSeq = nums.length > 0 ? Math.max(...nums) : -1;\nconst seq = String(maxSeq + 1).padStart(2, '0');\nconst paySeq = year + seq;\n\n// 2차 안전장치: 납부회차 기준 중복 체크\nconst isDuplicate = records.some(p =>\n  (p.properties?.['납부회차']?.select?.name || '') === paySeq\n);\nif (isDuplicate) {\n  console.log(`[중복 방지] ${studentName} - ${paySeq} 이미 존재. 실행 중단.`);\n  return [];\n}\n\nconst recordName = `${studentName} | ${paySeq}`;\nreturn [{ json: { studentStudyPageId, studentPageId, fee, isoDate, paySeq, recordName } }];"
+      },
       "position": [
         1220,
-        300
+        304
       ],
-      "parameters": {
-        "jsCode": "const prev = $('Code - 이름 병합').item.json;\nconst { studentName, studentPageId, isoDate, year, fee } = prev;\nconst pages = $input.first().json.results || [];\n\nconst records = pages.filter(p => (p.properties?.['납부회차']?.select?.name || '').startsWith(year));\nconst nums = records.map(p => parseInt((p.properties?.['납부회차']?.select?.name || '').slice(2), 10) || 0);\nconst maxSeq = nums.length > 0 ? Math.max(...nums) : -1;\nconst seq = String(maxSeq + 1).padStart(2, '0');\nconst paySeq = year + seq;\nconst recordName = `${studentName} | ${paySeq}`;\n\nreturn [{ json: { studentPageId, fee, isoDate, paySeq, recordName } }];"
-      }
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
     },
     {
       "id": "http-02",
       "name": "HTTP - 등록일원부 레코드 생성",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1480,
-        300
-      ],
       "parameters": {
-        "method": "POST",
-        "url": "https://api.notion.com/v1/pages",
         "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "notionApi",
-        "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
@@ -172,21 +172,54 @@
             }
           ]
         },
-        "sendBody": true,
-        "specifyBody": "json",
         "jsonBody": "={\n  \"parent\": { \"database_id\": \"55aac51e-739c-4f8e-8709-03cb1eb252b6\" },\n  \"properties\": {\n    \"이름\": {\n      \"title\": [{ \"text\": { \"content\": \"{{ $json.recordName }}\" } }]\n    },\n    \"Students\": {\n      \"relation\": [{ \"id\": \"{{ $json.studentPageId }}\" }]\n    },\n    \"납부회차\": {\n      \"select\": { \"name\": \"{{ $json.paySeq }}\" }\n    },\n    \"수업료\": {\n      \"number\": {{ $json.fee }}\n    },\n    \"등록일\": {\n      \"date\": { \"start\": \"{{ $json.isoDate }}\" }\n    }\n  }\n}",
-        "options": {}
-      }
+        "method": "POST",
+        "nodeCredentialType": "notionApi",
+        "options": {},
+        "sendBody": true,
+        "sendHeaders": true,
+        "specifyBody": "json",
+        "url": "https://api.notion.com/v1/pages"
+      },
+      "position": [
+        1480,
+        304
+      ],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2
+    },
+    {
+      "id": "http-03",
+      "name": "HTTP - 등록일원부생성 체크박스 업데이트",
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            }
+          ]
+        },
+        "jsonBody": "{\n  \"properties\": {\n    \"등록일원부생성\": {\n      \"checkbox\": true\n    }\n  }\n}",
+        "method": "PATCH",
+        "nodeCredentialType": "notionApi",
+        "options": {},
+        "sendBody": true,
+        "sendHeaders": true,
+        "specifyBody": "json",
+        "url": "={{ 'https://api.notion.com/v1/pages/' + $('Code - 납부회차 계산').item.json.studentStudyPageId }}"
+      },
+      "position": [
+        1700,
+        304
+      ],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2
     },
     {
       "id": "set-success",
       "name": "Set - 성공 데이터",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        1700,
-        300
-      ],
       "parameters": {
         "assignments": {
           "assignments": [
@@ -223,42 +256,127 @@
           ]
         },
         "options": {}
-      }
+      },
+      "position": [
+        1920,
+        304
+      ],
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4
     },
     {
       "id": "status-success",
       "name": "✅ 상태 업데이트 (성공)",
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1,
-      "position": [
-        1920,
-        300
-      ],
       "parameters": {
-        "workflowId": "eOopB5bbEEO9rjrg",
-        "options": {}
-      }
+        "options": {},
+        "workflowId": "eOopB5bbEEO9rjrg"
+      },
+      "position": [
+        2140,
+        304
+      ],
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1
     },
     {
       "id": "error-trigger",
       "name": "❌ 에러 감지",
-      "type": "n8n-nodes-base.errorTrigger",
-      "typeVersion": 1,
+      "parameters": {},
       "position": [
         700,
-        500
+        540
       ],
-      "parameters": {}
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1
+    },
+    {
+      "id": "if-infra-error",
+      "name": "IF - 인프라 에러 필터",
+      "parameters": {
+        "conditions": {
+          "combinator": "or",
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.execution.error.statusCode }}",
+              "operator": {
+                "operation": "equals",
+                "type": "number"
+              },
+              "rightValue": 502
+            },
+            {
+              "id": "c2",
+              "leftValue": "={{ $json.execution.error.statusCode }}",
+              "operator": {
+                "operation": "equals",
+                "type": "number"
+              },
+              "rightValue": 503
+            },
+            {
+              "id": "c3",
+              "leftValue": "={{ $json.execution.error.statusCode }}",
+              "operator": {
+                "operation": "equals",
+                "type": "number"
+              },
+              "rightValue": 504
+            },
+            {
+              "id": "c4",
+              "leftValue": "={{ $json.execution.error.statusCode }}",
+              "operator": {
+                "operation": "equals",
+                "type": "number"
+              },
+              "rightValue": 520
+            },
+            {
+              "id": "c5",
+              "leftValue": "={{ $json.execution.error.message }}",
+              "operator": {
+                "operation": "contains",
+                "type": "string"
+              },
+              "rightValue": "timed out"
+            },
+            {
+              "id": "c6",
+              "leftValue": "={{ $json.execution.error.message }}",
+              "operator": {
+                "operation": "contains",
+                "type": "string"
+              },
+              "rightValue": "Gateway"
+            },
+            {
+              "id": "c7",
+              "leftValue": "={{ $json.execution.error.message }}",
+              "operator": {
+                "operation": "contains",
+                "type": "string"
+              },
+              "rightValue": "service failed"
+            }
+          ],
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          }
+        }
+      },
+      "position": [
+        920,
+        540
+      ],
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2
     },
     {
       "id": "set-error",
       "name": "Set - 에러 데이터",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        920,
-        500
-      ],
       "parameters": {
         "assignments": {
           "assignments": [
@@ -295,37 +413,43 @@
           ]
         },
         "options": {}
-      }
+      },
+      "position": [
+        1140,
+        680
+      ],
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4
     },
     {
       "id": "status-error",
       "name": "❌ 상태 업데이트 (에러)",
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1,
-      "position": [
-        1140,
-        500
-      ],
       "parameters": {
-        "workflowId": "eOopB5bbEEO9rjrg",
-        "options": {}
-      }
+        "options": {},
+        "workflowId": "eOopB5bbEEO9rjrg"
+      },
+      "position": [
+        1360,
+        680
+      ],
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1
     },
     {
       "id": "manual-note",
       "name": "📋 워크플로우 메뉴얼",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
+      "parameters": {
+        "color": 4,
+        "content": "## 📋 등록일원부 자동생성 메뉴얼\n\n### 🔗 노션 메뉴얼\nhttps://www.notion.so/323c6a06e17e81b6b0a5d91342537f5c\n\n---\n\n- **트리거**: Notion Trigger (Student_Study 변경)\n- **목적**: 수업 종료 시 등록일원부 자동 생성",
+        "height": 280,
+        "width": 340
+      },
       "position": [
         -840,
         160
       ],
-      "parameters": {
-        "content": "## 📋 등록일원부 자동생성 메뉴얼\n\n### 🔗 노션 메뉴얼\nhttps://www.notion.so/323c6a06e17e81b6b0a5d91342537f5c\n\n---\n\n- **트리거**: Notion Trigger (Student_Study 변경)\n- **목적**: 수업 종료 시 등록일원부 자동 생성",
-        "height": 280,
-        "width": 340,
-        "color": 4
-      }
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1
     }
   ],
   "connections": {
@@ -333,9 +457,9 @@
       "main": [
         [
           {
+            "index": 0,
             "node": "Code - 종료 체크 및 데이터 추출",
-            "type": "main",
-            "index": 0
+            "type": "main"
           }
         ]
       ]
@@ -344,9 +468,9 @@
       "main": [
         [
           {
+            "index": 0,
             "node": "Notion - Class 수업료 조회",
-            "type": "main",
-            "index": 0
+            "type": "main"
           }
         ]
       ]
@@ -355,9 +479,9 @@
       "main": [
         [
           {
+            "index": 0,
             "node": "Code - 수업료 추출",
-            "type": "main",
-            "index": 0
+            "type": "main"
           }
         ]
       ]
@@ -366,9 +490,9 @@
       "main": [
         [
           {
+            "index": 0,
             "node": "Notion - Students 이름 조회",
-            "type": "main",
-            "index": 0
+            "type": "main"
           }
         ]
       ]
@@ -377,9 +501,9 @@
       "main": [
         [
           {
+            "index": 0,
             "node": "Code - 이름 병합",
-            "type": "main",
-            "index": 0
+            "type": "main"
           }
         ]
       ]
@@ -388,9 +512,9 @@
       "main": [
         [
           {
+            "index": 0,
             "node": "HTTP - 납부회차 조회",
-            "type": "main",
-            "index": 0
+            "type": "main"
           }
         ]
       ]
@@ -399,9 +523,9 @@
       "main": [
         [
           {
+            "index": 0,
             "node": "Code - 납부회차 계산",
-            "type": "main",
-            "index": 0
+            "type": "main"
           }
         ]
       ]
@@ -410,9 +534,9 @@
       "main": [
         [
           {
+            "index": 0,
             "node": "HTTP - 등록일원부 레코드 생성",
-            "type": "main",
-            "index": 0
+            "type": "main"
           }
         ]
       ]
@@ -421,9 +545,20 @@
       "main": [
         [
           {
+            "index": 0,
+            "node": "HTTP - 등록일원부생성 체크박스 업데이트",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "HTTP - 등록일원부생성 체크박스 업데이트": {
+      "main": [
+        [
+          {
+            "index": 0,
             "node": "Set - 성공 데이터",
-            "type": "main",
-            "index": 0
+            "type": "main"
           }
         ]
       ]
@@ -432,9 +567,9 @@
       "main": [
         [
           {
+            "index": 0,
             "node": "✅ 상태 업데이트 (성공)",
-            "type": "main",
-            "index": 0
+            "type": "main"
           }
         ]
       ]
@@ -443,9 +578,21 @@
       "main": [
         [
           {
+            "index": 0,
+            "node": "IF - 인프라 에러 필터",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "IF - 인프라 에러 필터": {
+      "main": [
+        [],
+        [
+          {
+            "index": 0,
             "node": "Set - 에러 데이터",
-            "type": "main",
-            "index": 0
+            "type": "main"
           }
         ]
       ]
@@ -454,9 +601,9 @@
       "main": [
         [
           {
+            "index": 0,
             "node": "❌ 상태 업데이트 (에러)",
-            "type": "main",
-            "index": 0
+            "type": "main"
           }
         ]
       ]
@@ -470,17 +617,14 @@
   },
   "staticData": {
     "node:Notion Trigger - Student_Study 변경 감지": {
-      "lastTimeChecked": "2026-04-02T12:32:00.000Z",
-      "possibleDuplicates": [
-        "333c6a06-e17e-815e-8fa6-f08e72884bc0"
-      ]
+      "lastTimeChecked": "2026-05-08T07:29:00.000Z"
     }
   },
   "meta": null,
   "pinData": {},
-  "versionId": "4d2b6f2c-bed4-4c3a-aedc-558c311c1bb9",
-  "activeVersionId": "4d2b6f2c-bed4-4c3a-aedc-558c311c1bb9",
-  "versionCounter": 239,
+  "versionId": "33d9679b-bf60-4eb8-bf02-d0fdf4b4256a",
+  "activeVersionId": "33d9679b-bf60-4eb8-bf02-d0fdf4b4256a",
+  "versionCounter": 497,
   "triggerCount": 1,
   "shared": [
     {
@@ -503,144 +647,150 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-19T10:49:30.619Z",
-    "createdAt": "2026-03-19T10:49:30.619Z",
-    "versionId": "4d2b6f2c-bed4-4c3a-aedc-558c311c1bb9",
+    "updatedAt": "2026-05-08T07:29:21.794Z",
+    "createdAt": "2026-05-08T07:29:21.794Z",
+    "versionId": "33d9679b-bf60-4eb8-bf02-d0fdf4b4256a",
     "workflowId": "BrZ88oo3KRKccX0g",
     "nodes": [
       {
-        "id": "trigger-01",
-        "name": "Notion Trigger - Student_Study 변경 감지",
-        "type": "n8n-nodes-base.notionTrigger",
-        "typeVersion": 1,
-        "position": [
-          -600,
-          300
-        ],
-        "parameters": {
-          "event": "pagedUpdatedInDatabase",
-          "databaseId": {
-            "__rl": true,
-            "value": "2d0c6a06e17e81188ce1dd2f76406aa1",
-            "mode": "id"
-          },
-          "simple": false
-        },
         "credentials": {
           "notionApi": {
             "id": "MAYBu1lbKiMiquHV",
             "name": "n8n-Math4U"
           }
-        }
+        },
+        "id": "trigger-01",
+        "name": "Notion Trigger - Student_Study 변경 감지",
+        "parameters": {
+          "databaseId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "2d0c6a06e17e81188ce1dd2f76406aa1"
+          },
+          "event": "pagedUpdatedInDatabase",
+          "pollTimes": {
+            "item": [
+              {
+                "mode": "everyMinute"
+              }
+            ]
+          },
+          "simple": false
+        },
+        "position": [
+          -608,
+          304
+        ],
+        "type": "n8n-nodes-base.notionTrigger",
+        "typeVersion": 1,
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 8000
       },
       {
         "id": "code-01",
         "name": "Code - 종료 체크 및 데이터 추출",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          -340,
-          300
-        ],
         "parameters": {
-          "jsCode": "const page = $input.first().json;\nconst props = page.properties || {};\n\nconst isEnded = props['수업완료']?.checkbox === true;\nif (!isEnded) return [];\n\nconst sessionItems = props['수업회차']?.multi_select || [];\nconst sessionItem = sessionItems.find(s => /\\d/.test(s.name));\nconst sessionCount = sessionItem ? parseInt(sessionItem.name) : null;\n\nconst bunArr = props['수업구분']?.rollup?.array || [];\nconst bunName = bunArr[0]?.select?.name || '';\nconst classCount = parseInt(bunName.replace(/[^0-9]/g, '')) || null;\n\nif (sessionCount === null || classCount === null) return [];\nif (sessionCount !== classCount) return [];\n\nconst studentPageId = props['Students']?.relation?.[0]?.id || '';\nif (!studentPageId) return [];\nconst classPageId = props['Class']?.relation?.[0]?.id || '';\nif (!classPageId) return [];\n\nconst rollupArr = props['다음수업일']?.rollup?.array || [];\nconst dateStr = rollupArr[0]?.formula?.string || '';\nlet isoDate = new Date().toISOString().split('T')[0];\nif (dateStr) {\n  const m = dateStr.match(/(\\d{4})년\\s*(\\d{1,2})월\\s*(\\d{1,2})일/);\n  if (m) isoDate = `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;\n}\n\nconst year = String(new Date().getFullYear()).slice(2);\nreturn [{ json: { studentPageId, classPageId, isoDate, year } }];"
-        }
+          "jsCode": "const page = $input.first().json;\nconst props = page.properties || {};\n\n// 수업완료 체크\nconst isEnded = props['수업완료']?.checkbox === true;\nif (!isEnded) return [];\n\n// ✅ 등록일원부생성 체크박스가 이미 true면 중단 (중복 방지 핵심)\nconst alreadyCreated = props['등록일원부생성']?.checkbox === true;\nif (alreadyCreated) return [];\n\nconst sessionItems = props['수업회차']?.multi_select || [];\nconst sessionItem = sessionItems.find(s => /\\d/.test(s.name));\nconst sessionCount = sessionItem ? parseInt(sessionItem.name) : null;\n\nconst bunArr = props['수업구분']?.rollup?.array || [];\nconst bunName = bunArr[0]?.select?.name || '';\nconst classCount = parseInt(bunName.replace(/[^0-9]/g, '')) || null;\n\nif (sessionCount === null || classCount === null) return [];\nif (sessionCount !== classCount) return [];\n\nconst studentStudyPageId = page.id;\nconst studentPageId = props['Students']?.relation?.[0]?.id || '';\nif (!studentPageId) return [];\nconst classPageId = props['Class']?.relation?.[0]?.id || '';\nif (!classPageId) return [];\n\nconst rollupArr = props['다음수업일']?.rollup?.array || [];\nconst dateStr = rollupArr[0]?.formula?.string || '';\nlet isoDate = new Date().toISOString().split('T')[0];\nif (dateStr) {\n  const m = dateStr.match(/(\\d{4})년\\s*(\\d{1,2})월\\s*(\\d{1,2})일/);\n  if (m) isoDate = `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;\n}\n\nconst year = String(new Date().getFullYear()).slice(2);\nreturn [{ json: { studentStudyPageId, studentPageId, classPageId, isoDate, year } }];"
+        },
+        "position": [
+          -336,
+          304
+        ],
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2
       },
       {
-        "id": "notion-01",
-        "name": "Notion - Class 수업료 조회",
-        "type": "n8n-nodes-base.notion",
-        "typeVersion": 2.2,
-        "position": [
-          -80,
-          300
-        ],
-        "parameters": {
-          "resource": "databasePage",
-          "operation": "get",
-          "pageId": {
-            "__rl": true,
-            "value": "={{ $json.classPageId }}",
-            "mode": "id"
-          },
-          "simple": false,
-          "options": {}
-        },
         "credentials": {
           "notionApi": {
             "id": "MAYBu1lbKiMiquHV",
             "name": "n8n-Math4U"
           }
-        }
+        },
+        "id": "notion-01",
+        "name": "Notion - Class 수업료 조회",
+        "parameters": {
+          "operation": "get",
+          "options": {},
+          "pageId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "={{ $json.classPageId }}"
+          },
+          "resource": "databasePage",
+          "simple": false
+        },
+        "position": [
+          -80,
+          304
+        ],
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2
       },
       {
         "id": "code-02",
         "name": "Code - 수업료 추출",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          180,
-          300
-        ],
         "parameters": {
           "jsCode": "const classData = $json;\nconst prev = $('Code - 종료 체크 및 데이터 추출').item.json;\nconst fee = classData.properties?.['수업료']?.number || 0;\nreturn [{ json: { ...prev, fee } }];"
-        }
+        },
+        "position": [
+          192,
+          304
+        ],
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2
       },
       {
-        "id": "notion-01b",
-        "name": "Notion - Students 이름 조회",
-        "type": "n8n-nodes-base.notion",
-        "typeVersion": 2.2,
-        "position": [
-          440,
-          300
-        ],
-        "parameters": {
-          "resource": "databasePage",
-          "operation": "get",
-          "pageId": {
-            "__rl": true,
-            "value": "={{ $json.studentPageId }}",
-            "mode": "id"
-          },
-          "simple": false,
-          "options": {}
-        },
         "credentials": {
           "notionApi": {
             "id": "MAYBu1lbKiMiquHV",
             "name": "n8n-Math4U"
           }
-        }
+        },
+        "id": "notion-01b",
+        "name": "Notion - Students 이름 조회",
+        "parameters": {
+          "operation": "get",
+          "options": {},
+          "pageId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "={{ $json.studentPageId }}"
+          },
+          "resource": "databasePage",
+          "simple": false
+        },
+        "position": [
+          448,
+          304
+        ],
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2
       },
       {
         "id": "code-02b",
         "name": "Code - 이름 병합",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          700,
-          300
-        ],
         "parameters": {
           "jsCode": "const studentData = $json;\nconst prev = $('Code - 수업료 추출').item.json;\nconst studentName = studentData.properties?.['이름']?.title?.[0]?.plain_text || '';\nreturn [{ json: { ...prev, studentName } }];"
-        }
+        },
+        "position": [
+          704,
+          304
+        ],
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2
       },
       {
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        },
         "id": "http-01",
         "name": "HTTP - 납부회차 조회",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          960,
-          300
-        ],
         "parameters": {
-          "method": "POST",
-          "url": "https://api.notion.com/v1/databases/55aac51e739c4f8e870903cb1eb252b6/query",
           "authentication": "predefinedCredentialType",
-          "nodeCredentialType": "notionApi",
-          "sendHeaders": true,
           "headerParameters": {
             "parameters": [
               {
@@ -649,46 +799,46 @@
               }
             ]
           },
-          "sendBody": true,
-          "specifyBody": "json",
           "jsonBody": "={\n  \"filter\": {\n    \"property\": \"Students\",\n    \"relation\": {\n      \"contains\": \"{{ $json.studentPageId }}\"\n    }\n  }\n}",
-          "options": {}
+          "method": "POST",
+          "nodeCredentialType": "notionApi",
+          "options": {},
+          "sendBody": true,
+          "sendHeaders": true,
+          "specifyBody": "json",
+          "url": "https://api.notion.com/v1/databases/55aac51e739c4f8e870903cb1eb252b6/query"
         },
-        "credentials": {
-          "notionApi": {
-            "id": "MAYBu1lbKiMiquHV",
-            "name": "n8n-Math4U"
-          }
-        }
+        "position": [
+          960,
+          304
+        ],
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2
       },
       {
         "id": "code-03",
         "name": "Code - 납부회차 계산",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
+        "parameters": {
+          "jsCode": "const prev = $('Code - 이름 병합').item.json;\nconst { studentName, studentStudyPageId, studentPageId, isoDate, year, fee } = prev;\nconst pages = $input.first().json.results || [];\n\nconst records = pages.filter(p => (p.properties?.['납부회차']?.select?.name || '').startsWith(year));\nconst nums = records.map(p => parseInt((p.properties?.['납부회차']?.select?.name || '').slice(2), 10) || 0);\nconst maxSeq = nums.length > 0 ? Math.max(...nums) : -1;\nconst seq = String(maxSeq + 1).padStart(2, '0');\nconst paySeq = year + seq;\n\n// 2차 안전장치: 납부회차 기준 중복 체크\nconst isDuplicate = records.some(p =>\n  (p.properties?.['납부회차']?.select?.name || '') === paySeq\n);\nif (isDuplicate) {\n  console.log(`[중복 방지] ${studentName} - ${paySeq} 이미 존재. 실행 중단.`);\n  return [];\n}\n\nconst recordName = `${studentName} | ${paySeq}`;\nreturn [{ json: { studentStudyPageId, studentPageId, fee, isoDate, paySeq, recordName } }];"
+        },
         "position": [
           1220,
-          300
+          304
         ],
-        "parameters": {
-          "jsCode": "const prev = $('Code - 이름 병합').item.json;\nconst { studentName, studentPageId, isoDate, year, fee } = prev;\nconst pages = $input.first().json.results || [];\n\nconst records = pages.filter(p => (p.properties?.['납부회차']?.select?.name || '').startsWith(year));\nconst nums = records.map(p => parseInt((p.properties?.['납부회차']?.select?.name || '').slice(2), 10) || 0);\nconst maxSeq = nums.length > 0 ? Math.max(...nums) : -1;\nconst seq = String(maxSeq + 1).padStart(2, '0');\nconst paySeq = year + seq;\nconst recordName = `${studentName} | ${paySeq}`;\n\nreturn [{ json: { studentPageId, fee, isoDate, paySeq, recordName } }];"
-        }
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2
       },
       {
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        },
         "id": "http-02",
         "name": "HTTP - 등록일원부 레코드 생성",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          1480,
-          300
-        ],
         "parameters": {
-          "method": "POST",
-          "url": "https://api.notion.com/v1/pages",
           "authentication": "predefinedCredentialType",
-          "nodeCredentialType": "notionApi",
-          "sendHeaders": true,
           "headerParameters": {
             "parameters": [
               {
@@ -697,27 +847,60 @@
               }
             ]
           },
-          "sendBody": true,
-          "specifyBody": "json",
           "jsonBody": "={\n  \"parent\": { \"database_id\": \"55aac51e-739c-4f8e-8709-03cb1eb252b6\" },\n  \"properties\": {\n    \"이름\": {\n      \"title\": [{ \"text\": { \"content\": \"{{ $json.recordName }}\" } }]\n    },\n    \"Students\": {\n      \"relation\": [{ \"id\": \"{{ $json.studentPageId }}\" }]\n    },\n    \"납부회차\": {\n      \"select\": { \"name\": \"{{ $json.paySeq }}\" }\n    },\n    \"수업료\": {\n      \"number\": {{ $json.fee }}\n    },\n    \"등록일\": {\n      \"date\": { \"start\": \"{{ $json.isoDate }}\" }\n    }\n  }\n}",
-          "options": {}
+          "method": "POST",
+          "nodeCredentialType": "notionApi",
+          "options": {},
+          "sendBody": true,
+          "sendHeaders": true,
+          "specifyBody": "json",
+          "url": "https://api.notion.com/v1/pages"
         },
+        "position": [
+          1480,
+          304
+        ],
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2
+      },
+      {
         "credentials": {
           "notionApi": {
             "id": "MAYBu1lbKiMiquHV",
             "name": "n8n-Math4U"
           }
-        }
+        },
+        "id": "http-03",
+        "name": "HTTP - 등록일원부생성 체크박스 업데이트",
+        "parameters": {
+          "authentication": "predefinedCredentialType",
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Notion-Version",
+                "value": "2022-06-28"
+              }
+            ]
+          },
+          "jsonBody": "{\n  \"properties\": {\n    \"등록일원부생성\": {\n      \"checkbox\": true\n    }\n  }\n}",
+          "method": "PATCH",
+          "nodeCredentialType": "notionApi",
+          "options": {},
+          "sendBody": true,
+          "sendHeaders": true,
+          "specifyBody": "json",
+          "url": "={{ 'https://api.notion.com/v1/pages/' + $('Code - 납부회차 계산').item.json.studentStudyPageId }}"
+        },
+        "position": [
+          1700,
+          304
+        ],
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2
       },
       {
         "id": "set-success",
         "name": "Set - 성공 데이터",
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 3.4,
-        "position": [
-          1700,
-          300
-        ],
         "parameters": {
           "assignments": {
             "assignments": [
@@ -754,42 +937,127 @@
             ]
           },
           "options": {}
-        }
+        },
+        "position": [
+          1920,
+          304
+        ],
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4
       },
       {
         "id": "status-success",
         "name": "✅ 상태 업데이트 (성공)",
-        "type": "n8n-nodes-base.executeWorkflow",
-        "typeVersion": 1,
-        "position": [
-          1920,
-          300
-        ],
         "parameters": {
-          "workflowId": "eOopB5bbEEO9rjrg",
-          "options": {}
-        }
+          "options": {},
+          "workflowId": "eOopB5bbEEO9rjrg"
+        },
+        "position": [
+          2140,
+          304
+        ],
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1
       },
       {
         "id": "error-trigger",
         "name": "❌ 에러 감지",
-        "type": "n8n-nodes-base.errorTrigger",
-        "typeVersion": 1,
+        "parameters": {},
         "position": [
           700,
-          500
+          540
         ],
-        "parameters": {}
+        "type": "n8n-nodes-base.errorTrigger",
+        "typeVersion": 1
+      },
+      {
+        "id": "if-infra-error",
+        "name": "IF - 인프라 에러 필터",
+        "parameters": {
+          "conditions": {
+            "combinator": "or",
+            "conditions": [
+              {
+                "id": "c1",
+                "leftValue": "={{ $json.execution.error.statusCode }}",
+                "operator": {
+                  "operation": "equals",
+                  "type": "number"
+                },
+                "rightValue": 502
+              },
+              {
+                "id": "c2",
+                "leftValue": "={{ $json.execution.error.statusCode }}",
+                "operator": {
+                  "operation": "equals",
+                  "type": "number"
+                },
+                "rightValue": 503
+              },
+              {
+                "id": "c3",
+                "leftValue": "={{ $json.execution.error.statusCode }}",
+                "operator": {
+                  "operation": "equals",
+                  "type": "number"
+                },
+                "rightValue": 504
+              },
+              {
+                "id": "c4",
+                "leftValue": "={{ $json.execution.error.statusCode }}",
+                "operator": {
+                  "operation": "equals",
+                  "type": "number"
+                },
+                "rightValue": 520
+              },
+              {
+                "id": "c5",
+                "leftValue": "={{ $json.execution.error.message }}",
+                "operator": {
+                  "operation": "contains",
+                  "type": "string"
+                },
+                "rightValue": "timed out"
+              },
+              {
+                "id": "c6",
+                "leftValue": "={{ $json.execution.error.message }}",
+                "operator": {
+                  "operation": "contains",
+                  "type": "string"
+                },
+                "rightValue": "Gateway"
+              },
+              {
+                "id": "c7",
+                "leftValue": "={{ $json.execution.error.message }}",
+                "operator": {
+                  "operation": "contains",
+                  "type": "string"
+                },
+                "rightValue": "service failed"
+              }
+            ],
+            "options": {
+              "caseSensitive": false,
+              "leftValue": "",
+              "typeValidation": "loose"
+            }
+          }
+        },
+        "position": [
+          920,
+          540
+        ],
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2
       },
       {
         "id": "set-error",
         "name": "Set - 에러 데이터",
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 3.4,
-        "position": [
-          920,
-          500
-        ],
         "parameters": {
           "assignments": {
             "assignments": [
@@ -826,37 +1094,43 @@
             ]
           },
           "options": {}
-        }
+        },
+        "position": [
+          1140,
+          680
+        ],
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4
       },
       {
         "id": "status-error",
         "name": "❌ 상태 업데이트 (에러)",
-        "type": "n8n-nodes-base.executeWorkflow",
-        "typeVersion": 1,
-        "position": [
-          1140,
-          500
-        ],
         "parameters": {
-          "workflowId": "eOopB5bbEEO9rjrg",
-          "options": {}
-        }
+          "options": {},
+          "workflowId": "eOopB5bbEEO9rjrg"
+        },
+        "position": [
+          1360,
+          680
+        ],
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1
       },
       {
         "id": "manual-note",
         "name": "📋 워크플로우 메뉴얼",
-        "type": "n8n-nodes-base.stickyNote",
-        "typeVersion": 1,
+        "parameters": {
+          "color": 4,
+          "content": "## 📋 등록일원부 자동생성 메뉴얼\n\n### 🔗 노션 메뉴얼\nhttps://www.notion.so/323c6a06e17e81b6b0a5d91342537f5c\n\n---\n\n- **트리거**: Notion Trigger (Student_Study 변경)\n- **목적**: 수업 종료 시 등록일원부 자동 생성",
+          "height": 280,
+          "width": 340
+        },
         "position": [
           -840,
           160
         ],
-        "parameters": {
-          "content": "## 📋 등록일원부 자동생성 메뉴얼\n\n### 🔗 노션 메뉴얼\nhttps://www.notion.so/323c6a06e17e81b6b0a5d91342537f5c\n\n---\n\n- **트리거**: Notion Trigger (Student_Study 변경)\n- **목적**: 수업 종료 시 등록일원부 자동 생성",
-          "height": 280,
-          "width": 340,
-          "color": 4
-        }
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1
       }
     ],
     "connections": {
@@ -864,9 +1138,9 @@
         "main": [
           [
             {
+              "index": 0,
               "node": "Code - 종료 체크 및 데이터 추출",
-              "type": "main",
-              "index": 0
+              "type": "main"
             }
           ]
         ]
@@ -875,9 +1149,9 @@
         "main": [
           [
             {
+              "index": 0,
               "node": "Notion - Class 수업료 조회",
-              "type": "main",
-              "index": 0
+              "type": "main"
             }
           ]
         ]
@@ -886,9 +1160,9 @@
         "main": [
           [
             {
+              "index": 0,
               "node": "Code - 수업료 추출",
-              "type": "main",
-              "index": 0
+              "type": "main"
             }
           ]
         ]
@@ -897,9 +1171,9 @@
         "main": [
           [
             {
+              "index": 0,
               "node": "Notion - Students 이름 조회",
-              "type": "main",
-              "index": 0
+              "type": "main"
             }
           ]
         ]
@@ -908,9 +1182,9 @@
         "main": [
           [
             {
+              "index": 0,
               "node": "Code - 이름 병합",
-              "type": "main",
-              "index": 0
+              "type": "main"
             }
           ]
         ]
@@ -919,9 +1193,9 @@
         "main": [
           [
             {
+              "index": 0,
               "node": "HTTP - 납부회차 조회",
-              "type": "main",
-              "index": 0
+              "type": "main"
             }
           ]
         ]
@@ -930,9 +1204,9 @@
         "main": [
           [
             {
+              "index": 0,
               "node": "Code - 납부회차 계산",
-              "type": "main",
-              "index": 0
+              "type": "main"
             }
           ]
         ]
@@ -941,9 +1215,9 @@
         "main": [
           [
             {
+              "index": 0,
               "node": "HTTP - 등록일원부 레코드 생성",
-              "type": "main",
-              "index": 0
+              "type": "main"
             }
           ]
         ]
@@ -952,9 +1226,20 @@
         "main": [
           [
             {
+              "index": 0,
+              "node": "HTTP - 등록일원부생성 체크박스 업데이트",
+              "type": "main"
+            }
+          ]
+        ]
+      },
+      "HTTP - 등록일원부생성 체크박스 업데이트": {
+        "main": [
+          [
+            {
+              "index": 0,
               "node": "Set - 성공 데이터",
-              "type": "main",
-              "index": 0
+              "type": "main"
             }
           ]
         ]
@@ -963,9 +1248,9 @@
         "main": [
           [
             {
+              "index": 0,
               "node": "✅ 상태 업데이트 (성공)",
-              "type": "main",
-              "index": 0
+              "type": "main"
             }
           ]
         ]
@@ -974,9 +1259,21 @@
         "main": [
           [
             {
+              "index": 0,
+              "node": "IF - 인프라 에러 필터",
+              "type": "main"
+            }
+          ]
+        ]
+      },
+      "IF - 인프라 에러 필터": {
+        "main": [
+          [],
+          [
+            {
+              "index": 0,
               "node": "Set - 에러 데이터",
-              "type": "main",
-              "index": 0
+              "type": "main"
             }
           ]
         ]
@@ -985,9 +1282,9 @@
         "main": [
           [
             {
+              "index": 0,
               "node": "❌ 상태 업데이트 (에러)",
-              "type": "main",
-              "index": 0
+              "type": "main"
             }
           ]
         ]
@@ -999,18 +1296,18 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-19T10:49:31.169Z",
-        "id": 390,
+        "createdAt": "2026-05-08T07:29:22.237Z",
+        "id": 531,
         "workflowId": "BrZ88oo3KRKccX0g",
-        "versionId": "4d2b6f2c-bed4-4c3a-aedc-558c311c1bb9",
+        "versionId": "33d9679b-bf60-4eb8-bf02-d0fdf4b4256a",
         "event": "activated",
         "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
       },
       {
-        "createdAt": "2026-03-19T10:49:30.722Z",
-        "id": 389,
+        "createdAt": "2026-05-08T07:29:21.861Z",
+        "id": 530,
         "workflowId": "BrZ88oo3KRKccX0g",
-        "versionId": "4d2b6f2c-bed4-4c3a-aedc-558c311c1bb9",
+        "versionId": "33d9679b-bf60-4eb8-bf02-d0fdf4b4256a",
         "event": "deactivated",
         "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
       }
