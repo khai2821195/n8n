@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-04T07:45:18.136Z",
+  "updatedAt": "2026-05-04T14:53:48.759Z",
   "createdAt": "2026-03-14T15:43:51.332Z",
   "id": "eOopB5bbEEO9rjrg",
   "name": "🔧 WF Status Updater (공통 서브워크플로우)",
@@ -8,11 +8,13 @@
   "isArchived": false,
   "nodes": [
     {
-      "parameters": {},
+      "parameters": {
+        "inputSource": "passthrough"
+      },
       "id": "trigger",
       "name": "워크플로우 호출 수신",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
-      "typeVersion": 1,
+      "typeVersion": 1.1,
       "position": [
         0,
         304
@@ -105,7 +107,7 @@
             {
               "id": "cond-infra",
               "leftValue": "={{ $('입력값 검증').item.json.errorMessage }}",
-              "rightValue": "Bad gateway|service unavailable|502|503|temporarily unavailable",
+              "rightValue": "Bad gateway|service unavailable|502|503|504|Gateway Time-out|temporarily unavailable",
               "operator": {
                 "type": "string",
                 "operation": "regex"
@@ -113,8 +115,7 @@
             }
           ],
           "combinator": "and"
-        },
-        "options": {}
+        }
       },
       "id": "filter-infra-error",
       "name": "If - 인프라 오류 제외",
@@ -286,9 +287,9 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "11ad3639-2a0b-4050-b374-0c6f748ff063",
-  "activeVersionId": "11ad3639-2a0b-4050-b374-0c6f748ff063",
-  "versionCounter": 50,
+  "versionId": "0abef577-07e3-460e-8d42-90606b8bd3c3",
+  "activeVersionId": "0abef577-07e3-460e-8d42-90606b8bd3c3",
+  "versionCounter": 57,
   "triggerCount": 0,
   "shared": [
     {
@@ -311,17 +312,19 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-04T07:45:18.137Z",
-    "createdAt": "2026-04-04T07:45:18.137Z",
-    "versionId": "11ad3639-2a0b-4050-b374-0c6f748ff063",
+    "updatedAt": "2026-05-04T14:53:48.760Z",
+    "createdAt": "2026-05-04T14:53:48.760Z",
+    "versionId": "0abef577-07e3-460e-8d42-90606b8bd3c3",
     "workflowId": "eOopB5bbEEO9rjrg",
     "nodes": [
       {
-        "parameters": {},
+        "parameters": {
+          "inputSource": "passthrough"
+        },
         "id": "trigger",
         "name": "워크플로우 호출 수신",
         "type": "n8n-nodes-base.executeWorkflowTrigger",
-        "typeVersion": 1,
+        "typeVersion": 1.1,
         "position": [
           0,
           304
@@ -420,7 +423,7 @@
               {
                 "id": "cond-infra",
                 "leftValue": "={{ $('입력값 검증').item.json.errorMessage }}",
-                "rightValue": "Bad gateway|service unavailable|502|503|temporarily unavailable",
+                "rightValue": "Bad gateway|service unavailable|502|503|504|Gateway Time-out|temporarily unavailable",
                 "operator": {
                   "type": "string",
                   "operation": "regex"
@@ -428,8 +431,7 @@
               }
             ],
             "combinator": "and"
-          },
-          "options": {}
+          }
         },
         "id": "filter-infra-error",
         "name": "If - 인프라 오류 제외",
@@ -603,18 +605,18 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-04T07:45:18.410Z",
-        "id": 453,
+        "createdAt": "2026-05-04T14:53:48.911Z",
+        "id": 523,
         "workflowId": "eOopB5bbEEO9rjrg",
-        "versionId": "11ad3639-2a0b-4050-b374-0c6f748ff063",
+        "versionId": "0abef577-07e3-460e-8d42-90606b8bd3c3",
         "event": "activated",
         "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
       },
       {
-        "createdAt": "2026-04-04T07:45:18.335Z",
-        "id": 452,
+        "createdAt": "2026-05-04T14:53:48.830Z",
+        "id": 522,
         "workflowId": "eOopB5bbEEO9rjrg",
-        "versionId": "11ad3639-2a0b-4050-b374-0c6f748ff063",
+        "versionId": "0abef577-07e3-460e-8d42-90606b8bd3c3",
         "event": "deactivated",
         "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
       }
