@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-30T23:05:41.999Z",
+  "updatedAt": "2026-05-04T04:00:30.842Z",
   "createdAt": "2026-03-07T18:19:56.995Z",
   "id": "n7M2Z2BhVbGNWhqX",
   "name": "Class_Study 월별 자동생성",
@@ -65,7 +65,7 @@
     },
     {
       "parameters": {
-        "jsCode": "function parseHour(str) {\n  const m = (str || '').match(/(\\d+)시/);\n  return m ? parseInt(m[1], 10) : 0;\n}\nconst DAY_MAP = { '일': 0, '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6 };\nconst now = new Date();\nconst targetYear = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();\nconst targetMonth = now.getMonth() === 11 ? 1 : now.getMonth() + 2;\nfunction toKSTDatetime(date, hour) {\n  const yyyy = date.getFullYear();\n  const mm = String(date.getMonth() + 1).padStart(2, '0');\n  const dd = String(date.getDate()).padStart(2, '0');\n  const hh = String(hour).padStart(2, '0');\n  return yyyy + '-' + mm + '-' + dd + 'T' + hh + ':00:00+09:00';\n}\nfunction getDatesInMonth(year, month, dow) {\n  const dates = [];\n  const d = new Date(year, month - 1, 1);\n  while (d.getMonth() === month - 1) {\n    if (d.getDay() === dow) dates.push(new Date(d));\n    d.setDate(d.getDate() + 1);\n  }\n  return dates;\n}\nconst aggregated = $input.first();\nconst classList = aggregated.json.data || [];\nconst records = [];\nfor (const cls of classList) {\n  const props = cls.properties || {};\n  const classId = cls.id;\n  const 반명 = (props['반명']?.title || []).map(t => t.plain_text).join('');\n  const 수업구분Raw = props['수업구분']?.select?.name || '';\n  const totalCount = parseInt((수업구분Raw.match(/(\\d+)/) || ['0','0'])[1], 10);\n  if (totalCount === 0 || !반명) continue;\n  const studentIds = (props['Students']?.relation || []).map(r => r.id);\n  const slots = [];\n  for (let i = 1; i <= 3; i++) {\n    const days = (props['수업 ' + i]?.multi_select || []).map(s => s.name);\n    const times = (props['시간 ' + i]?.multi_select || []).map(s => s.name);\n    for (const day of days) slots.push({ day, hour: times.length > 0 ? parseHour(times[0]) : 0 });\n  }\n  if (slots.length === 0) continue;\n  const allDates = [];\n  for (let si = 0; si < slots.length; si++) {\n    const slot = slots[si];\n    if (!(slot.day in DAY_MAP)) continue;\n    const dates = getDatesInMonth(targetYear, targetMonth, DAY_MAP[slot.day]);\n    for (const d of dates) allDates.push({ date: d, hour: slot.hour, slotIdx: si });\n  }\n  allDates.sort((a, b) => a.date - b.date);\n  const dayWeekCount = {};\n  let seq = 0;\n  for (const entry of allDates) {\n    if (seq >= totalCount) break;\n    seq++;\n    const dow = entry.date.getDay();\n    dayWeekCount[dow] = (dayWeekCount[dow] || 0) + 1;\n    const weekNum = dayWeekCount[dow];\n    records.push({ json: { title: 반명 + ' ' + targetMonth + '월 ' + weekNum + '-' + (entry.slotIdx + 1), datetime: toKSTDatetime(entry.date, entry.hour), classId, studentIds, 반명, seq } });\n  }\n}\nif (records.length === 0) records.push({ json: { skip: true, message: '생성할 레코드 없음' } });\nreturn records;"
+        "jsCode": "function parseHour(str) {\n  const m = (str || '').match(/(\\d+)시/);\n  return m ? parseInt(m[1], 10) : 0;\n}\nconst DAY_MAP = { '일': 0, '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6 };\nconst now = new Date();\nconst targetYear = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();\nconst targetMonth = now.getMonth() === 11 ? 1 : now.getMonth() + 2;\n\nfunction toKSTDatetime(date, hour) {\n  const yyyy = date.getFullYear();\n  const mm = String(date.getMonth() + 1).padStart(2, '0');\n  const dd = String(date.getDate()).padStart(2, '0');\n  const hh = String(hour).padStart(2, '0');\n  return yyyy + '-' + mm + '-' + dd + 'T' + hh + ':00:00+09:00';\n}\n\nfunction getDatesInMonth(year, month, dow) {\n  const dates = [];\n  const d = new Date(year, month - 1, 1);\n  while (d.getMonth() === month - 1) {\n    if (d.getDay() === dow) dates.push(new Date(d));\n    d.setDate(d.getDate() + 1);\n  }\n  return dates;\n}\n\nfunction getWeekOfMonth(date) {\n  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);\n  const firstDow = firstDay.getDay() === 0 ? 7 : firstDay.getDay();\n  return Math.ceil((date.getDate() + firstDow - 1) / 7);\n}\n\n// multi_select 필드 읽기\nfunction getMultiSelect(props, key) {\n  const field = props[key];\n  if (!field) return [];\n  const ms = field['multi_select'];\n  if (!ms || !Array.isArray(ms)) return [];\n  return ms.map(function(s) { return s.name; });\n}\n\n// select 필드 읽기 (정규보충은 select 타입)\nfunction getSelect(props, key) {\n  const field = props[key];\n  if (!field) return null;\n  const sel = field['select'];\n  if (!sel) return null;\n  return sel.name || null;\n}\n\nconst aggregated = $input.first();\nconst classList = aggregated.json.data || [];\nconst records = [];\n\nfor (const cls of classList) {\n  const props = cls.properties || {};\n  const classId = cls.id;\n\n  const titleField = props['반명'];\n  const titleArr = titleField ? (titleField['title'] || []) : [];\n  const 반명 = titleArr.map(function(t) { return t.plain_text; }).join('');\n  if (!반명) continue;\n\n  const studentsField = props['Students'];\n  const studentsRel = studentsField ? (studentsField['relation'] || []) : [];\n  const studentIds = studentsRel.map(function(r) { return r.id; });\n\n  // 정규수업 슬롯\n  // 수업1 + 시간 1, 수업2 + 시간2, 수업3 + 시간3 (실제 필드명 확인)\n  const timeFieldNames = ['시간 1', '시간2', '시간3'];\n  const slots = [];\n  for (let i = 1; i <= 3; i++) {\n    const days = getMultiSelect(props, '수업 ' + i);\n    const times = getMultiSelect(props, timeFieldNames[i - 1]);\n    for (const day of days) {\n      slots.push({ day: day, hour: times.length > 0 ? parseHour(times[0]) : 0 });\n    }\n  }\n\n  // 정규보충 슬롯\n  // 정규보충: select 타입, 시간: '시간 4' 필드\n  const 보충Day = getSelect(props, '정규보충');\n  const 보충Times = getMultiSelect(props, '시간 4');\n  if (보충Day && 보충Day in DAY_MAP) {\n    slots.push({ day: 보충Day, hour: 보충Times.length > 0 ? parseHour(보충Times[0]) : 0 });\n  }\n\n  if (slots.length === 0) continue;\n\n  // 해당 월 전체 날짜 수집\n  const allDates = [];\n  for (const slot of slots) {\n    if (!(slot.day in DAY_MAP)) continue;\n    const dates = getDatesInMonth(targetYear, targetMonth, DAY_MAP[slot.day]);\n    for (const d of dates) {\n      allDates.push({ date: d, hour: slot.hour });\n    }\n  }\n  allDates.sort(function(a, b) { return a.date - b.date || a.hour - b.hour; });\n\n  // 주차별 그룹핑 후 넘버링\n  const weekGroups = {};\n  for (const entry of allDates) {\n    const w = getWeekOfMonth(entry.date);\n    if (!weekGroups[w]) weekGroups[w] = [];\n    weekGroups[w].push(entry);\n  }\n\n  const weekKeys = Object.keys(weekGroups).sort(function(a, b) { return Number(a) - Number(b); });\n  for (const w of weekKeys) {\n    const group = weekGroups[w];\n    group.sort(function(a, b) { return a.date - b.date || a.hour - b.hour; });\n    for (let idx = 0; idx < group.length; idx++) {\n      const entry = group[idx];\n      records.push({\n        json: {\n          title: 반명 + ' ' + targetMonth + '월 ' + w + '-' + (idx + 1),\n          datetime: toKSTDatetime(entry.date, entry.hour),\n          classId: classId,\n          studentIds: studentIds,\n          반명: 반명\n        }\n      });\n    }\n  }\n}\n\nif (records.length === 0) records.push({ json: { skip: true, message: '생성할 레코드 없음' } });\nreturn records;"
       },
       "id": "node-calc-schedule",
       "name": "Code - 수업일정 계산",
@@ -210,7 +210,6 @@
     },
     {
       "parameters": {
-        "mode": "runOnceForAllItems",
         "jsCode": "const results = [];\nfor (const item of $input.all()) {\n  const p = item.json;\n  if (!p.id) continue;\n  const props = p.properties || {};\n  const classId = (props['Class']?.relation || [])[0]?.id || null;\n  const dateStart = props['수업일정']?.date?.start || '';\n  const classStudyName = (props['수업구분']?.title || []).map(t => t.plain_text).join('');\n  const students = props['Students']?.relation || [];\n  if (students.length === 0) continue;\n  for (const s of students) {\n    results.push({ json: { studentId: s.id, classStudyId: p.id, classId, dateStart, classStudyName } });\n  }\n}\nif (results.length === 0) return [{ json: { skip: true, message: '배정할 학생 없음' } }];\nreturn results;"
       },
       "id": "node-split-students",
@@ -223,11 +222,7 @@
       ]
     },
     {
-      "parameters": {
-        "resume": "timeInterval",
-        "unit": "seconds",
-        "amount": 5
-      },
+      "parameters": {},
       "id": "node-wait2",
       "name": "Wait - 5초",
       "type": "n8n-nodes-base.wait",
@@ -240,7 +235,6 @@
     },
     {
       "parameters": {
-        "mode": "runOnceForAllItems",
         "jsCode": "const aggregateOutput = $input.first();\nconst allCreated = aggregateOutput.json.data || [];\nif (allCreated.length === 0) return [{ json: { skip: true, message: '생성된 레코드 없음' } }];\nconst groups = {};\nfor (const item of allCreated) {\n  const props = item.properties || {};\n  const classId = (props['Class']?.relation || [])[0]?.id || 'unknown';\n  const dateStr = props['수업일정']?.date?.start || '';\n  const pageId = item.id;\n  if (!pageId) continue;\n  if (!groups[classId]) groups[classId] = [];\n  groups[classId].push({ pageId, dateStr });\n}\nconst pairs = [];\nfor (const classId of Object.keys(groups)) {\n  const items = groups[classId].sort((a, b) => a.dateStr.localeCompare(b.dateStr));\n  for (let i = 0; i < items.length - 1; i++) {\n    if (items[i].pageId && items[i+1].pageId) pairs.push({ json: { currentId: items[i].pageId, nextId: items[i+1].pageId } });\n  }\n}\nif (pairs.length === 0) return [{ json: { skip: true, message: '연결할 쌍 없음' } }];\nreturn pairs;"
       },
       "id": "node-link-next",
@@ -507,8 +501,8 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -640,
-        112
+        -416,
+        0
       ]
     }
   ],
@@ -735,9 +729,9 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "6b21e232-51ef-4b92-9a26-bd4ef0e73e02",
-  "activeVersionId": "6b21e232-51ef-4b92-9a26-bd4ef0e73e02",
-  "versionCounter": 131,
+  "versionId": "cd1034ad-256a-4684-9fe7-7a1a5a9e083a",
+  "activeVersionId": "cd1034ad-256a-4684-9fe7-7a1a5a9e083a",
+  "versionCounter": 144,
   "triggerCount": 1,
   "shared": [
     {
@@ -760,9 +754,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-30T23:05:42.001Z",
-    "createdAt": "2026-03-30T23:05:42.001Z",
-    "versionId": "6b21e232-51ef-4b92-9a26-bd4ef0e73e02",
+    "updatedAt": "2026-05-04T04:00:30.844Z",
+    "createdAt": "2026-05-04T04:00:30.844Z",
+    "versionId": "cd1034ad-256a-4684-9fe7-7a1a5a9e083a",
     "workflowId": "n7M2Z2BhVbGNWhqX",
     "nodes": [
       {
@@ -829,7 +823,7 @@
       },
       {
         "parameters": {
-          "jsCode": "function parseHour(str) {\n  const m = (str || '').match(/(\\d+)시/);\n  return m ? parseInt(m[1], 10) : 0;\n}\nconst DAY_MAP = { '일': 0, '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6 };\nconst now = new Date();\nconst targetYear = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();\nconst targetMonth = now.getMonth() === 11 ? 1 : now.getMonth() + 2;\nfunction toKSTDatetime(date, hour) {\n  const yyyy = date.getFullYear();\n  const mm = String(date.getMonth() + 1).padStart(2, '0');\n  const dd = String(date.getDate()).padStart(2, '0');\n  const hh = String(hour).padStart(2, '0');\n  return yyyy + '-' + mm + '-' + dd + 'T' + hh + ':00:00+09:00';\n}\nfunction getDatesInMonth(year, month, dow) {\n  const dates = [];\n  const d = new Date(year, month - 1, 1);\n  while (d.getMonth() === month - 1) {\n    if (d.getDay() === dow) dates.push(new Date(d));\n    d.setDate(d.getDate() + 1);\n  }\n  return dates;\n}\nconst aggregated = $input.first();\nconst classList = aggregated.json.data || [];\nconst records = [];\nfor (const cls of classList) {\n  const props = cls.properties || {};\n  const classId = cls.id;\n  const 반명 = (props['반명']?.title || []).map(t => t.plain_text).join('');\n  const 수업구분Raw = props['수업구분']?.select?.name || '';\n  const totalCount = parseInt((수업구분Raw.match(/(\\d+)/) || ['0','0'])[1], 10);\n  if (totalCount === 0 || !반명) continue;\n  const studentIds = (props['Students']?.relation || []).map(r => r.id);\n  const slots = [];\n  for (let i = 1; i <= 3; i++) {\n    const days = (props['수업 ' + i]?.multi_select || []).map(s => s.name);\n    const times = (props['시간 ' + i]?.multi_select || []).map(s => s.name);\n    for (const day of days) slots.push({ day, hour: times.length > 0 ? parseHour(times[0]) : 0 });\n  }\n  if (slots.length === 0) continue;\n  const allDates = [];\n  for (let si = 0; si < slots.length; si++) {\n    const slot = slots[si];\n    if (!(slot.day in DAY_MAP)) continue;\n    const dates = getDatesInMonth(targetYear, targetMonth, DAY_MAP[slot.day]);\n    for (const d of dates) allDates.push({ date: d, hour: slot.hour, slotIdx: si });\n  }\n  allDates.sort((a, b) => a.date - b.date);\n  const dayWeekCount = {};\n  let seq = 0;\n  for (const entry of allDates) {\n    if (seq >= totalCount) break;\n    seq++;\n    const dow = entry.date.getDay();\n    dayWeekCount[dow] = (dayWeekCount[dow] || 0) + 1;\n    const weekNum = dayWeekCount[dow];\n    records.push({ json: { title: 반명 + ' ' + targetMonth + '월 ' + weekNum + '-' + (entry.slotIdx + 1), datetime: toKSTDatetime(entry.date, entry.hour), classId, studentIds, 반명, seq } });\n  }\n}\nif (records.length === 0) records.push({ json: { skip: true, message: '생성할 레코드 없음' } });\nreturn records;"
+          "jsCode": "function parseHour(str) {\n  const m = (str || '').match(/(\\d+)시/);\n  return m ? parseInt(m[1], 10) : 0;\n}\nconst DAY_MAP = { '일': 0, '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6 };\nconst now = new Date();\nconst targetYear = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();\nconst targetMonth = now.getMonth() === 11 ? 1 : now.getMonth() + 2;\n\nfunction toKSTDatetime(date, hour) {\n  const yyyy = date.getFullYear();\n  const mm = String(date.getMonth() + 1).padStart(2, '0');\n  const dd = String(date.getDate()).padStart(2, '0');\n  const hh = String(hour).padStart(2, '0');\n  return yyyy + '-' + mm + '-' + dd + 'T' + hh + ':00:00+09:00';\n}\n\nfunction getDatesInMonth(year, month, dow) {\n  const dates = [];\n  const d = new Date(year, month - 1, 1);\n  while (d.getMonth() === month - 1) {\n    if (d.getDay() === dow) dates.push(new Date(d));\n    d.setDate(d.getDate() + 1);\n  }\n  return dates;\n}\n\nfunction getWeekOfMonth(date) {\n  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);\n  const firstDow = firstDay.getDay() === 0 ? 7 : firstDay.getDay();\n  return Math.ceil((date.getDate() + firstDow - 1) / 7);\n}\n\n// multi_select 필드 읽기\nfunction getMultiSelect(props, key) {\n  const field = props[key];\n  if (!field) return [];\n  const ms = field['multi_select'];\n  if (!ms || !Array.isArray(ms)) return [];\n  return ms.map(function(s) { return s.name; });\n}\n\n// select 필드 읽기 (정규보충은 select 타입)\nfunction getSelect(props, key) {\n  const field = props[key];\n  if (!field) return null;\n  const sel = field['select'];\n  if (!sel) return null;\n  return sel.name || null;\n}\n\nconst aggregated = $input.first();\nconst classList = aggregated.json.data || [];\nconst records = [];\n\nfor (const cls of classList) {\n  const props = cls.properties || {};\n  const classId = cls.id;\n\n  const titleField = props['반명'];\n  const titleArr = titleField ? (titleField['title'] || []) : [];\n  const 반명 = titleArr.map(function(t) { return t.plain_text; }).join('');\n  if (!반명) continue;\n\n  const studentsField = props['Students'];\n  const studentsRel = studentsField ? (studentsField['relation'] || []) : [];\n  const studentIds = studentsRel.map(function(r) { return r.id; });\n\n  // 정규수업 슬롯\n  // 수업1 + 시간 1, 수업2 + 시간2, 수업3 + 시간3 (실제 필드명 확인)\n  const timeFieldNames = ['시간 1', '시간2', '시간3'];\n  const slots = [];\n  for (let i = 1; i <= 3; i++) {\n    const days = getMultiSelect(props, '수업 ' + i);\n    const times = getMultiSelect(props, timeFieldNames[i - 1]);\n    for (const day of days) {\n      slots.push({ day: day, hour: times.length > 0 ? parseHour(times[0]) : 0 });\n    }\n  }\n\n  // 정규보충 슬롯\n  // 정규보충: select 타입, 시간: '시간 4' 필드\n  const 보충Day = getSelect(props, '정규보충');\n  const 보충Times = getMultiSelect(props, '시간 4');\n  if (보충Day && 보충Day in DAY_MAP) {\n    slots.push({ day: 보충Day, hour: 보충Times.length > 0 ? parseHour(보충Times[0]) : 0 });\n  }\n\n  if (slots.length === 0) continue;\n\n  // 해당 월 전체 날짜 수집\n  const allDates = [];\n  for (const slot of slots) {\n    if (!(slot.day in DAY_MAP)) continue;\n    const dates = getDatesInMonth(targetYear, targetMonth, DAY_MAP[slot.day]);\n    for (const d of dates) {\n      allDates.push({ date: d, hour: slot.hour });\n    }\n  }\n  allDates.sort(function(a, b) { return a.date - b.date || a.hour - b.hour; });\n\n  // 주차별 그룹핑 후 넘버링\n  const weekGroups = {};\n  for (const entry of allDates) {\n    const w = getWeekOfMonth(entry.date);\n    if (!weekGroups[w]) weekGroups[w] = [];\n    weekGroups[w].push(entry);\n  }\n\n  const weekKeys = Object.keys(weekGroups).sort(function(a, b) { return Number(a) - Number(b); });\n  for (const w of weekKeys) {\n    const group = weekGroups[w];\n    group.sort(function(a, b) { return a.date - b.date || a.hour - b.hour; });\n    for (let idx = 0; idx < group.length; idx++) {\n      const entry = group[idx];\n      records.push({\n        json: {\n          title: 반명 + ' ' + targetMonth + '월 ' + w + '-' + (idx + 1),\n          datetime: toKSTDatetime(entry.date, entry.hour),\n          classId: classId,\n          studentIds: studentIds,\n          반명: 반명\n        }\n      });\n    }\n  }\n}\n\nif (records.length === 0) records.push({ json: { skip: true, message: '생성할 레코드 없음' } });\nreturn records;"
         },
         "id": "node-calc-schedule",
         "name": "Code - 수업일정 계산",
@@ -986,7 +980,6 @@
       },
       {
         "parameters": {
-          "mode": "runOnceForAllItems",
           "jsCode": "const results = [];\nfor (const item of $input.all()) {\n  const p = item.json;\n  if (!p.id) continue;\n  const props = p.properties || {};\n  const classId = (props['Class']?.relation || [])[0]?.id || null;\n  const dateStart = props['수업일정']?.date?.start || '';\n  const classStudyName = (props['수업구분']?.title || []).map(t => t.plain_text).join('');\n  const students = props['Students']?.relation || [];\n  if (students.length === 0) continue;\n  for (const s of students) {\n    results.push({ json: { studentId: s.id, classStudyId: p.id, classId, dateStart, classStudyName } });\n  }\n}\nif (results.length === 0) return [{ json: { skip: true, message: '배정할 학생 없음' } }];\nreturn results;"
         },
         "id": "node-split-students",
@@ -999,11 +992,7 @@
         ]
       },
       {
-        "parameters": {
-          "resume": "timeInterval",
-          "unit": "seconds",
-          "amount": 5
-        },
+        "parameters": {},
         "id": "node-wait2",
         "name": "Wait - 5초",
         "type": "n8n-nodes-base.wait",
@@ -1016,7 +1005,6 @@
       },
       {
         "parameters": {
-          "mode": "runOnceForAllItems",
           "jsCode": "const aggregateOutput = $input.first();\nconst allCreated = aggregateOutput.json.data || [];\nif (allCreated.length === 0) return [{ json: { skip: true, message: '생성된 레코드 없음' } }];\nconst groups = {};\nfor (const item of allCreated) {\n  const props = item.properties || {};\n  const classId = (props['Class']?.relation || [])[0]?.id || 'unknown';\n  const dateStr = props['수업일정']?.date?.start || '';\n  const pageId = item.id;\n  if (!pageId) continue;\n  if (!groups[classId]) groups[classId] = [];\n  groups[classId].push({ pageId, dateStr });\n}\nconst pairs = [];\nfor (const classId of Object.keys(groups)) {\n  const items = groups[classId].sort((a, b) => a.dateStr.localeCompare(b.dateStr));\n  for (let i = 0; i < items.length - 1; i++) {\n    if (items[i].pageId && items[i+1].pageId) pairs.push({ json: { currentId: items[i].pageId, nextId: items[i+1].pageId } });\n  }\n}\nif (pairs.length === 0) return [{ json: { skip: true, message: '연결할 쌍 없음' } }];\nreturn pairs;"
         },
         "id": "node-link-next",
@@ -1307,8 +1295,8 @@
         "type": "n8n-nodes-base.stickyNote",
         "typeVersion": 1,
         "position": [
-          -640,
-          112
+          -416,
+          0
         ]
       }
     ],
@@ -1525,18 +1513,18 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-30T23:05:42.168Z",
-        "id": 416,
+        "createdAt": "2026-05-04T04:00:30.982Z",
+        "id": 515,
         "workflowId": "n7M2Z2BhVbGNWhqX",
-        "versionId": "6b21e232-51ef-4b92-9a26-bd4ef0e73e02",
+        "versionId": "cd1034ad-256a-4684-9fe7-7a1a5a9e083a",
         "event": "activated",
         "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
       },
       {
-        "createdAt": "2026-03-30T23:05:42.101Z",
-        "id": 415,
+        "createdAt": "2026-05-04T04:00:30.930Z",
+        "id": 514,
         "workflowId": "n7M2Z2BhVbGNWhqX",
-        "versionId": "6b21e232-51ef-4b92-9a26-bd4ef0e73e02",
+        "versionId": "cd1034ad-256a-4684-9fe7-7a1a5a9e083a",
         "event": "deactivated",
         "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
       }
