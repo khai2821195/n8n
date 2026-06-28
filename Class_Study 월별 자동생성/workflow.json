@@ -1,0 +1,1621 @@
+{
+  "updatedAt": "2026-06-07T22:31:04.514Z",
+  "createdAt": "2026-03-07T18:19:56.995Z",
+  "id": "n7M2Z2BhVbGNWhqX",
+  "name": "Class_Study 월별 자동생성",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0 25 * *"
+            }
+          ]
+        }
+      },
+      "id": "node-schedule",
+      "name": "Schedule - 매월 25일",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -400,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {
+          "__rl": true,
+          "value": "2d0c6a06-e17e-8104-9eae-c45a7a818f60",
+          "mode": "id"
+        },
+        "returnAll": true,
+        "simple": false,
+        "options": {}
+      },
+      "id": "node-get-classes",
+      "name": "Notion - Class DB 전체 조회",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        -160,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "node-aggregate",
+      "name": "Aggregate - 전체 반 목록 합치기",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        80,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function parseHour(str) {\n  const m = (str || '').match(/(\\d+)시/);\n  return m ? parseInt(m[1], 10) : 0;\n}\nconst DAY_MAP = { '일': 0, '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6 };\nconst now = new Date();\n\nconst nextMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);\nconst targetYear = nextMonthDate.getFullYear();\nconst targetMonth = nextMonthDate.getMonth() + 1;\n            \n\nfunction toKSTDatetime(date, hour) {\n  const yyyy = date.getFullYear();\n  const mm = String(date.getMonth() + 1).padStart(2, '0');\n  const dd = String(date.getDate()).padStart(2, '0');\n  const hh = String(hour).padStart(2, '0');\n  return yyyy + '-' + mm + '-' + dd + 'T' + hh + ':00:00+09:00';\n}\n\nfunction getDatesInMonth(year, month, dow) {\n  const dates = [];\n  const d = new Date(year, month - 1, 1);\n  while (d.getMonth() === month - 1) {\n    if (d.getDay() === dow) dates.push(new Date(d));\n    d.setDate(d.getDate() + 1);\n  }\n  return dates;\n}\n\nfunction getWeekOfMonth(date) {\n  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);\n  const firstDow = firstDay.getDay() === 0 ? 7 : firstDay.getDay();\n  return Math.ceil((date.getDate() + firstDow - 1) / 7);\n}\n\n// multi_select 필드 읽기\nfunction getMultiSelect(props, key) {\n  const field = props[key];\n  if (!field) return [];\n  const ms = field['multi_select'];\n  if (!ms || !Array.isArray(ms)) return [];\n  return ms.map(function(s) { return s.name; });\n}\n\n// select 필드 읽기 (정규보충은 select 타입)\nfunction getSelect(props, key) {\n  const field = props[key];\n  if (!field) return null;\n  const sel = field['select'];\n  if (!sel) return null;\n  return sel.name || null;\n}\n\nconst aggregated = $input.first();\nconst classList = aggregated.json.data || [];\nconst records = [];\n\nfor (const cls of classList) {\n  const props = cls.properties || {};\n  const classId = cls.id;\n\n  const titleField = props['반명'];\n  const titleArr = titleField ? (titleField['title'] || []) : [];\n  const 반명 = titleArr.map(function(t) { return t.plain_text; }).join('');\n  if (!반명) continue;\n\n  const studentsField = props['Students'];\n  const studentsRel = studentsField ? (studentsField['relation'] || []) : [];\n  const studentIds = studentsRel.map(function(r) { return r.id; });\n\n  // 정규수업 슬롯\n  // 수업1 + 시간 1, 수업2 + 시간2, 수업3 + 시간3 (실제 필드명 확인)\n  const timeFieldNames = ['시간 1', '시간2', '시간3'];\n  const slots = [];\n  for (let i = 1; i <= 3; i++) {\n    const days = getMultiSelect(props, '수업 ' + i);\n    const times = getMultiSelect(props, timeFieldNames[i - 1]);\n    for (const day of days) {\n      slots.push({ day: day, hour: times.length > 0 ? parseHour(times[0]) : 0 });\n    }\n  }\n\n  // 정규보충 슬롯\n  // 정규보충: multi_select 타입, 시간: '시간 4' 필드\n  const 보충Days = getMultiSelect(props, '정규보충');\n  const 보충Times = getMultiSelect(props, '시간 4');\n  for (const 보충Day of 보충Days) {\n    if (보충Day in DAY_MAP) {\n      slots.push({ day: 보충Day, hour: 보충Times.length > 0 ? parseHour(보충Times[0]) : 0 });\n    }\n  }\n\n  if (slots.length === 0) continue;\n\n  // 해당 월 전체 날짜 수집\n  const allDates = [];\n  for (const slot of slots) {\n    if (!(slot.day in DAY_MAP)) continue;\n    const dates = getDatesInMonth(targetYear, targetMonth, DAY_MAP[slot.day]);\n    for (const d of dates) {\n      allDates.push({ date: d, hour: slot.hour });\n    }\n  }\n  allDates.sort(function(a, b) { return a.date - b.date || a.hour - b.hour; });\n\n  // 주차별 그룹핑 후 넘버링\n  const weekGroups = {};\n  for (const entry of allDates) {\n    const w = getWeekOfMonth(entry.date);\n    if (!weekGroups[w]) weekGroups[w] = [];\n    weekGroups[w].push(entry);\n  }\n\n  const weekKeys = Object.keys(weekGroups).sort(function(a, b) { return Number(a) - Number(b); });\n  for (const w of weekKeys) {\n    const group = weekGroups[w];\n    group.sort(function(a, b) { return a.date - b.date || a.hour - b.hour; });\n    for (let idx = 0; idx < group.length; idx++) {\n      const entry = group[idx];\n      records.push({\n        json: {\n          title: 반명 + ' ' + targetMonth + '월 ' + w + '-' + (idx + 1),\n          datetime: toKSTDatetime(entry.date, entry.hour),\n          classId: classId,\n          studentIds: studentIds,\n          반명: 반명\n        }\n      });\n    }\n  }\n}\n\nif (records.length === 0) records.push({ json: { skip: true, message: '생성할 레코드 없음' } });\nreturn records;"
+      },
+      "id": "node-calc-schedule",
+      "name": "Code - 수업일정 계산",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.notion.com/v1/databases/2d0c6a06-e17e-819c-9347-e50501c59069/query",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "notionApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ filter: { and: [ { property: '수업일정', date: { on_or_after: (() => { const d = new Date(); const y = d.getMonth() === 11 ? d.getFullYear() + 1 : d.getFullYear(); const m = d.getMonth() === 11 ? 1 : d.getMonth() + 2; return new Date(y, m - 1, 1).toISOString().split('T')[0]; })() } }, { property: '수업일정', date: { before: (() => { const d = new Date(); const y = d.getMonth() === 11 ? d.getFullYear() + 1 : d.getFullYear(); const m = d.getMonth() === 11 ? 1 : d.getMonth() + 2; return new Date(y, m, 1).toISOString().split('T')[0]; })() } } ] }, page_size: 100 }) }}",
+        "options": {}
+      },
+      "id": "node-get-existing",
+      "name": "HTTP - 다음달 Class_Study 조회",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        560,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const candidates = $('Code - 수업일정 계산').all();\nconst httpResponse = $input.first().json;\nconst existingItems = httpResponse.results || [];\nconst now = new Date();\nconst targetYear = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();\nconst targetMonth = now.getMonth() === 11 ? 1 : now.getMonth() + 2;\nconst monthStart = new Date(targetYear, targetMonth - 1, 1).getTime();\nconst monthEnd = new Date(targetYear, targetMonth, 1).getTime();\nconst existingSet = new Set();\nconst classLastKajeong = {};\nfor (const item of existingItems) {\n  const props = item.properties || {};\n  const classId = (props['Class']?.relation || [])[0]?.id || null;\n  const dateStr = props['수업일정']?.date?.start || '';\n  if (!classId || !dateStr) continue;\n  const dateTs = new Date(dateStr).getTime();\n  if (dateTs >= monthStart && dateTs < monthEnd) existingSet.add(classId + '__' + dateStr.split('T')[0]);\n  const 과정Names = (props['과정']?.multi_select || []).map(s => s.name);\n  if (과정Names.length > 0) {\n    if (!classLastKajeong[classId] || dateStr > classLastKajeong[classId].date) {\n      classLastKajeong[classId] = { date: dateStr, 과정: 과정Names };\n    }\n  }\n}\nconst results = [];\nfor (const c of candidates) {\n  if (c.json.skip) continue;\n  const dateOnly = (c.json.datetime || '').split('T')[0];\n  const key = c.json.classId + '__' + dateOnly;\n  if (!existingSet.has(key)) {\n    const lastKajeong = classLastKajeong[c.json.classId];\n    results.push({ json: Object.assign({}, c.json, { 과정: lastKajeong ? lastKajeong.과정 : [] }) });\n  }\n}\nif (results.length === 0) results.push({ json: { skip: true, message: '모두 중복 - 생성 없음' } });\nreturn results;"
+      },
+      "id": "node-dedup",
+      "name": "Code - 중복 체크",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              },
+              "id": "condition-skip"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "node-skip-check",
+      "name": "If - 스킵 체크",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1040,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "value": "2d0c6a06-e17e-819c-9347-e50501c59069",
+          "mode": "id"
+        },
+        "title": "={{ $json.title }}",
+        "simple": false,
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "수업일정|date",
+              "date": "={{ $json.datetime }}"
+            },
+            {
+              "key": "Class|relation",
+              "relationValue": [
+                "={{ $json.classId }}"
+              ]
+            },
+            {
+              "key": "Students|relation",
+              "relationValue": "={{ $json.studentIds }}"
+            },
+            {
+              "key": "과정|multi_select",
+              "multiSelectValue": "={{ $json.과정 }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-create-class-study",
+      "name": "Notion - Class_Study 레코드 생성",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        1280,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "node-aggregate-created",
+      "name": "Aggregate - 생성 목록 합치기",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = [];\nfor (const item of $input.all()) {\n  const p = item.json;\n  if (!p.id) continue;\n  const props = p.properties || {};\n  const classId = (props['Class']?.relation || [])[0]?.id || null;\n  const dateStart = props['수업일정']?.date?.start || '';\n  const classStudyName = (props['수업구분']?.title || []).map(t => t.plain_text).join('');\n  const students = props['Students']?.relation || [];\n  if (students.length === 0) continue;\n  for (const s of students) {\n    results.push({ json: { studentId: s.id, classStudyId: p.id, classId, dateStart, classStudyName } });\n  }\n}\nif (results.length === 0) return [{ json: { skip: true, message: '배정할 학생 없음' } }];\nreturn results;"
+      },
+      "id": "node-split-students",
+      "name": "Code - Students 분리",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1520,
+        240
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "node-wait2",
+      "name": "Wait - 5초",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1520,
+        480
+      ],
+      "webhookId": "6f3b4de9-d907-448f-b9b4-0c704bb88afe"
+    },
+    {
+      "parameters": {
+        "jsCode": "const aggregateOutput = $input.first();\nconst allCreated = aggregateOutput.json.data || [];\nif (allCreated.length === 0) return [{ json: { skip: true, message: '생성된 레코드 없음' } }];\nconst groups = {};\nfor (const item of allCreated) {\n  const props = item.properties || {};\n  const classId = (props['Class']?.relation || [])[0]?.id || 'unknown';\n  const dateStr = props['수업일정']?.date?.start || '';\n  const pageId = item.id;\n  if (!pageId) continue;\n  if (!groups[classId]) groups[classId] = [];\n  groups[classId].push({ pageId, dateStr });\n}\nconst pairs = [];\nfor (const classId of Object.keys(groups)) {\n  const items = groups[classId].sort((a, b) => a.dateStr.localeCompare(b.dateStr));\n  for (let i = 0; i < items.length - 1; i++) {\n    if (items[i].pageId && items[i+1].pageId) pairs.push({ json: { currentId: items[i].pageId, nextId: items[i+1].pageId } });\n  }\n}\nif (pairs.length === 0) return [{ json: { skip: true, message: '연결할 쌍 없음' } }];\nreturn pairs;"
+      },
+      "id": "node-link-next",
+      "name": "Code - 다음수업 연결 준비",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-skip-link",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "node-if-link",
+      "name": "If - 연결 스킵",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2000,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "get",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $json.studentId }}",
+          "mode": "id"
+        }
+      },
+      "id": "node-get-student",
+      "name": "Notion - Student 조회",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        1744,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "value": "2d0c6a06-e17e-8118-8ce1-dd2f76406aa1",
+          "mode": "id"
+        },
+        "title": "={{ $json.name }} | {{ $('Code - Students 분리').item.json.classStudyName }}",
+        "simple": false,
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "수업일시|date",
+              "date": "={{ $('Code - Students 분리').item.json.dateStart }}"
+            },
+            {
+              "key": "Students|relation",
+              "relationValue": [
+                "={{ $json.id }}"
+              ]
+            },
+            {
+              "key": "Class|relation",
+              "relationValue": [
+                "={{ $('Code - Students 분리').item.json.classId }}"
+              ]
+            },
+            {
+              "key": "Class_Study|relation",
+              "relationValue": [
+                "={{ $('Code - Students 분리').item.json.classStudyId }}"
+              ]
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-create-ss",
+      "name": "Notion - Student_Study 생성",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        1968,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Code - Students 분리').item.json.classStudyId }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "배정확인|checkbox",
+              "checkboxValue": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-baejeong",
+      "name": "Notion - 배정확인",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        2192,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $json.currentId }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "다음수업|relation",
+              "relationValue": [
+                "={{ $json.nextId }}"
+              ]
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-update-next",
+      "name": "Notion - 다음수업 업데이트",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        2240,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "s1",
+              "name": "workflowId",
+              "type": "string",
+              "value": "n7M2Z2BhVbGNWhqX"
+            },
+            {
+              "id": "s2",
+              "name": "workflowName",
+              "type": "string",
+              "value": "Class_Study 월별 자동생성"
+            },
+            {
+              "id": "s3",
+              "name": "notionPageId",
+              "type": "string",
+              "value": "323c6a06e17e817daa0bc4f4b7c1bc98"
+            },
+            {
+              "id": "s4",
+              "name": "status",
+              "type": "string",
+              "value": "✅ 정상"
+            },
+            {
+              "id": "s5",
+              "name": "errorMessage",
+              "type": "string",
+              "value": ""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-success-data",
+      "name": "Set - 성공 데이터",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2432,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": "eOopB5bbEEO9rjrg",
+        "options": {}
+      },
+      "id": "status-success",
+      "name": "✅ 상태 업데이트 (성공)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        2672,
+        240
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "error-trigger",
+      "name": "❌ 에러 감지",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        400,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": "eOopB5bbEEO9rjrg",
+        "options": {}
+      },
+      "id": "status-error",
+      "name": "❌ 상태 업데이트 (에러)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        592,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 📋 Class_Study 월별 자동생성\n\n- **트리거**: 매월 25일 자정\n- **목적**: 다음달 수업일정 자동 생성",
+        "height": 180,
+        "width": 280,
+        "color": 4
+      },
+      "id": "manual-note",
+      "name": "📋 워크플로우 메뉴얼",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -416,
+        0
+      ]
+    },
+    {
+      "id": "node-update-prev",
+      "name": "Notion - 지난수업 업데이트",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        2480,
+        560
+      ],
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $json.nextId }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "지난수업|relation",
+              "relationValue": [
+                "={{ $json.currentId }}"
+              ]
+            }
+          ]
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Schedule - 매월 25일": {
+      "main": [
+        [
+          {
+            "node": "Notion - Class DB 전체 조회",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion - Class DB 전체 조회": {
+      "main": [
+        [
+          {
+            "node": "Aggregate - 전체 반 목록 합치기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate - 전체 반 목록 합치기": {
+      "main": [
+        [
+          {
+            "node": "Code - 수업일정 계산",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - 수업일정 계산": {
+      "main": [
+        [
+          {
+            "node": "HTTP - 다음달 Class_Study 조회",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - 다음달 Class_Study 조회": {
+      "main": [
+        [
+          {
+            "node": "Code - 중복 체크",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - 중복 체크": {
+      "main": [
+        [
+          {
+            "node": "If - 스킵 체크",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If - 스킵 체크": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Notion - Class_Study 레코드 생성",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Aggregate - 생성 목록 합치기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion - Class_Study 레코드 생성": {
+      "main": [
+        [
+          {
+            "node": "Code - Students 분리",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Students 분리": {
+      "main": [
+        [
+          {
+            "node": "Notion - Student 조회",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion - Student 조회": {
+      "main": [
+        [
+          {
+            "node": "Notion - Student_Study 생성",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion - Student_Study 생성": {
+      "main": [
+        [
+          {
+            "node": "Notion - 배정확인",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion - 배정확인": {
+      "main": [
+        [
+          {
+            "node": "Set - 성공 데이터",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - 성공 데이터": {
+      "main": [
+        [
+          {
+            "node": "✅ 상태 업데이트 (성공)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate - 생성 목록 합치기": {
+      "main": [
+        [
+          {
+            "node": "Wait - 5초",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait - 5초": {
+      "main": [
+        [
+          {
+            "node": "Code - 다음수업 연결 준비",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - 다음수업 연결 준비": {
+      "main": [
+        [
+          {
+            "node": "If - 연결 스킵",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If - 연결 스킵": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Notion - 다음수업 업데이트",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "❌ 에러 감지": {
+      "main": [
+        [
+          {
+            "node": "❌ 상태 업데이트 (에러)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion - 다음수업 업데이트": {
+      "main": [
+        [
+          {
+            "node": "Notion - 지난수업 업데이트",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Seoul",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Schedule - 매월 1일": {
+      "recurrenceRules": []
+    },
+    "node:Schedule - 매월 25일": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": {},
+  "versionId": "9ede4d12-084b-4d3f-bf88-6132a7818bcb",
+  "activeVersionId": "9ede4d12-084b-4d3f-bf88-6132a7818bcb",
+  "versionCounter": 165,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-03-08T17:30:29.523Z",
+      "createdAt": "2026-03-08T17:30:29.523Z",
+      "role": "workflow:owner",
+      "workflowId": "n7M2Z2BhVbGNWhqX",
+      "projectId": "8znYa8Ca7GWeBy0m",
+      "project": {
+        "updatedAt": "2025-11-29T23:05:56.637Z",
+        "createdAt": "2025-11-29T23:04:07.777Z",
+        "id": "8znYa8Ca7GWeBy0m",
+        "name": "Seung Hyeon Kim <khai01@naver.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-06-07T22:31:04.517Z",
+    "createdAt": "2026-06-07T22:31:04.517Z",
+    "versionId": "9ede4d12-084b-4d3f-bf88-6132a7818bcb",
+    "workflowId": "n7M2Z2BhVbGNWhqX",
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 0 25 * *"
+              }
+            ]
+          }
+        },
+        "id": "node-schedule",
+        "name": "Schedule - 매월 25일",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.3,
+        "position": [
+          -400,
+          240
+        ]
+      },
+      {
+        "parameters": {
+          "resource": "databasePage",
+          "operation": "getAll",
+          "databaseId": {
+            "__rl": true,
+            "value": "2d0c6a06-e17e-8104-9eae-c45a7a818f60",
+            "mode": "id"
+          },
+          "returnAll": true,
+          "simple": false,
+          "options": {}
+        },
+        "id": "node-get-classes",
+        "name": "Notion - Class DB 전체 조회",
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2,
+        "position": [
+          -160,
+          240
+        ],
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "aggregate": "aggregateAllItemData",
+          "options": {}
+        },
+        "id": "node-aggregate",
+        "name": "Aggregate - 전체 반 목록 합치기",
+        "type": "n8n-nodes-base.aggregate",
+        "typeVersion": 1,
+        "position": [
+          80,
+          240
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "function parseHour(str) {\n  const m = (str || '').match(/(\\d+)시/);\n  return m ? parseInt(m[1], 10) : 0;\n}\nconst DAY_MAP = { '일': 0, '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6 };\nconst now = new Date();\nconst targetYear = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();\nconst targetMonth = now.getMonth() === 11 ? 1 : now.getMonth() + 2;\n\nfunction toKSTDatetime(date, hour) {\n  const yyyy = date.getFullYear();\n  const mm = String(date.getMonth() + 1).padStart(2, '0');\n  const dd = String(date.getDate()).padStart(2, '0');\n  const hh = String(hour).padStart(2, '0');\n  return yyyy + '-' + mm + '-' + dd + 'T' + hh + ':00:00+09:00';\n}\n\nfunction getDatesInMonth(year, month, dow) {\n  const dates = [];\n  const d = new Date(year, month - 1, 1);\n  while (d.getMonth() === month - 1) {\n    if (d.getDay() === dow) dates.push(new Date(d));\n    d.setDate(d.getDate() + 1);\n  }\n  return dates;\n}\n\nfunction getWeekOfMonth(date) {\n  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);\n  const firstDow = firstDay.getDay() === 0 ? 7 : firstDay.getDay();\n  return Math.ceil((date.getDate() + firstDow - 1) / 7);\n}\n\n// multi_select 필드 읽기\nfunction getMultiSelect(props, key) {\n  const field = props[key];\n  if (!field) return [];\n  const ms = field['multi_select'];\n  if (!ms || !Array.isArray(ms)) return [];\n  return ms.map(function(s) { return s.name; });\n}\n\n// select 필드 읽기 (정규보충은 select 타입)\nfunction getSelect(props, key) {\n  const field = props[key];\n  if (!field) return null;\n  const sel = field['select'];\n  if (!sel) return null;\n  return sel.name || null;\n}\n\nconst aggregated = $input.first();\nconst classList = aggregated.json.data || [];\nconst records = [];\n\nfor (const cls of classList) {\n  const props = cls.properties || {};\n  const classId = cls.id;\n\n  const titleField = props['반명'];\n  const titleArr = titleField ? (titleField['title'] || []) : [];\n  const 반명 = titleArr.map(function(t) { return t.plain_text; }).join('');\n  if (!반명) continue;\n\n  const studentsField = props['Students'];\n  const studentsRel = studentsField ? (studentsField['relation'] || []) : [];\n  const studentIds = studentsRel.map(function(r) { return r.id; });\n\n  // 정규수업 슬롯\n  // 수업1 + 시간 1, 수업2 + 시간2, 수업3 + 시간3 (실제 필드명 확인)\n  const timeFieldNames = ['시간 1', '시간2', '시간3'];\n  const slots = [];\n  for (let i = 1; i <= 3; i++) {\n    const days = getMultiSelect(props, '수업 ' + i);\n    const times = getMultiSelect(props, timeFieldNames[i - 1]);\n    for (const day of days) {\n      slots.push({ day: day, hour: times.length > 0 ? parseHour(times[0]) : 0 });\n    }\n  }\n\n  // 정규보충 슬롯\n  // 정규보충: multi_select 타입, 시간: '시간 4' 필드\n  const 보충Days = getMultiSelect(props, '정규보충');\n  const 보충Times = getMultiSelect(props, '시간 4');\n  for (const 보충Day of 보충Days) {\n    if (보충Day in DAY_MAP) {\n      slots.push({ day: 보충Day, hour: 보충Times.length > 0 ? parseHour(보충Times[0]) : 0 });\n    }\n  }\n\n  if (slots.length === 0) continue;\n\n  // 해당 월 전체 날짜 수집\n  const allDates = [];\n  for (const slot of slots) {\n    if (!(slot.day in DAY_MAP)) continue;\n    const dates = getDatesInMonth(targetYear, targetMonth, DAY_MAP[slot.day]);\n    for (const d of dates) {\n      allDates.push({ date: d, hour: slot.hour });\n    }\n  }\n  allDates.sort(function(a, b) { return a.date - b.date || a.hour - b.hour; });\n\n  // 주차별 그룹핑 후 넘버링\n  const weekGroups = {};\n  for (const entry of allDates) {\n    const w = getWeekOfMonth(entry.date);\n    if (!weekGroups[w]) weekGroups[w] = [];\n    weekGroups[w].push(entry);\n  }\n\n  const weekKeys = Object.keys(weekGroups).sort(function(a, b) { return Number(a) - Number(b); });\n  for (const w of weekKeys) {\n    const group = weekGroups[w];\n    group.sort(function(a, b) { return a.date - b.date || a.hour - b.hour; });\n    for (let idx = 0; idx < group.length; idx++) {\n      const entry = group[idx];\n      records.push({\n        json: {\n          title: 반명 + ' ' + targetMonth + '월 ' + w + '-' + (idx + 1),\n          datetime: toKSTDatetime(entry.date, entry.hour),\n          classId: classId,\n          studentIds: studentIds,\n          반명: 반명\n        }\n      });\n    }\n  }\n}\n\nif (records.length === 0) records.push({ json: { skip: true, message: '생성할 레코드 없음' } });\nreturn records;"
+        },
+        "id": "node-calc-schedule",
+        "name": "Code - 수업일정 계산",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          320,
+          240
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.notion.com/v1/databases/2d0c6a06-e17e-819c-9347-e50501c59069/query",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "notionApi",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Notion-Version",
+                "value": "2022-06-28"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ filter: { and: [ { property: '수업일정', date: { on_or_after: (() => { const d = new Date(); const y = d.getMonth() === 11 ? d.getFullYear() + 1 : d.getFullYear(); const m = d.getMonth() === 11 ? 1 : d.getMonth() + 2; return new Date(y, m - 1, 1).toISOString().split('T')[0]; })() } }, { property: '수업일정', date: { before: (() => { const d = new Date(); const y = d.getMonth() === 11 ? d.getFullYear() + 1 : d.getFullYear(); const m = d.getMonth() === 11 ? 1 : d.getMonth() + 2; return new Date(y, m, 1).toISOString().split('T')[0]; })() } } ] }, page_size: 100 }) }}",
+          "options": {}
+        },
+        "id": "node-get-existing",
+        "name": "HTTP - 다음달 Class_Study 조회",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          560,
+          240
+        ],
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const candidates = $('Code - 수업일정 계산').all();\nconst httpResponse = $input.first().json;\nconst existingItems = httpResponse.results || [];\nconst now = new Date();\nconst targetYear = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();\nconst targetMonth = now.getMonth() === 11 ? 1 : now.getMonth() + 2;\nconst monthStart = new Date(targetYear, targetMonth - 1, 1).getTime();\nconst monthEnd = new Date(targetYear, targetMonth, 1).getTime();\nconst existingSet = new Set();\nconst classLastKajeong = {};\nfor (const item of existingItems) {\n  const props = item.properties || {};\n  const classId = (props['Class']?.relation || [])[0]?.id || null;\n  const dateStr = props['수업일정']?.date?.start || '';\n  if (!classId || !dateStr) continue;\n  const dateTs = new Date(dateStr).getTime();\n  if (dateTs >= monthStart && dateTs < monthEnd) existingSet.add(classId + '__' + dateStr.split('T')[0]);\n  const 과정Names = (props['과정']?.multi_select || []).map(s => s.name);\n  if (과정Names.length > 0) {\n    if (!classLastKajeong[classId] || dateStr > classLastKajeong[classId].date) {\n      classLastKajeong[classId] = { date: dateStr, 과정: 과정Names };\n    }\n  }\n}\nconst results = [];\nfor (const c of candidates) {\n  if (c.json.skip) continue;\n  const dateOnly = (c.json.datetime || '').split('T')[0];\n  const key = c.json.classId + '__' + dateOnly;\n  if (!existingSet.has(key)) {\n    const lastKajeong = classLastKajeong[c.json.classId];\n    results.push({ json: Object.assign({}, c.json, { 과정: lastKajeong ? lastKajeong.과정 : [] }) });\n  }\n}\nif (results.length === 0) results.push({ json: { skip: true, message: '모두 중복 - 생성 없음' } });\nreturn results;"
+        },
+        "id": "node-dedup",
+        "name": "Code - 중복 체크",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          800,
+          240
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "version": 2,
+              "leftValue": "",
+              "caseSensitive": true,
+              "typeValidation": "loose"
+            },
+            "conditions": [
+              {
+                "leftValue": "={{ $json.skip }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals"
+                },
+                "id": "condition-skip"
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "node-skip-check",
+        "name": "If - 스킵 체크",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1040,
+          240
+        ]
+      },
+      {
+        "parameters": {
+          "resource": "databasePage",
+          "databaseId": {
+            "__rl": true,
+            "value": "2d0c6a06-e17e-819c-9347-e50501c59069",
+            "mode": "id"
+          },
+          "title": "={{ $json.title }}",
+          "simple": false,
+          "propertiesUi": {
+            "propertyValues": [
+              {
+                "key": "수업일정|date",
+                "date": "={{ $json.datetime }}"
+              },
+              {
+                "key": "Class|relation",
+                "relationValue": [
+                  "={{ $json.classId }}"
+                ]
+              },
+              {
+                "key": "Students|relation",
+                "relationValue": "={{ $json.studentIds }}"
+              },
+              {
+                "key": "과정|multi_select",
+                "multiSelectValue": "={{ $json.과정 }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "node-create-class-study",
+        "name": "Notion - Class_Study 레코드 생성",
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2,
+        "position": [
+          1280,
+          240
+        ],
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "aggregate": "aggregateAllItemData",
+          "options": {}
+        },
+        "id": "node-aggregate-created",
+        "name": "Aggregate - 생성 목록 합치기",
+        "type": "n8n-nodes-base.aggregate",
+        "typeVersion": 1,
+        "position": [
+          1280,
+          480
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const results = [];\nfor (const item of $input.all()) {\n  const p = item.json;\n  if (!p.id) continue;\n  const props = p.properties || {};\n  const classId = (props['Class']?.relation || [])[0]?.id || null;\n  const dateStart = props['수업일정']?.date?.start || '';\n  const classStudyName = (props['수업구분']?.title || []).map(t => t.plain_text).join('');\n  const students = props['Students']?.relation || [];\n  if (students.length === 0) continue;\n  for (const s of students) {\n    results.push({ json: { studentId: s.id, classStudyId: p.id, classId, dateStart, classStudyName } });\n  }\n}\nif (results.length === 0) return [{ json: { skip: true, message: '배정할 학생 없음' } }];\nreturn results;"
+        },
+        "id": "node-split-students",
+        "name": "Code - Students 분리",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1520,
+          240
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "node-wait2",
+        "name": "Wait - 5초",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          1520,
+          480
+        ],
+        "webhookId": "6f3b4de9-d907-448f-b9b4-0c704bb88afe"
+      },
+      {
+        "parameters": {
+          "jsCode": "const aggregateOutput = $input.first();\nconst allCreated = aggregateOutput.json.data || [];\nif (allCreated.length === 0) return [{ json: { skip: true, message: '생성된 레코드 없음' } }];\nconst groups = {};\nfor (const item of allCreated) {\n  const props = item.properties || {};\n  const classId = (props['Class']?.relation || [])[0]?.id || 'unknown';\n  const dateStr = props['수업일정']?.date?.start || '';\n  const pageId = item.id;\n  if (!pageId) continue;\n  if (!groups[classId]) groups[classId] = [];\n  groups[classId].push({ pageId, dateStr });\n}\nconst pairs = [];\nfor (const classId of Object.keys(groups)) {\n  const items = groups[classId].sort((a, b) => a.dateStr.localeCompare(b.dateStr));\n  for (let i = 0; i < items.length - 1; i++) {\n    if (items[i].pageId && items[i+1].pageId) pairs.push({ json: { currentId: items[i].pageId, nextId: items[i+1].pageId } });\n  }\n}\nif (pairs.length === 0) return [{ json: { skip: true, message: '연결할 쌍 없음' } }];\nreturn pairs;"
+        },
+        "id": "node-link-next",
+        "name": "Code - 다음수업 연결 준비",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1760,
+          480
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "version": 2,
+              "leftValue": "",
+              "caseSensitive": true,
+              "typeValidation": "loose"
+            },
+            "conditions": [
+              {
+                "id": "cond-skip-link",
+                "leftValue": "={{ $json.skip }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "node-if-link",
+        "name": "If - 연결 스킵",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2000,
+          480
+        ]
+      },
+      {
+        "parameters": {
+          "resource": "databasePage",
+          "operation": "get",
+          "pageId": {
+            "__rl": true,
+            "value": "={{ $json.studentId }}",
+            "mode": "id"
+          }
+        },
+        "id": "node-get-student",
+        "name": "Notion - Student 조회",
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2,
+        "position": [
+          1744,
+          240
+        ],
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "resource": "databasePage",
+          "databaseId": {
+            "__rl": true,
+            "value": "2d0c6a06-e17e-8118-8ce1-dd2f76406aa1",
+            "mode": "id"
+          },
+          "title": "={{ $json.name }} | {{ $('Code - Students 분리').item.json.classStudyName }}",
+          "simple": false,
+          "propertiesUi": {
+            "propertyValues": [
+              {
+                "key": "수업일시|date",
+                "date": "={{ $('Code - Students 분리').item.json.dateStart }}"
+              },
+              {
+                "key": "Students|relation",
+                "relationValue": [
+                  "={{ $json.id }}"
+                ]
+              },
+              {
+                "key": "Class|relation",
+                "relationValue": [
+                  "={{ $('Code - Students 분리').item.json.classId }}"
+                ]
+              },
+              {
+                "key": "Class_Study|relation",
+                "relationValue": [
+                  "={{ $('Code - Students 분리').item.json.classStudyId }}"
+                ]
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "node-create-ss",
+        "name": "Notion - Student_Study 생성",
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2,
+        "position": [
+          1968,
+          240
+        ],
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "resource": "databasePage",
+          "operation": "update",
+          "pageId": {
+            "__rl": true,
+            "value": "={{ $('Code - Students 분리').item.json.classStudyId }}",
+            "mode": "id"
+          },
+          "propertiesUi": {
+            "propertyValues": [
+              {
+                "key": "배정확인|checkbox",
+                "checkboxValue": true
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "node-baejeong",
+        "name": "Notion - 배정확인",
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2,
+        "position": [
+          2192,
+          240
+        ],
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "resource": "databasePage",
+          "operation": "update",
+          "pageId": {
+            "__rl": true,
+            "value": "={{ $json.currentId }}",
+            "mode": "id"
+          },
+          "propertiesUi": {
+            "propertyValues": [
+              {
+                "key": "다음수업|relation",
+                "relationValue": [
+                  "={{ $json.nextId }}"
+                ]
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "node-update-next",
+        "name": "Notion - 다음수업 업데이트",
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2,
+        "position": [
+          2240,
+          560
+        ],
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "s1",
+                "name": "workflowId",
+                "type": "string",
+                "value": "n7M2Z2BhVbGNWhqX"
+              },
+              {
+                "id": "s2",
+                "name": "workflowName",
+                "type": "string",
+                "value": "Class_Study 월별 자동생성"
+              },
+              {
+                "id": "s3",
+                "name": "notionPageId",
+                "type": "string",
+                "value": "323c6a06e17e817daa0bc4f4b7c1bc98"
+              },
+              {
+                "id": "s4",
+                "name": "status",
+                "type": "string",
+                "value": "✅ 정상"
+              },
+              {
+                "id": "s5",
+                "name": "errorMessage",
+                "type": "string",
+                "value": ""
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "set-success-data",
+        "name": "Set - 성공 데이터",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          2432,
+          240
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "eOopB5bbEEO9rjrg",
+          "options": {}
+        },
+        "id": "status-success",
+        "name": "✅ 상태 업데이트 (성공)",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          2672,
+          240
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "error-trigger",
+        "name": "❌ 에러 감지",
+        "type": "n8n-nodes-base.errorTrigger",
+        "typeVersion": 1,
+        "position": [
+          400,
+          512
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "eOopB5bbEEO9rjrg",
+          "options": {}
+        },
+        "id": "status-error",
+        "name": "❌ 상태 업데이트 (에러)",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          592,
+          512
+        ]
+      },
+      {
+        "parameters": {
+          "content": "## 📋 Class_Study 월별 자동생성\n\n- **트리거**: 매월 25일 자정\n- **목적**: 다음달 수업일정 자동 생성",
+          "height": 180,
+          "width": 280,
+          "color": 4
+        },
+        "id": "manual-note",
+        "name": "📋 워크플로우 메뉴얼",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -416,
+          0
+        ]
+      },
+      {
+        "id": "node-update-prev",
+        "name": "Notion - 지난수업 업데이트",
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2,
+        "position": [
+          2480,
+          560
+        ],
+        "parameters": {
+          "resource": "databasePage",
+          "operation": "update",
+          "pageId": {
+            "__rl": true,
+            "value": "={{ $json.nextId }}",
+            "mode": "id"
+          },
+          "propertiesUi": {
+            "propertyValues": [
+              {
+                "key": "지난수업|relation",
+                "relationValue": [
+                  "={{ $json.currentId }}"
+                ]
+              }
+            ]
+          },
+          "options": {}
+        },
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Schedule - 매월 25일": {
+        "main": [
+          [
+            {
+              "node": "Notion - Class DB 전체 조회",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Notion - Class DB 전체 조회": {
+        "main": [
+          [
+            {
+              "node": "Aggregate - 전체 반 목록 합치기",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Aggregate - 전체 반 목록 합치기": {
+        "main": [
+          [
+            {
+              "node": "Code - 수업일정 계산",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code - 수업일정 계산": {
+        "main": [
+          [
+            {
+              "node": "HTTP - 다음달 Class_Study 조회",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "HTTP - 다음달 Class_Study 조회": {
+        "main": [
+          [
+            {
+              "node": "Code - 중복 체크",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code - 중복 체크": {
+        "main": [
+          [
+            {
+              "node": "If - 스킵 체크",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If - 스킵 체크": {
+        "main": [
+          [],
+          [
+            {
+              "node": "Notion - Class_Study 레코드 생성",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Aggregate - 생성 목록 합치기",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Notion - Class_Study 레코드 생성": {
+        "main": [
+          [
+            {
+              "node": "Code - Students 분리",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code - Students 분리": {
+        "main": [
+          [
+            {
+              "node": "Notion - Student 조회",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Notion - Student 조회": {
+        "main": [
+          [
+            {
+              "node": "Notion - Student_Study 생성",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Notion - Student_Study 생성": {
+        "main": [
+          [
+            {
+              "node": "Notion - 배정확인",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Notion - 배정확인": {
+        "main": [
+          [
+            {
+              "node": "Set - 성공 데이터",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set - 성공 데이터": {
+        "main": [
+          [
+            {
+              "node": "✅ 상태 업데이트 (성공)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Aggregate - 생성 목록 합치기": {
+        "main": [
+          [
+            {
+              "node": "Wait - 5초",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait - 5초": {
+        "main": [
+          [
+            {
+              "node": "Code - 다음수업 연결 준비",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code - 다음수업 연결 준비": {
+        "main": [
+          [
+            {
+              "node": "If - 연결 스킵",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If - 연결 스킵": {
+        "main": [
+          [],
+          [
+            {
+              "node": "Notion - 다음수업 업데이트",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "❌ 에러 감지": {
+        "main": [
+          [
+            {
+              "node": "❌ 상태 업데이트 (에러)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Notion - 다음수업 업데이트": {
+        "main": [
+          [
+            {
+              "node": "Notion - 지난수업 업데이트",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Seung Hyeon Kim",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-06-07T22:31:04.671Z",
+        "id": 594,
+        "workflowId": "n7M2Z2BhVbGNWhqX",
+        "versionId": "9ede4d12-084b-4d3f-bf88-6132a7818bcb",
+        "event": "activated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      },
+      {
+        "createdAt": "2026-06-07T22:31:04.604Z",
+        "id": 593,
+        "workflowId": "n7M2Z2BhVbGNWhqX",
+        "versionId": "9ede4d12-084b-4d3f-bf88-6132a7818bcb",
+        "event": "deactivated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
+    ]
+  }
+}
