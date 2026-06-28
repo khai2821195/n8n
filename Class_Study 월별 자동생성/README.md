@@ -9,44 +9,36 @@
 
 n8n Workflow Expert.
 Analyze a provided n8n workflow JSON and write a GitHub `README.md` in Korean.
-"Class_Study 월별 자동생성" (Monthly Auto-generation of Class Study).
+"Class_Study 월별 자동생성" (Monthly Automatic Generation of Class Study).
 `n7M2Z2BhVbGNWhqX`.
-Math4U.
+`Math4U`.
 
         *   `Schedule - 매월 25일`: Triggered on the 25th of every month at 00:00.
-        *   `Notion - Class DB 전체 조회`: Fetches all pages from a specific Notion database (`2d0c6a06-e17e-8104-9eae-c45a7a818f60`).
-        *   `Aggregate - 전체 반 목록 합치기`: Aggregates all fetched items into a single list.
+        *   `Notion - Class DB 전체 조회`: Fetches all pages from a specific Notion database (Class DB).
+        *   `Aggregate - 전체 반 목록 합치기`: Combines all fetched class items into a single array for processing.
         *   `Code - 수업일정 계산`: A JavaScript node that:
             *   Calculates the dates for the *next* month.
-            *   Parses class schedules (Regular classes 1-3 and Supplementary classes).
-            *   Maps days of the week (Sun-Sat).
-            *   Calculates specific dates and times for each class session.
-            *   Groups them by week of the month.
-            *   Generates a title like "[Class Name] [Month]월 [Week]-[Session Number]".
-            *   Outputs a list of records containing `title`, `datetime`, `classId`, `studentIds`, and `반명`.
+            *   Parses class names, student relations, and schedules (Regular classes 1-3 and Supplementary classes).
+            *   Maps days of the week (Sun-Sat) to dates.
+            *   Groups dates by week of the month.
+            *   Generates a list of records with titles like "Class Name [Month]월 [Week]-[Session]".
+            *   Formats dates to KST ISO string.
 
-    *   *Purpose:* Automatically generate study session records for the next month based on class schedules stored in Notion.
+    *   *Purpose:* Automatically generate a study schedule for the following month based on a Notion Class database.
     *   *Trigger:* Monthly (25th).
     *   *Logic:*
         1.  Get all classes from Notion.
-        2.  For each class, look at "수업 1, 2, 3" and "정규보충" (days) and "시간 1, 2, 3, 4" (hours).
-        3.  Find all matching dates in the next month.
-        4.  Assign a sequence number (e.g., 1-1, 1-2) based on the week and order.
-        5.  Prepare data for creation (likely to be inserted into another Notion DB, though the JSON cuts off before the final creation node, the logic clearly prepares records for it).
+        2.  Extract schedule patterns (Day of week, Hour).
+        3.  Calculate actual dates for the next month.
+        4.  Assign session numbers (e.g., 1-1, 1-2) based on the week and order.
+        5.  Prepare data for insertion (though the JSON ends at the Code node, the intent is clearly to create new records in another DB).
 
-    *   *Title:* Class_Study 월별 자동생성 (Monthly Auto-generation of Class Study)
-    *   *Description:* A workflow that automatically calculates and prepares the next month's class schedule based on Notion database settings.
-    *   *Workflow Flow:*
-        1.  **Schedule Trigger**: Every 25th of the month.
-        2.  **Notion Get All**: Retrieve class info (Class name, students, schedule).
-        3.  **Aggregate**: Combine data for processing.
-        4.  **Code Node**: Complex date calculation logic (KST timezone, week-of-month calculation, session numbering).
-    *   *Requirements:* Notion API Key (Integration Token), Database ID.
-    *   *Key Logic Details:*
-        *   Target: Next month.
-        *   Format: `[Class Name] [Month]월 [Week]-[Session]`
-        *   Timezone: KST (UTC+9).
-
-    *   Ensure professional tone.
-    *   Use clear headings.
-    *   Use a table or list for node descriptions.
+    *   *Title:* Class_Study 월별 자동생성 (Monthly Class Study Auto-Generator).
+    *   *Overview:* Automates the creation of monthly study logs/schedules in Notion.
+    *   *Workflow Steps:*
+        1.  **Schedule Trigger**: Every 25th.
+        2.  **Notion Get All**: Fetch Class DB.
+        3.  **Aggregate**: Merge data.
+        4.  **Code Node**: The "brain" that calculates dates and session IDs.
+    *   *Requirements:* Notion API credentials, specific DB structure (Class DB with fields like '반명', '수업 1~3', '시간 1~4', '정규보충', 'Students').
+    *   *Key Logic Details:* KST timezone handling, week-of-month calculation.
