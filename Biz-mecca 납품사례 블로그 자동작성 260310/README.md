@@ -8,38 +8,46 @@
 ---
 
 n8n Workflow Expert.
-Analyze provided JSON and write a GitHub `README.md` in Korean.
-"Biz-mecca 납품사례 블로그 자동작성 260310" (Biz-mecca Delivery Case Blog Auto-writer).
+Analyze a provided n8n workflow JSON and write a GitHub `README.md` in Korean.
+"Biz-mecca 납품사례 블로그 자동작성 260310" (Biz-mecca Delivery Case Blog Auto-Writer).
 `ruLfwzGZtsmLSD3k`.
 DCT.
 
         *   `node-form` (Form Trigger): Collects product name, description, client name, client type, quantity, product URL, and notes.
-        *   `node-set-inputs` (Set): Normalizes the form inputs into a structured format.
-        *   `node-jina` (HTTP Request): Crawls the product URL (currently disabled in the JSON).
-        *   `node-parse-product` (Code): Parses the crawled HTML/text to extract product info (handling encoding issues like EUC-KR).
-        *   *Note:* The JSON is truncated at the end of the `node-parse-product` code, but the intent is clear: Form $\rightarrow$ Set $\rightarrow$ Crawl $\rightarrow$ Parse $\rightarrow$ (presumably) AI Generation $\rightarrow$ Output.
+        *   `node-set-inputs` (Set): Organizes the form inputs into clean variables.
+        *   `node-jina` (HTTP Request): Crawls the product URL (currently disabled).
+        *   `node-parse-product` (Code): Parses the crawled HTML/text to extract product info (incomplete JSON provided, but the intent is clear).
 
-    *   *Purpose:* Automate the creation of Naver Blog drafts for delivery cases (case studies) for "Biz-mecca".
-    *   *Workflow Flow:*
-        1.  **Input:** User fills out an n8n form with delivery details.
-        2.  **Data Normalization:** The `Set` node organizes the input for easier use in subsequent steps.
-        3.  **Web Scraping (Optional/Disabled):** An HTTP request fetches the product page from the Biz-mecca website.
-        4.  **Data Parsing:** A JavaScript code node cleans the HTML and extracts relevant text, handling potential character encoding issues.
-        5.  **Output (Implicit):** Based on the form title and description, the final goal is to generate a blog draft (though the final LLM/Output nodes are missing from the truncated JSON, the logic is evident).
+        1.  Clear purpose and operation method.
+        2.  Sequential node flow (Trigger $\rightarrow$ Process $\rightarrow$ Output).
+        3.  Environment variables/Credentials.
+        4.  Precautions/Special notes.
+        5.  Markdown format.
+        6.  Output *only* the README.md content.
 
-    *   *Title:* Biz-mecca 납품사례 블로그 자동작성 워크플로우
-    *   *Description:* A tool to automatically generate blog drafts based on product delivery information.
-    *   *Key Features:*
-        *   Easy input via n8n Form.
-        *   Automatic product page crawling.
-        *   Data cleaning for better AI prompts.
-    *   *Node-by-node breakdown:*
-        *   `납품사례 폼 입력`: User interface for data entry.
-        *   `입력값 정리`: Variable mapping.
-        *   `제품 URL 크롤링`: Fetching product details from the web.
-        *   `제품 정보 파싱`: Cleaning HTML and extracting text.
-    *   *Requirements:* n8n instance, (likely) an LLM API key (OpenAI/Anthropic) though not explicitly in the JSON, it's implied by "자동작성".
+    *   *Purpose:* To automate the creation of Naver Blog drafts based on delivery case information entered via a form.
+    *   *User Journey:* User fills out a form $\rightarrow$ Data is cleaned $\rightarrow$ (Optional) Product page is crawled for more detail $\rightarrow$ (Implied) AI generates a blog post (though the JSON cuts off, the name says "Auto-Writer").
+    *   *Key Inputs:* Product name, description, client, client type, quantity, URL, memo.
 
-    *   Use professional, clear Korean.
-    *   Follow the requested Markdown structure.
-    *   Ensure the "Disabled" status of the crawling node is mentioned.
+    *   *Title:* Biz-mecca 납품사례 블로그 자동작성 (Biz-mecca Delivery Case Blog Auto-Writer).
+    *   *Overview:* A workflow that transforms delivery data into a blog draft.
+    *   *Workflow Steps:*
+        1.  **Form Trigger:** User input.
+        2.  **Set Node:** Data mapping.
+        3.  **HTTP Request (Optional):** Web scraping of the product page.
+        4.  **Code Node:** Text cleaning and parsing.
+    *   *Requirements:* n8n instance, (likely) an LLM API key (though not explicitly in the snippet, "Auto-Writer" implies AI), and a Naver Blog API or just a final text output.
+
+    *   *Header:* # Biz-mecca 납품사례 블로그 자동작성
+    *   *Description:* 납품 정보를 입력하면 네이버 블로그 포스팅 초안을 자동으로 생성하는 n8n 워크플로우입니다.
+    *   *Flow:*
+        1.  `납품사례 폼 입력`: 사용자로부터 제품명, 거래처, 수량 등의 정보를 입력받습니다.
+        2.  `입력값 정리`: 입력된 데이터를 표준 변수명으로 매핑하여 후속 노드에서 사용하기 쉽게 정리합니다.
+        3.  `제품 URL 크롤링` (선택적): 비즈메카 제품 상세 페이지의 내용을 가져와 더 풍부한 정보를 확보합니다.
+        4.  `제품 정보 파싱`: 크롤링된 HTML 데이터에서 불필요한 태그를 제거하고 텍스트를 정제합니다.
+    *   *Credentials:* HTTP Request (if using specific proxies), AI API (if integrated later).
+    *   *Notes:* The crawling node is currently disabled.
+
+    *   Ensure professional tone.
+    *   Use clear bullet points.
+    *   Check against the JSON provided.
