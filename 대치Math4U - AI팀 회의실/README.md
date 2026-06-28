@@ -7,38 +7,49 @@
 ---
 
 n8n Workflow Expert.
-Analyze a provided n8n workflow JSON and create a GitHub `README.md` in Korean.
+Analyze a provided n8n workflow JSON and write a GitHub `README.md` in Korean.
 "대치Math4U - AI팀 회의실" (Daechi Math4U - AI Team Meeting Room).
-A JSON representation of an n8n workflow.
+
+        *   `form-trigger`: Form trigger for inputting a meeting agenda.
+        *   `parse-input`: Set node to parse agenda and current date.
+        *   `neil-gemini`: Google Gemini node acting as Neil Patel (Marketer/SEO).
+        *   `john-gemini`: Google Gemini node acting as Jony Ive (Designer/Visual).
+        *   `bill-gemini`: Google Gemini node acting as Bill Gates (Automation/Ops).
+        *   `tim-gemini`: Google Gemini node acting as Tim Cook (Student Management/CRM).
+        *   `minutes` (Set node): Aggregates all AI responses into a formatted Markdown meeting minute.
 
         1.  Clear purpose and operation method.
-        2.  Step-by-step node flow (Trigger $\rightarrow$ Process $\rightarrow$ Output).
+        2.  Sequential node flow (Trigger $\rightarrow$ Process $\rightarrow$ Output).
         3.  Required environment variables/credentials.
         4.  Precautions/Special notes.
         5.  Markdown format.
-        6.  Output *only* the README.md content.
+        6.  Output *only* the README content.
 
-    *   *Trigger:* `n8n-nodes-base.formTrigger` ("회의 시작 폼"). It takes an `agenda` (textarea).
-    *   *Processing 1:* `n8n-nodes-base.set` ("입력 파싱"). Sets `agenda` and `meetingDate` (current date).
-    *   *AI Agents (Sequential/Parallel-ish flow):*
-        *   `neil-gemini` (Neil Patel): Marketer/SEO/SNS perspective.
-        *   `john-gemini` (Jony Ive): Designer/Visual/Brand perspective.
-        *   `bill-gemini` (Bill Gates): Automation/System perspective.
-        *   `tim-gemini` (Tim Cook): Student Management/Counseling perspective.
-        *   *Model used:* `gemini-3.1-flash-lite`.
-    *   *Output/Aggregation:* `n8n-nodes-base.set` ("회의록 생성" - though the JSON snippet ends abruptly, the logic is clear). It compiles the responses from all four AI agents into a formatted Markdown meeting minute.
-    *   *Final Step:* The form response mode is `lastNode`, meaning the final formatted meeting minutes are shown back to the user who filled out the form.
-
-    *   *Title:* # 대치Math4U - AI팀 회의실 (AI Team Meeting Room)
-    *   *Introduction:* This workflow simulates a virtual meeting with four AI experts (Neil, Jony, Bill, Tim) to get multi-dimensional feedback on a specific agenda for a math academy.
-    *   *Workflow Flow:*
-        1.  **Form Trigger**: User enters the agenda.
-        2.  **Data Parsing**: Sets the date and cleans the input.
-        3.  **AI Brainstorming**:
-            *   Neil (Marketing/SEO)
-            *   Jony (Design/UX)
-            *   Bill (Automation/Ops)
-            *   Tim (Student/Parent Care)
-        4.  **Minutes Generation**: Aggregates all AI responses into a structured Markdown report.
+    *   *Title:* 대치Math4U - AI팀 회의실 (AI Team Meeting Room)
+    *   *Purpose:* To simulate a multi-disciplinary brainstorming session. Instead of one AI, four specialized AI personas (Marketing, Design, Automation, Student Management) provide feedback on a specific agenda.
+    *   *Flow:*
+        1.  **Trigger:** User fills out a form with an "agenda".
+        2.  **Preprocessing:** Extract agenda and set the current date.
+        3.  **AI Brainstorming (Parallel/Sequential):**
+            *   Neil (Marketing): Focuses on SEO, clicks, and trends.
+            *   John (Design): Focuses on minimalism and brand consistency.
+            *   Bill (Automation): Focuses on n8n, efficiency, and systems.
+            *   Tim (Student Mgmt): Focuses on parent trust and student satisfaction.
+        4.  **Aggregation:** Combine all responses into a structured Markdown meeting minute.
     *   *Credentials:* Google Gemini API Key.
-    *   *Special Notes:* The final output is intended to be passed to another AI (Claude/Genie) for final action item refinement.
+    *   *Special Note:* The final output is designed to be pasted into Claude.ai (referred to as "Genie") for final synthesis and action item determination.
+
+    *   *Header:* # 대치Math4U - AI팀 회의실
+    *   *Introduction:* This workflow allows a user to input a meeting topic and receive diverse perspectives from four AI personas.
+    *   *Workflow Steps:*
+        1.  `회의 시작 폼` $\rightarrow$ Input agenda.
+        2.  `입력 파싱` $\rightarrow$ Data cleaning.
+        3.  `AI 페르소나 분석` $\rightarrow$ 4 Gemini nodes.
+        4.  `회의록 생성` $\rightarrow$ Markdown formatting.
+    *   *Personas Table:*
+        *   Neil: Marketing/SEO.
+        *   John: Design/Visual.
+        *   Bill: Automation/Ops.
+        *   Tim: Student/Parent Mgmt.
+    *   *Requirements:* Google Gemini API.
+    *   *Usage:* Form $\rightarrow$ Result $\rightarrow$ Claude.ai.
