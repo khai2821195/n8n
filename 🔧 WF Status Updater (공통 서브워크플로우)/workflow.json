@@ -1,0 +1,625 @@
+{
+  "updatedAt": "2026-05-04T14:53:48.759Z",
+  "createdAt": "2026-03-14T15:43:51.332Z",
+  "id": "eOopB5bbEEO9rjrg",
+  "name": "🔧 WF Status Updater (공통 서브워크플로우)",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "trigger",
+      "name": "워크플로우 호출 수신",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst workflowId = input.workflowId || '';\nconst status = input.status || '✅ 정상';\nconst notionPageId = input.notionPageId || '';\nconst errorMessage = input.errorMessage || '';\nconst workflowName = input.workflowName || '';\n\nif (!workflowId) throw new Error('workflowId 필수');\nif (!notionPageId) throw new Error('notionPageId 필수');\n\n// UTC 그대로 전달 - 노션이 사용자 타임존에 맞게 표시\nconst lastRun = new Date().toISOString();\n\nreturn [{ json: { workflowId, workflowName, status, notionPageId, errorMessage, lastRun } }];"
+      },
+      "id": "validate",
+      "name": "입력값 검증",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.notion.com/v1/pages/{{ $json.notionPageId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "notionApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ properties: { 'Status': { select: { name: $json.status } }, 'Last Run': { date: { start: $json.lastRun } }, 'Error Message': { rich_text: [{ text: { content: $json.errorMessage || '' } }] } } }) }}",
+        "options": {}
+      },
+      "id": "update-notion",
+      "name": "노션 상태 업데이트",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        448,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $('입력값 검증').item.json.status }}",
+              "rightValue": "❌ 에러",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-error",
+      "name": "에러 여부 확인",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        672,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": false,
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-infra",
+              "leftValue": "={{ $('입력값 검증').item.json.errorMessage }}",
+              "rightValue": "Bad gateway|service unavailable|502|503|504|Gateway Time-out|temporarily unavailable",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "filter-infra-error",
+      "name": "If - 인프라 오류 제외",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0AM1MRP3BK",
+          "mode": "id"
+        },
+        "text": "=⚠️ *n8n 워크플로우 에러 발생!*\n\n📝 *워크플로우:* {{ $('입력값 검증').item.json.workflowName }}\n📦 *ID:* {{ $('입력값 검증').item.json.workflowId }}\n⏰ *발생 시간:* {{ $('입력값 검증').item.json.lastRun }}\n❌ *에러 내용:* {{ $('입력값 검증').item.json.errorMessage }}\n\n🔗 https://n8n.math4u.co.kr/workflow/{{ $('입력값 검증').item.json.workflowId }}",
+        "otherOptions": {}
+      },
+      "id": "slack-alert",
+      "name": "Slack 에러 알림",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        1104,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "success",
+              "type": "booleanValue",
+              "booleanValue": true
+            },
+            {
+              "name": "updatedAt",
+              "type": "stringValue",
+              "stringValue": "={{ $('입력값 검증').item.json.lastRun }}"
+            },
+            {
+              "name": "status",
+              "type": "stringValue",
+              "stringValue": "={{ $('입력값 검증').item.json.status }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "result",
+      "name": "결과 반환",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [
+        1104,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 🔧 WF Status Updater\n### 공통 상태 업데이트 서브워크플로우\n\n**파라미터**\n- `workflowId` ✅ 필수\n- `notionPageId` ✅ 필수\n- `status` : `✅ 정상` 또는 `❌ 에러`\n- `errorMessage` : 에러 시 메시지\n\n**동작**\n1. 노션 Status + Last Run + Error Message 업데이트\n2. ❌ 에러 시 → 인프라 오류(502/503) 제외 후 Slack 알림",
+        "height": 300,
+        "width": 360,
+        "color": 5
+      },
+      "id": "sticky-main",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        -80
+      ]
+    }
+  ],
+  "connections": {
+    "워크플로우 호출 수신": {
+      "main": [
+        [
+          {
+            "node": "입력값 검증",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "입력값 검증": {
+      "main": [
+        [
+          {
+            "node": "노션 상태 업데이트",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "노션 상태 업데이트": {
+      "main": [
+        [
+          {
+            "node": "에러 여부 확인",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "에러 여부 확인": {
+      "main": [
+        [
+          {
+            "node": "If - 인프라 오류 제외",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "결과 반환",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If - 인프라 오류 제외": {
+      "main": [
+        [
+          {
+            "node": "결과 반환",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack 에러 알림",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack 에러 알림": {
+      "main": [
+        [
+          {
+            "node": "결과 반환",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "0abef577-07e3-460e-8d42-90606b8bd3c3",
+  "activeVersionId": "0abef577-07e3-460e-8d42-90606b8bd3c3",
+  "versionCounter": 70,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-14T15:43:51.334Z",
+      "createdAt": "2026-03-14T15:43:51.334Z",
+      "role": "workflow:owner",
+      "workflowId": "eOopB5bbEEO9rjrg",
+      "projectId": "8znYa8Ca7GWeBy0m",
+      "project": {
+        "updatedAt": "2025-11-29T23:05:56.637Z",
+        "createdAt": "2025-11-29T23:04:07.777Z",
+        "id": "8znYa8Ca7GWeBy0m",
+        "name": "Seung Hyeon Kim <khai01@naver.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-05-04T14:53:48.760Z",
+    "createdAt": "2026-05-04T14:53:48.760Z",
+    "versionId": "0abef577-07e3-460e-8d42-90606b8bd3c3",
+    "workflowId": "eOopB5bbEEO9rjrg",
+    "nodes": [
+      {
+        "parameters": {
+          "inputSource": "passthrough"
+        },
+        "id": "trigger",
+        "name": "워크플로우 호출 수신",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          0,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $input.first().json;\nconst workflowId = input.workflowId || '';\nconst status = input.status || '✅ 정상';\nconst notionPageId = input.notionPageId || '';\nconst errorMessage = input.errorMessage || '';\nconst workflowName = input.workflowName || '';\n\nif (!workflowId) throw new Error('workflowId 필수');\nif (!notionPageId) throw new Error('notionPageId 필수');\n\n// UTC 그대로 전달 - 노션이 사용자 타임존에 맞게 표시\nconst lastRun = new Date().toISOString();\n\nreturn [{ json: { workflowId, workflowName, status, notionPageId, errorMessage, lastRun } }];"
+        },
+        "id": "validate",
+        "name": "입력값 검증",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          224,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "method": "PATCH",
+          "url": "=https://api.notion.com/v1/pages/{{ $json.notionPageId }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "notionApi",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Notion-Version",
+                "value": "2022-06-28"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify({ properties: { 'Status': { select: { name: $json.status } }, 'Last Run': { date: { start: $json.lastRun } }, 'Error Message': { rich_text: [{ text: { content: $json.errorMessage || '' } }] } } }) }}",
+          "options": {}
+        },
+        "id": "update-notion",
+        "name": "노션 상태 업데이트",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4,
+        "position": [
+          448,
+          304
+        ],
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "leftValue": "={{ $('입력값 검증').item.json.status }}",
+                "rightValue": "❌ 에러",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "if-error",
+        "name": "에러 여부 확인",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          672,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "version": 2,
+              "leftValue": "",
+              "caseSensitive": false,
+              "typeValidation": "loose"
+            },
+            "conditions": [
+              {
+                "id": "cond-infra",
+                "leftValue": "={{ $('입력값 검증').item.json.errorMessage }}",
+                "rightValue": "Bad gateway|service unavailable|502|503|504|Gateway Time-out|temporarily unavailable",
+                "operator": {
+                  "type": "string",
+                  "operation": "regex"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        },
+        "id": "filter-infra-error",
+        "name": "If - 인프라 오류 제외",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          880,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "select": "channel",
+          "channelId": {
+            "__rl": true,
+            "value": "C0AM1MRP3BK",
+            "mode": "id"
+          },
+          "text": "=⚠️ *n8n 워크플로우 에러 발생!*\n\n📝 *워크플로우:* {{ $('입력값 검증').item.json.workflowName }}\n📦 *ID:* {{ $('입력값 검증').item.json.workflowId }}\n⏰ *발생 시간:* {{ $('입력값 검증').item.json.lastRun }}\n❌ *에러 내용:* {{ $('입력값 검증').item.json.errorMessage }}\n\n🔗 https://n8n.math4u.co.kr/workflow/{{ $('입력값 검증').item.json.workflowId }}",
+          "otherOptions": {}
+        },
+        "id": "slack-alert",
+        "name": "Slack 에러 알림",
+        "type": "n8n-nodes-base.slack",
+        "typeVersion": 2.3,
+        "position": [
+          1104,
+          208
+        ],
+        "credentials": {
+          "slackApi": {
+            "id": "I1bk0oby0BsUZ87n",
+            "name": "Slack account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "fields": {
+            "values": [
+              {
+                "name": "success",
+                "type": "booleanValue",
+                "booleanValue": true
+              },
+              {
+                "name": "updatedAt",
+                "type": "stringValue",
+                "stringValue": "={{ $('입력값 검증').item.json.lastRun }}"
+              },
+              {
+                "name": "status",
+                "type": "stringValue",
+                "stringValue": "={{ $('입력값 검증').item.json.status }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "result",
+        "name": "결과 반환",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3,
+        "position": [
+          1104,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "content": "## 🔧 WF Status Updater\n### 공통 상태 업데이트 서브워크플로우\n\n**파라미터**\n- `workflowId` ✅ 필수\n- `notionPageId` ✅ 필수\n- `status` : `✅ 정상` 또는 `❌ 에러`\n- `errorMessage` : 에러 시 메시지\n\n**동작**\n1. 노션 Status + Last Run + Error Message 업데이트\n2. ❌ 에러 시 → 인프라 오류(502/503) 제외 후 Slack 알림",
+          "height": 300,
+          "width": 360,
+          "color": 5
+        },
+        "id": "sticky-main",
+        "name": "Sticky Note",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -32,
+          -80
+        ]
+      }
+    ],
+    "connections": {
+      "워크플로우 호출 수신": {
+        "main": [
+          [
+            {
+              "node": "입력값 검증",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "입력값 검증": {
+        "main": [
+          [
+            {
+              "node": "노션 상태 업데이트",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "노션 상태 업데이트": {
+        "main": [
+          [
+            {
+              "node": "에러 여부 확인",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "에러 여부 확인": {
+        "main": [
+          [
+            {
+              "node": "If - 인프라 오류 제외",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "결과 반환",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If - 인프라 오류 제외": {
+        "main": [
+          [
+            {
+              "node": "결과 반환",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Slack 에러 알림",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Slack 에러 알림": {
+        "main": [
+          [
+            {
+              "node": "결과 반환",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Seung Hyeon Kim",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-05-04T14:53:48.911Z",
+        "id": 523,
+        "workflowId": "eOopB5bbEEO9rjrg",
+        "versionId": "0abef577-07e3-460e-8d42-90606b8bd3c3",
+        "event": "activated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      },
+      {
+        "createdAt": "2026-05-04T14:53:48.830Z",
+        "id": 522,
+        "workflowId": "eOopB5bbEEO9rjrg",
+        "versionId": "0abef577-07e3-460e-8d42-90606b8bd3c3",
+        "event": "deactivated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
+    ]
+  }
+}
