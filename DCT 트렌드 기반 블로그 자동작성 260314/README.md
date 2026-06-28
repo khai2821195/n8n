@@ -8,39 +8,41 @@
 ---
 
 n8n Workflow Expert.
-Analyze a provided n8n workflow JSON and write a GitHub `README.md` in Korean.
+Analyze a provided n8n workflow JSON and create a GitHub `README.md` in Korean.
 "DCT 트렌드 기반 블로그 자동작성 260314" (DCT Trend-based Blog Auto-Writer).
 `ovShsLWKGcrOOgnE`.
 DCT.
 
-        *   `node-schedule`: Schedule Trigger (Every Sunday at 9 AM).
-        *   `node-season`: Code node (Calculates current date, season, special events, and generates a blog title).
-        *   `node-trend`: HTTP Request (Naver DataLab Shopping API - fetches trends for promotional items, gift sets, and return gifts).
-        *   `node-merge`: Code node (Combines seasonal info and Naver trend data).
-        *   `node-prompt1`: Code node (Constructs a detailed prompt for the AI, acting as a DCT Company marketer).
-        *   `node-ai1`: HTTP Request (Google Gemini API - `gemma-3-12b-it` model - generates the blog post content).
-        *   `node-extract1`: Code node (Extracts the AI response - though the JSON is cut off, the intent is clear).
+        *   `node-schedule`: Trigger every Sunday at 9 AM.
+        *   `node-season`: Code node calculating current date, season, special events, and generating a blog title.
+        *   `node-trend`: HTTP Request to Naver DataLab API (Shopping categories: Promotional items, Gift sets, Return gifts).
+        *   `node-merge`: Code node combining season info and trend data.
+        *   `node-prompt1`: Code node constructing a prompt for an AI (DCT Company blog marketer persona).
+        *   `node-ai1`: HTTP Request to Google Gemini API (`gemma-3-12b-it`) to generate the blog content.
+        *   `node-extract1`: (Cut off in JSON, but clearly for extracting the AI response).
 
-    *   *Purpose:* Automatically generate a weekly Naver blog post for "DCT Company" (a promotional goods supplier) based on current seasonal trends and real-time Naver shopping data.
-    *   *Flow:*
-        1.  Trigger: Weekly (Sunday 9 AM).
-        2.  Context: Determine season/events (e.g., graduation, holidays).
-        3.  Data: Fetch Naver Shopping trends for specific categories (Promotional items, etc.).
-        4.  Prompting: Create a structured prompt for the AI (Role: Marketer, Goal: TOP 5 recommendations).
-        5.  Generation: Use Gemini AI to write the post in JSON format.
-        6.  Post-processing: Extract content (implied).
+    *   *Purpose:* Automatically generate a weekly Naver blog post for "DCT Company" (a promotional goods supplier) based on current seasonal trends and real-time Naver shopping search data.
+    *   *Flow:* Schedule $\rightarrow$ Season Calculation $\rightarrow$ Naver Trend Data $\rightarrow$ Data Merging $\rightarrow$ Prompt Engineering $\rightarrow$ AI Generation $\rightarrow$ Extraction.
 
-    *   *Title:* DCT 트렌드 기반 블로그 자동작성 워크플로우
-    *   *Introduction:* Explain that this automates marketing content creation for DCT Company.
-    *   *Key Features:* Seasonal analysis, Naver DataLab integration, AI-driven content generation.
+    *   *Title:* DCT 트렌드 기반 블로그 자동작성 워크플로우.
+    *   *Description:* A system that analyzes seasonal events and Naver shopping trends to create SEO-optimized blog posts for promotional products.
+    *   *Key Features:*
+        *   Automatic weekly scheduling.
+        *   Seasonal context awareness (Spring/Summer/Autumn/Winter).
+        *   Real-time data integration via Naver DataLab API.
+        *   AI-powered content generation using Google Gemini (Gemma).
     *   *Workflow Steps:*
-        *   Step 1: Schedule Trigger.
-        *   Step 2: Seasonal Info Calculation.
-        *   Step 3: Naver Trend Collection.
-        *   Step 4: Data Merging.
-        *   Step 5: AI Prompting.
-        *   Step 6: AI Content Generation.
+        1.  **Trigger:** Every Sunday 09:00.
+        2.  **Season Info:** Calculate month, week, and relevant events (e.g., graduation, Chuseok).
+        3.  **Trend Collection:** Fetch search ratios for "Promotional items," "Gift sets," and "Return gifts" from Naver.
+        4.  **Data Merge:** Combine seasonal context and trend numbers.
+        5.  **Prompting:** Create a detailed persona-based prompt for the AI.
+        6.  **AI Generation:** Call Gemini API to write the post (Title, Body, Hashtags).
+        7.  **Extraction:** Parse the JSON response.
     *   *Requirements:*
-        *   Naver API (Client ID/Secret).
-        *   Google Gemini API Key.
-    *   *Technical Details:* Model used (`gemma-3-12b-it`), API endpoints.
+        *   Naver API Client ID & Secret.
+        *   Google Gemini API Key (Environment variable: `GEMINI_API_KEY`).
+
+    *   Use professional and clear Korean.
+    *   Use Markdown formatting (headers, lists, code blocks).
+    *   Ensure the structure follows the user's "README 작성 규칙".
