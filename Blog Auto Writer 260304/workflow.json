@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-28T23:02:26.917Z",
+  "updatedAt": "2026-06-28T23:11:40.143Z",
   "createdAt": "2026-03-03T18:16:19.957Z",
   "id": "L6uRu2oqasHrOIQR",
   "name": "📚 Math4U 학원 블로그 자동작성",
@@ -256,39 +256,6 @@
         2640,
         400
       ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={{ $env.GEMINI_API_KEY }}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "contentType": "raw",
-        "rawContentType": "application/json",
-        "body": "={{ $json.eval_body }}",
-        "options": {
-          "timeout": 60000
-        }
-      },
-      "id": "node-ai-eval",
-      "name": "품질 평가 (gemma-4-26b)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        2880,
-        400
-      ],
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 5000
     },
     {
       "parameters": {
@@ -629,9 +596,8 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent?key={{ $env.GEMINI_API_KEY }}",
-        "sendHeaders": true,
+        "body": "={{ $json.prompt2_body }}",
+        "contentType": "raw",
         "headerParameters": {
           "parameters": [
             {
@@ -640,20 +606,54 @@
             }
           ]
         },
-        "sendBody": true,
-        "contentType": "raw",
-        "rawContentType": "application/json",
-        "body": "={{ $json.prompt2_body }}",
+        "method": "POST",
         "options": {
           "timeout": 120000
-        }
+        },
+        "rawContentType": "application/json",
+        "sendBody": true,
+        "sendHeaders": true,
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={{ $env.GEMINI_API_KEY }}"
       },
       "id": "node-ai2",
-      "name": "2차 보강 (gemini-3-flash)",
+      "name": "2차 보강 (gemini-3.5-flash)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
         2160,
+        400
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "body": "={{ $json.eval_body }}",
+        "contentType": "raw",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "method": "POST",
+        "options": {
+          "timeout": 60000
+        },
+        "rawContentType": "application/json",
+        "sendBody": true,
+        "sendHeaders": true,
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={{ $env.GEMINI_API_KEY }}"
+      },
+      "id": "node-ai-eval",
+      "name": "품질 평가 (gemini-3.1-flash-lite)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2880,
         400
       ],
       "retryOnFail": true,
@@ -743,7 +743,7 @@
       "main": [
         [
           {
-            "node": "2차 보강 (gemini-3-flash)",
+            "node": "2차 보강 (gemini-3.5-flash)",
             "type": "main",
             "index": 0
           }
@@ -765,18 +765,7 @@
       "main": [
         [
           {
-            "node": "품질 평가 (gemma-4-26b)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "품질 평가 (gemma-4-26b)": {
-      "main": [
-        [
-          {
-            "node": "품질 결과 파싱",
+            "node": "품질 평가 (gemini-3.1-flash-lite)",
             "type": "main",
             "index": 0
           }
@@ -911,11 +900,22 @@
         ]
       ]
     },
-    "2차 보강 (gemini-3-flash)": {
+    "2차 보강 (gemini-3.5-flash)": {
       "main": [
         [
           {
             "node": "2차 보강 추출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "품질 평가 (gemini-3.1-flash-lite)": {
+      "main": [
+        [
+          {
+            "node": "품질 결과 파싱",
             "type": "main",
             "index": 0
           }
@@ -936,9 +936,9 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "be02e680-0b3e-4886-b409-eb21e428cecd",
-  "activeVersionId": "54b5258d-d96c-4fcd-8291-b502b8d4f6a0",
-  "versionCounter": 68,
+  "versionId": "dc5af3a0-cc4c-45fb-b0ad-fe5c241bff39",
+  "activeVersionId": "dc5af3a0-cc4c-45fb-b0ad-fe5c241bff39",
+  "versionCounter": 75,
   "triggerCount": 1,
   "shared": [
     {
@@ -961,9 +961,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-06-28T11:16:37.000Z",
-    "createdAt": "2026-06-28T11:11:11.289Z",
-    "versionId": "54b5258d-d96c-4fcd-8291-b502b8d4f6a0",
+    "updatedAt": "2026-06-28T23:11:40.146Z",
+    "createdAt": "2026-06-28T23:11:40.146Z",
+    "versionId": "dc5af3a0-cc4c-45fb-b0ad-fe5c241bff39",
     "workflowId": "L6uRu2oqasHrOIQR",
     "nodes": [
       {
@@ -1192,39 +1192,6 @@
       },
       {
         "parameters": {
-          "method": "POST",
-          "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key={{ $env.GEMINI_API_KEY }}",
-          "sendHeaders": true,
-          "headerParameters": {
-            "parameters": [
-              {
-                "name": "Content-Type",
-                "value": "application/json"
-              }
-            ]
-          },
-          "sendBody": true,
-          "contentType": "raw",
-          "rawContentType": "application/json",
-          "body": "={{ $json.prompt2_body }}",
-          "options": {
-            "timeout": 120000
-          }
-        },
-        "id": "node-ai2",
-        "name": "2차 보강 (gemma-3-27b)",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          2160,
-          400
-        ],
-        "retryOnFail": true,
-        "maxTries": 3,
-        "waitBetweenTries": 8000
-      },
-      {
-        "parameters": {
           "jsCode": "const d = $input.first().json;\nconst prev = $('2차 프롬프트 조립').first().json;\nlet raw = '';\nif (d.candidates && d.candidates[0]) raw = d.candidates[0]['content']['parts'][0]['text'] || '';\nraw = raw.replace(/```json\\s*/g,'').replace(/```\\s*/g,'').trim();\nlet title = prev.draft_title, body = raw, hashtags = prev.draft_hashtags;\ntry {\n  const p = JSON.parse(raw);\n  title = p.title || title;\n  body = p.body || raw;\n  if (Array.isArray(p.hashtags)) hashtags = p.hashtags.join(' ');\n  else hashtags = p.hashtags || hashtags;\n} catch(e) {}\nreturn [{ json: { ...prev, draft_content: body, draft_title: title, draft_hashtags: hashtags } }];"
         },
         "id": "node-extract2",
@@ -1248,39 +1215,6 @@
           2640,
           400
         ]
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemma-4-26b-a4b-it:generateContent?key={{ $env.GEMINI_API_KEY }}",
-          "sendHeaders": true,
-          "headerParameters": {
-            "parameters": [
-              {
-                "name": "Content-Type",
-                "value": "application/json"
-              }
-            ]
-          },
-          "sendBody": true,
-          "contentType": "raw",
-          "rawContentType": "application/json",
-          "body": "={{ $json.eval_body }}",
-          "options": {
-            "timeout": 60000
-          }
-        },
-        "id": "node-ai-eval",
-        "name": "품질 평가 (gemma-4-26b)",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          2880,
-          400
-        ],
-        "retryOnFail": true,
-        "maxTries": 3,
-        "waitBetweenTries": 8000
       },
       {
         "parameters": {
@@ -1618,6 +1552,72 @@
         "retryOnFail": true,
         "maxTries": 3,
         "waitBetweenTries": 5000
+      },
+      {
+        "parameters": {
+          "body": "={{ $json.prompt2_body }}",
+          "contentType": "raw",
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "method": "POST",
+          "options": {
+            "timeout": 120000
+          },
+          "rawContentType": "application/json",
+          "sendBody": true,
+          "sendHeaders": true,
+          "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={{ $env.GEMINI_API_KEY }}"
+        },
+        "id": "node-ai2",
+        "name": "2차 보강 (gemini-3.5-flash)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2160,
+          400
+        ],
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000
+      },
+      {
+        "parameters": {
+          "body": "={{ $json.eval_body }}",
+          "contentType": "raw",
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "method": "POST",
+          "options": {
+            "timeout": 60000
+          },
+          "rawContentType": "application/json",
+          "sendBody": true,
+          "sendHeaders": true,
+          "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={{ $env.GEMINI_API_KEY }}"
+        },
+        "id": "node-ai-eval",
+        "name": "품질 평가 (gemini-3.1-flash-lite)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2880,
+          400
+        ],
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 5000
       }
     ],
     "connections": {
@@ -1702,18 +1702,7 @@
         "main": [
           [
             {
-              "node": "2차 보강 (gemma-3-27b)",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "2차 보강 (gemma-3-27b)": {
-        "main": [
-          [
-            {
-              "node": "2차 보강 추출",
+              "node": "2차 보강 (gemini-3.5-flash)",
               "type": "main",
               "index": 0
             }
@@ -1735,18 +1724,7 @@
         "main": [
           [
             {
-              "node": "품질 평가 (gemma-4-26b)",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "품질 평가 (gemma-4-26b)": {
-        "main": [
-          [
-            {
-              "node": "품질 결과 파싱",
+              "node": "품질 평가 (gemini-3.1-flash-lite)",
               "type": "main",
               "index": 0
             }
@@ -1880,19 +1858,49 @@
             }
           ]
         ]
+      },
+      "2차 보강 (gemini-3.5-flash)": {
+        "main": [
+          [
+            {
+              "node": "2차 보강 추출",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "품질 평가 (gemini-3.1-flash-lite)": {
+        "main": [
+          [
+            {
+              "node": "품질 결과 파싱",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
     "authors": "Seung Hyeon Kim",
-    "name": "Version 54b5258d",
-    "description": "",
-    "autosaved": true,
+    "name": null,
+    "description": null,
+    "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-06-28T11:16:37.014Z",
-        "id": 603,
+        "createdAt": "2026-06-28T23:11:40.395Z",
+        "id": 625,
         "workflowId": "L6uRu2oqasHrOIQR",
-        "versionId": "54b5258d-d96c-4fcd-8291-b502b8d4f6a0",
+        "versionId": "dc5af3a0-cc4c-45fb-b0ad-fe5c241bff39",
         "event": "activated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      },
+      {
+        "createdAt": "2026-06-28T23:11:40.296Z",
+        "id": 624,
+        "workflowId": "L6uRu2oqasHrOIQR",
+        "versionId": "dc5af3a0-cc4c-45fb-b0ad-fe5c241bff39",
+        "event": "deactivated",
         "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
       }
     ]
