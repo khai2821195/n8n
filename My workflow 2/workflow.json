@@ -1,0 +1,125 @@
+{
+  "updatedAt": "2026-03-17T21:30:43.991Z",
+  "createdAt": "2026-03-17T21:27:04.725Z",
+  "id": "JNjq85FvYhUYjMZL",
+  "name": "My workflow 2",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-meeting-archive",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        0
+      ],
+      "id": "9b7733e5-2ef3-4fb7-a0d0-3358151dbe76",
+      "webhookId": "55eb9374-67c6-40ba-8f88-5ce70607e804"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst dateStr = now.toISOString().split('T')[0];\nconst content = items[0].json.body.text || \"내용 없음\";\n\n// 경로 내 특수문자 및 공백 처리\nconst folderPath = \"1. Projects (프로젝트)/AI Team Project/회의록\";\nconst encodedPath = encodeURIComponent(folderPath);\nconst fileName = encodeURIComponent(`${dateStr}_AI팀_회의록.md`);\n\nconst formattedContent = `# 🗓️ AI팀 회의록 (${dateStr})\\n\\n> **참여자**: 카이(CEO), 셰릴(비서), C-Levels\\n\\n---\\n\\n${content}`;\n\nreturn [{\n  json: {\n    apiUrl: `http://127.0.0.1:27123/vault/${encodedPath}/${fileName}`,\n    markdown: formattedContent\n  }\n}];"
+      },
+      "name": "Format & Path Encoding",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        128,
+        0
+      ],
+      "id": "5cc2b279-0be6-48e2-9a91-5b4ed65cf856"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "={{$json.apiUrl}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer da2f37555ea9892915977b03a4669422a427d2169d1f9cb6b50faba64a894a3d"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "text/markdown",
+        "body": "={{$json.markdown}}",
+        "options": {}
+      },
+      "name": "Send to Obsidian",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        320,
+        0
+      ],
+      "id": "c17c6d9d-d9bd-4203-b7d6-ca137350b1e6"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Format & Path Encoding",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format & Path Encoding": {
+      "main": [
+        [
+          {
+            "node": "Send to Obsidian",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "5cbfc85f-892a-4c79-98cb-511ac65788aa",
+  "activeVersionId": null,
+  "versionCounter": 3,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-17T21:27:04.731Z",
+      "createdAt": "2026-03-17T21:27:04.731Z",
+      "role": "workflow:owner",
+      "workflowId": "JNjq85FvYhUYjMZL",
+      "projectId": "8znYa8Ca7GWeBy0m",
+      "project": {
+        "updatedAt": "2025-11-29T23:05:56.637Z",
+        "createdAt": "2025-11-29T23:04:07.777Z",
+        "id": "8znYa8Ca7GWeBy0m",
+        "name": "Seung Hyeon Kim <khai01@naver.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
