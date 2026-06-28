@@ -1,0 +1,1181 @@
+{
+  "updatedAt": "2026-04-06T10:57:45.131Z",
+  "createdAt": "2026-03-14T07:49:13.322Z",
+  "id": "ovShsLWKGcrOOgnE",
+  "name": "DCT 트렌드 기반 블로그 자동작성 260314",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "node-schedule",
+      "name": "매주 일요일 9시",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        304
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-season",
+      "name": "현재 시기 정보",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        304
+      ],
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst month = now.getMonth() + 1;\nconst day = now.getDate();\nconst weekOfMonth = Math.ceil(day / 7);\nlet season = '', seasonDesc = '';\nif (month >= 3 && month <= 5) { season = '봄'; seasonDesc = '졸업/입학 시즌, 벚꽃 행사, 신학기'; }\nelse if (month >= 6 && month <= 8) { season = '여름'; seasonDesc = '워터파크, 야외 행사, 여름 축제, 체육대회'; }\nelse if (month >= 9 && month <= 11) { season = '가을'; seasonDesc = '운동회, 추석 명절, 기업 행사, 송년회 준비'; }\nelse { season = '겨울'; seasonDesc = '연말 송년회, 크리스마스, 신년 선물, 설 명절'; }\nconst specialEvents = [];\nif (month === 2 || month === 3) specialEvents.push('졸업/입학 시즌');\nif (month === 5) specialEvents.push('어린이날, 스승의날, 가정의달');\nif (month === 9 || month === 10) specialEvents.push('추석 명절, 체육대회');\nif (month === 12 || month === 1) specialEvents.push('연말연시, 신년');\nconst dateStr = now.toISOString().slice(0,10);\nconst endDate = dateStr;\nconst startDate = new Date(now.getTime() - 7*24*60*60*1000).toISOString().slice(0,10);\nconst blogTitle = `'26년 ${month}월 ${weekOfMonth}주 AI가 추천하는 판촉/홍보/답례품`;\nreturn [{ json: { month, day, weekOfMonth, season, seasonDesc, specialEvents: specialEvents.join(', ') || '일반 시즌', dateStr, startDate, endDate, blogTitle } }];"
+      }
+    },
+    {
+      "id": "node-trend",
+      "name": "네이버 트렌드 수집",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        304
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://openapi.naver.com/v1/datalab/shopping/categories",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Naver-Client-Id",
+              "value": "eHQN1xDoAWnFHF4sAe3I"
+            },
+            {
+              "name": "X-Naver-Client-Secret",
+              "value": "Ghnsw8dyRF"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ startDate: $('현재 시기 정보').first().json.startDate, endDate: $('현재 시기 정보').first().json.endDate, timeUnit: 'date', category: [{ name: '판촉물', param: ['50000803'] }, { name: '생활용품선물', param: ['50000810'] }, { name: '답례품', param: ['50000804'] }], device: '', ages: [], gender: '' }) }}",
+        "options": {
+          "timeout": 10000
+        }
+      }
+    },
+    {
+      "id": "node-merge",
+      "name": "시기+트렌드 합치기",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        304
+      ],
+      "parameters": {
+        "jsCode": "const season = $('현재 시기 정보').first().json;\nconst trendRaw = $input.first().json;\nlet trendSummary = '트렌드 데이터 없음';\ntry {\n  if (trendRaw.results) {\n    trendSummary = trendRaw.results.map(r => {\n      const max = Math.max(...r.data.map(d => d.ratio));\n      return `${r.title}: 최고 검색비율 ${max.toFixed(1)}`;\n    }).join('\\n');\n  }\n} catch(e) {}\nreturn [{ json: { ...season, trendSummary } }];"
+      }
+    },
+    {
+      "id": "node-prompt1",
+      "name": "1차 프롬프트 조립",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        304
+      ],
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst prompt = [\n  '너는 판촉물·홍보물 전문 납품업체 DCT컴퍼니의 블로그 마케터야.',\n  '아래 정보를 바탕으로 네이버 블로그 포스팅 초안을 작성해줘.',\n  '',\n  '## 블로그 제목',\n  d.blogTitle,\n  '',\n  '## 현재 시기 정보',\n  '날짜: ' + d.dateStr,\n  '계절: ' + d.season + ' (' + d.seasonDesc + ')',\n  '특수 이벤트: ' + d.specialEvents,\n  '',\n  '## 네이버 쇼핑 트렌드 데이터',\n  d.trendSummary,\n  '',\n  '## 작성 규칙',\n  '1. 제목: 위 블로그 제목 그대로 사용',\n  '2. 본문: 1000~1500자',\n  '3. 구성: 도입부 → TOP 5 추천 품목(## 소제목, 추천이유/활용사례) → 마무리(DCT컴퍼니 구매 안내)',\n  '4. SEO 키워드 자연스럽게 삽입',\n  '5. 이미지 설명: [이미지: 설명] 형식으로 각 품목마다 1개',\n  '6. 해시태그: 15개',\n  '7. JSON으로만 응답 (백틱 없이): {\"title\":\"...\",\"body\":\"...\",\"hashtags\":\"...\"}'\n].join('\\n');\nconst body = JSON.stringify({\n  contents: [{ parts: [{ text: prompt }] }],\n  generationConfig: { temperature: 0.8, maxOutputTokens: 3000 }\n});\nreturn [{ json: { ...d, prompt1_body: body } }];"
+      }
+    },
+    {
+      "id": "node-ai1",
+      "name": "1차 AI 호출 (gemma-12b)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        304
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemma-3-12b-it:generateContent?key={{ $env.GEMINI_API_KEY }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.prompt1_body }}",
+        "options": {
+          "timeout": 60000
+        }
+      }
+    },
+    {
+      "id": "node-extract1",
+      "name": "1차 블로그 추출",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        304
+      ],
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst prev = $('1차 프롬프트 조립').first().json;\nlet raw = '';\nif (d.candidates && d.candidates[0]) raw = d.candidates[0]['content']['parts'][0]['text'] || '';\nraw = raw.replace(/```json\\s*/g,'').replace(/```\\s*/g,'').trim();\nlet title = prev.blogTitle, body = raw, hashtags = '';\ntry {\n  const p = JSON.parse(raw);\n  title = p.title || prev.blogTitle;\n  body = p.body || raw;\n  hashtags = p.hashtags || '';\n} catch(e) {}\nreturn [{ json: { ...prev, title, body_draft: body, hashtags_draft: hashtags } }];"
+      }
+    },
+    {
+      "id": "node-notion-draft",
+      "name": "노션 초안 저장",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1568,
+        304
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.notion.com/v1/pages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer ntn_MASKED"
+            },
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ parent: { database_id: '39b2fdcea0a345a48db21f22a6d6b0e0' }, properties: { '제목': { title: [{ text: { content: $json.title } }] }, '카테고리': { rich_text: [{ text: { content: '트렌드 추천' } }] }, '작성일': { date: { start: $json.dateStr } }, '상태': { select: { name: '초안' } }, '해시태그': { rich_text: [{ text: { content: $json.hashtags_draft } }] } }, children: [ { object: 'block', type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: '📝 1차 초안 (gemma-12b)' } }] } }, { object: 'block', type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: $json.body_draft.slice(0,1900) } }] } } ] }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-prompt2",
+      "name": "2차 프롬프트 조립",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        304
+      ],
+      "parameters": {
+        "jsCode": "const d = $('1차 블로그 추출').first().json;\nconst prompt = [\n  '너는 판촉물·홍보물 전문 납품업체 DCT컴퍼니의 시니어 블로그 마케터야.',\n  '아래 초안을 바탕으로 훨씬 풍성하고 완성도 높은 네이버 블로그 포스팅으로 업그레이드해줘.',\n  '',\n  '## 초안 제목',\n  d.title,\n  '',\n  '## 초안 본문',\n  d.body_draft,\n  '',\n  '## 시기 정보',\n  '계절: ' + d.season + ' / 특수 이벤트: ' + d.specialEvents,\n  '',\n  '## 업그레이드 규칙',\n  '1. 제목: 더 클릭을 유도하는 SEO 최적화 제목으로 개선',\n  '2. 본문: 2000~2500자로 확장',\n  '3. 소제목 구조: ## 로 5개 이상 단락 구성',\n  '4. SEO 키워드: 제품명, 납품처 유형, 지역(동탄/수원/경기), 용도 키워드를 자연스럽게 5회 이상 삽입',\n  '5. 각 추천 품목에 구체적인 활용 사례와 가격대 언급',\n  '6. 이미지 설명: [이미지: 설명] 형식으로 품목마다 1~2개 삽입',\n  '7. 해시태그: 25개로 확장 (SEO 키워드 필수 포함)',\n  '8. JSON으로만 응답 (백틱 없이): {\"title\":\"...\",\"body\":\"...\",\"hashtags\":\"...\"}'\n].join('\\n');\nconst body = JSON.stringify({\n  contents: [{ parts: [{ text: prompt }] }],\n  generationConfig: { temperature: 0.85, maxOutputTokens: 4000 }\n});\nreturn [{ json: { ...d, notion_page_id: $('노션 초안 저장').first().json.id, prompt2_body: body } }];"
+      }
+    },
+    {
+      "id": "node-ai2",
+      "name": "2차 AI 호출 (gemma-27b)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2016,
+        304
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key={{ $env.GEMINI_API_KEY }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.prompt2_body }}",
+        "options": {
+          "timeout": 90000
+        }
+      }
+    },
+    {
+      "id": "node-extract2",
+      "name": "2차 블로그 추출",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        304
+      ],
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst prev = $('2차 프롬프트 조립').first().json;\nlet raw = '';\nif (d.candidates && d.candidates[0]) raw = d.candidates[0]['content']['parts'][0]['text'] || '';\nraw = raw.replace(/```json\\s*/g,'').replace(/```\\s*/g,'').trim();\nlet title = prev.title, body = raw, hashtags = prev.hashtags_draft;\ntry {\n  const p = JSON.parse(raw);\n  title = p.title || prev.title;\n  body = p.body || raw;\n  hashtags = p.hashtags || prev.hashtags_draft;\n} catch(e) {}\nconst MAX = 1900;\nconst bodyChunks = [];\nfor (let i = 0; i < body.length; i += MAX) bodyChunks.push(body.slice(i, i + MAX));\nreturn [{ json: { ...prev, title_final: title, body_final: body, bodyChunks_final: bodyChunks, hashtags_final: hashtags } }];"
+      }
+    },
+    {
+      "id": "node-notion-update",
+      "name": "노션 제목+상태 업데이트",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2464,
+        304
+      ],
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.notion.com/v1/pages/{{ $json.notion_page_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer ntn_MASKED"
+            },
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ properties: { '제목': { title: [{ text: { content: $json.title_final } }] }, '해시태그': { rich_text: [{ text: { content: $json.hashtags_final } }] }, '상태': { select: { name: '수정중' } } } }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-notion-blocks",
+      "name": "노션 심화본문 블록 추가",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2688,
+        304
+      ],
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.notion.com/v1/blocks/{{ $('2차 블로그 추출').first().json.notion_page_id }}/children",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer ntn_MASKED"
+            },
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ children: [ { object: 'block', type: 'divider', divider: {} }, { object: 'block', type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: '✨ 2차 심화본문 (gemma-27b)' } }] } }, ...$('2차 블로그 추출').first().json.bodyChunks_final.map(chunk => ({ object: 'block', type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: chunk } }] } })), { object: 'block', type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: '🏷️ 해시태그' } }] } }, { object: 'block', type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: $('2차 블로그 추출').first().json.hashtags_final } }] } } ] }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-complete",
+      "name": "완료",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2912,
+        304
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "r1",
+              "name": "result",
+              "value": "={{ '🎉 [' + $('2차 블로그 추출').first().json.title_final + '] 2차 심화 작성 완료! 노션에 저장됐어요.' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "status-success",
+      "name": "✅ 상태 업데이트 (성공)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        3136,
+        304
+      ],
+      "parameters": {
+        "workflowId": "eOopB5bbEEO9rjrg",
+        "options": {}
+      }
+    },
+    {
+      "id": "error-trigger",
+      "name": "❌ 에러 감지",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        880,
+        520
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "status-error",
+      "name": "❌ 상태 업데이트 (에러)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        520
+      ],
+      "parameters": {
+        "workflowId": "eOopB5bbEEO9rjrg",
+        "options": {}
+      }
+    },
+    {
+      "id": "manual-note-main",
+      "name": "📋 워크플로우 메뉴얼",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        160
+      ],
+      "parameters": {
+        "content": "## 📋 DCT 트렌드 블로그 자동작성 메뉴얼\n\n### 🔗 메뉴얼 노션에서 보기\nhttps://www.notion.so/323c6a06e17e818ba6d1f28ccacaeed0\n\n---\n\n### ⚙️ 워크플로우 개요\n- **실행 주기**: 매주 일요일 09:00\n- **1차 AI**: gemma-3-12b-it (초안 1000~1500자)\n- **2차 AI**: gemma-3-27b-it (심화 2000~2500자)\n- **저장**: Notion DB (초안 저장 후 심화본문 추가)\n\n### 🔧 수정이 필요할 때\n1. **키워드 변경** → `현재 시기 정보` 노드\n2. **1차 프롬프트** → `1차 프롬프트 조립` 노드\n3. **2차 프롬프트** → `2차 프롬프트 조립` 노드\n4. **저장 DB 변경** → `노션 초안 저장` 노드\n\n### ⚠️ 주의사항\n- 네이버 API 일일 호출 한도 확인\n- 2차 AI(27b) timeout 90초로 설정됨",
+        "height": 420,
+        "width": 380,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "매주 일요일 9시": {
+      "main": [
+        [
+          {
+            "node": "현재 시기 정보",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "현재 시기 정보": {
+      "main": [
+        [
+          {
+            "node": "네이버 트렌드 수집",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "네이버 트렌드 수집": {
+      "main": [
+        [
+          {
+            "node": "시기+트렌드 합치기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "시기+트렌드 합치기": {
+      "main": [
+        [
+          {
+            "node": "1차 프롬프트 조립",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1차 프롬프트 조립": {
+      "main": [
+        [
+          {
+            "node": "1차 AI 호출 (gemma-12b)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1차 AI 호출 (gemma-12b)": {
+      "main": [
+        [
+          {
+            "node": "1차 블로그 추출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1차 블로그 추출": {
+      "main": [
+        [
+          {
+            "node": "노션 초안 저장",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "노션 초안 저장": {
+      "main": [
+        [
+          {
+            "node": "2차 프롬프트 조립",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2차 프롬프트 조립": {
+      "main": [
+        [
+          {
+            "node": "2차 AI 호출 (gemma-27b)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2차 AI 호출 (gemma-27b)": {
+      "main": [
+        [
+          {
+            "node": "2차 블로그 추출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2차 블로그 추출": {
+      "main": [
+        [
+          {
+            "node": "노션 제목+상태 업데이트",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "노션 제목+상태 업데이트": {
+      "main": [
+        [
+          {
+            "node": "노션 심화본문 블록 추가",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "노션 심화본문 블록 추가": {
+      "main": [
+        [
+          {
+            "node": "완료",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "완료": {
+      "main": [
+        [
+          {
+            "node": "✅ 상태 업데이트 (성공)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "❌ 에러 감지": {
+      "main": [
+        [
+          {
+            "node": "❌ 상태 업데이트 (에러)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true,
+    "saveExecutionProgress": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "binaryMode": "separate"
+  },
+  "staticData": {
+    "node:매주 일요일 9시": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": {},
+  "versionId": "09be8dab-da25-411a-ae15-0a844cd26123",
+  "activeVersionId": "09be8dab-da25-411a-ae15-0a844cd26123",
+  "versionCounter": 146,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-03-14T15:47:02.349Z",
+      "createdAt": "2026-03-14T15:47:02.349Z",
+      "role": "workflow:owner",
+      "workflowId": "ovShsLWKGcrOOgnE",
+      "projectId": "8znYa8Ca7GWeBy0m",
+      "project": {
+        "updatedAt": "2025-11-29T23:05:56.637Z",
+        "createdAt": "2025-11-29T23:04:07.777Z",
+        "id": "8znYa8Ca7GWeBy0m",
+        "name": "Seung Hyeon Kim <khai01@naver.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-04-06T10:57:45.133Z",
+    "createdAt": "2026-04-06T10:57:45.133Z",
+    "versionId": "09be8dab-da25-411a-ae15-0a844cd26123",
+    "workflowId": "ovShsLWKGcrOOgnE",
+    "nodes": [
+      {
+        "id": "node-schedule",
+        "name": "매주 일요일 9시",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          304
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "weeks",
+                "triggerAtHour": 9
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "node-season",
+        "name": "현재 시기 정보",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          224,
+          304
+        ],
+        "parameters": {
+          "jsCode": "const now = new Date();\nconst month = now.getMonth() + 1;\nconst day = now.getDate();\nconst weekOfMonth = Math.ceil(day / 7);\nlet season = '', seasonDesc = '';\nif (month >= 3 && month <= 5) { season = '봄'; seasonDesc = '졸업/입학 시즌, 벚꽃 행사, 신학기'; }\nelse if (month >= 6 && month <= 8) { season = '여름'; seasonDesc = '워터파크, 야외 행사, 여름 축제, 체육대회'; }\nelse if (month >= 9 && month <= 11) { season = '가을'; seasonDesc = '운동회, 추석 명절, 기업 행사, 송년회 준비'; }\nelse { season = '겨울'; seasonDesc = '연말 송년회, 크리스마스, 신년 선물, 설 명절'; }\nconst specialEvents = [];\nif (month === 2 || month === 3) specialEvents.push('졸업/입학 시즌');\nif (month === 5) specialEvents.push('어린이날, 스승의날, 가정의달');\nif (month === 9 || month === 10) specialEvents.push('추석 명절, 체육대회');\nif (month === 12 || month === 1) specialEvents.push('연말연시, 신년');\nconst dateStr = now.toISOString().slice(0,10);\nconst endDate = dateStr;\nconst startDate = new Date(now.getTime() - 7*24*60*60*1000).toISOString().slice(0,10);\nconst blogTitle = `'26년 ${month}월 ${weekOfMonth}주 AI가 추천하는 판촉/홍보/답례품`;\nreturn [{ json: { month, day, weekOfMonth, season, seasonDesc, specialEvents: specialEvents.join(', ') || '일반 시즌', dateStr, startDate, endDate, blogTitle } }];"
+        }
+      },
+      {
+        "id": "node-trend",
+        "name": "네이버 트렌드 수집",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          448,
+          304
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://openapi.naver.com/v1/datalab/shopping/categories",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "X-Naver-Client-Id",
+                "value": "eHQN1xDoAWnFHF4sAe3I"
+              },
+              {
+                "name": "X-Naver-Client-Secret",
+                "value": "Ghnsw8dyRF"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify({ startDate: $('현재 시기 정보').first().json.startDate, endDate: $('현재 시기 정보').first().json.endDate, timeUnit: 'date', category: [{ name: '판촉물', param: ['50000803'] }, { name: '생활용품선물', param: ['50000810'] }, { name: '답례품', param: ['50000804'] }], device: '', ages: [], gender: '' }) }}",
+          "options": {
+            "timeout": 10000
+          }
+        }
+      },
+      {
+        "id": "node-merge",
+        "name": "시기+트렌드 합치기",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          672,
+          304
+        ],
+        "parameters": {
+          "jsCode": "const season = $('현재 시기 정보').first().json;\nconst trendRaw = $input.first().json;\nlet trendSummary = '트렌드 데이터 없음';\ntry {\n  if (trendRaw.results) {\n    trendSummary = trendRaw.results.map(r => {\n      const max = Math.max(...r.data.map(d => d.ratio));\n      return `${r.title}: 최고 검색비율 ${max.toFixed(1)}`;\n    }).join('\\n');\n  }\n} catch(e) {}\nreturn [{ json: { ...season, trendSummary } }];"
+        }
+      },
+      {
+        "id": "node-prompt1",
+        "name": "1차 프롬프트 조립",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          896,
+          304
+        ],
+        "parameters": {
+          "jsCode": "const d = $input.first().json;\nconst prompt = [\n  '너는 판촉물·홍보물 전문 납품업체 DCT컴퍼니의 블로그 마케터야.',\n  '아래 정보를 바탕으로 네이버 블로그 포스팅 초안을 작성해줘.',\n  '',\n  '## 블로그 제목',\n  d.blogTitle,\n  '',\n  '## 현재 시기 정보',\n  '날짜: ' + d.dateStr,\n  '계절: ' + d.season + ' (' + d.seasonDesc + ')',\n  '특수 이벤트: ' + d.specialEvents,\n  '',\n  '## 네이버 쇼핑 트렌드 데이터',\n  d.trendSummary,\n  '',\n  '## 작성 규칙',\n  '1. 제목: 위 블로그 제목 그대로 사용',\n  '2. 본문: 1000~1500자',\n  '3. 구성: 도입부 → TOP 5 추천 품목(## 소제목, 추천이유/활용사례) → 마무리(DCT컴퍼니 구매 안내)',\n  '4. SEO 키워드 자연스럽게 삽입',\n  '5. 이미지 설명: [이미지: 설명] 형식으로 각 품목마다 1개',\n  '6. 해시태그: 15개',\n  '7. JSON으로만 응답 (백틱 없이): {\"title\":\"...\",\"body\":\"...\",\"hashtags\":\"...\"}'\n].join('\\n');\nconst body = JSON.stringify({\n  contents: [{ parts: [{ text: prompt }] }],\n  generationConfig: { temperature: 0.8, maxOutputTokens: 3000 }\n});\nreturn [{ json: { ...d, prompt1_body: body } }];"
+        }
+      },
+      {
+        "id": "node-ai1",
+        "name": "1차 AI 호출 (gemma-12b)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1120,
+          304
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemma-3-12b-it:generateContent?key={{ $env.GEMINI_API_KEY }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ $json.prompt1_body }}",
+          "options": {
+            "timeout": 60000
+          }
+        }
+      },
+      {
+        "id": "node-extract1",
+        "name": "1차 블로그 추출",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1344,
+          304
+        ],
+        "parameters": {
+          "jsCode": "const d = $input.first().json;\nconst prev = $('1차 프롬프트 조립').first().json;\nlet raw = '';\nif (d.candidates && d.candidates[0]) raw = d.candidates[0]['content']['parts'][0]['text'] || '';\nraw = raw.replace(/```json\\s*/g,'').replace(/```\\s*/g,'').trim();\nlet title = prev.blogTitle, body = raw, hashtags = '';\ntry {\n  const p = JSON.parse(raw);\n  title = p.title || prev.blogTitle;\n  body = p.body || raw;\n  hashtags = p.hashtags || '';\n} catch(e) {}\nreturn [{ json: { ...prev, title, body_draft: body, hashtags_draft: hashtags } }];"
+        }
+      },
+      {
+        "id": "node-notion-draft",
+        "name": "노션 초안 저장",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1568,
+          304
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.notion.com/v1/pages",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer ntn_MASKED"
+              },
+              {
+                "name": "Notion-Version",
+                "value": "2022-06-28"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify({ parent: { database_id: '39b2fdcea0a345a48db21f22a6d6b0e0' }, properties: { '제목': { title: [{ text: { content: $json.title } }] }, '카테고리': { rich_text: [{ text: { content: '트렌드 추천' } }] }, '작성일': { date: { start: $json.dateStr } }, '상태': { select: { name: '초안' } }, '해시태그': { rich_text: [{ text: { content: $json.hashtags_draft } }] } }, children: [ { object: 'block', type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: '📝 1차 초안 (gemma-12b)' } }] } }, { object: 'block', type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: $json.body_draft.slice(0,1900) } }] } } ] }) }}",
+          "options": {}
+        }
+      },
+      {
+        "id": "node-prompt2",
+        "name": "2차 프롬프트 조립",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1792,
+          304
+        ],
+        "parameters": {
+          "jsCode": "const d = $('1차 블로그 추출').first().json;\nconst prompt = [\n  '너는 판촉물·홍보물 전문 납품업체 DCT컴퍼니의 시니어 블로그 마케터야.',\n  '아래 초안을 바탕으로 훨씬 풍성하고 완성도 높은 네이버 블로그 포스팅으로 업그레이드해줘.',\n  '',\n  '## 초안 제목',\n  d.title,\n  '',\n  '## 초안 본문',\n  d.body_draft,\n  '',\n  '## 시기 정보',\n  '계절: ' + d.season + ' / 특수 이벤트: ' + d.specialEvents,\n  '',\n  '## 업그레이드 규칙',\n  '1. 제목: 더 클릭을 유도하는 SEO 최적화 제목으로 개선',\n  '2. 본문: 2000~2500자로 확장',\n  '3. 소제목 구조: ## 로 5개 이상 단락 구성',\n  '4. SEO 키워드: 제품명, 납품처 유형, 지역(동탄/수원/경기), 용도 키워드를 자연스럽게 5회 이상 삽입',\n  '5. 각 추천 품목에 구체적인 활용 사례와 가격대 언급',\n  '6. 이미지 설명: [이미지: 설명] 형식으로 품목마다 1~2개 삽입',\n  '7. 해시태그: 25개로 확장 (SEO 키워드 필수 포함)',\n  '8. JSON으로만 응답 (백틱 없이): {\"title\":\"...\",\"body\":\"...\",\"hashtags\":\"...\"}'\n].join('\\n');\nconst body = JSON.stringify({\n  contents: [{ parts: [{ text: prompt }] }],\n  generationConfig: { temperature: 0.85, maxOutputTokens: 4000 }\n});\nreturn [{ json: { ...d, notion_page_id: $('노션 초안 저장').first().json.id, prompt2_body: body } }];"
+        }
+      },
+      {
+        "id": "node-ai2",
+        "name": "2차 AI 호출 (gemma-27b)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2016,
+          304
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key={{ $env.GEMINI_API_KEY }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ $json.prompt2_body }}",
+          "options": {
+            "timeout": 90000
+          }
+        }
+      },
+      {
+        "id": "node-extract2",
+        "name": "2차 블로그 추출",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2240,
+          304
+        ],
+        "parameters": {
+          "jsCode": "const d = $input.first().json;\nconst prev = $('2차 프롬프트 조립').first().json;\nlet raw = '';\nif (d.candidates && d.candidates[0]) raw = d.candidates[0]['content']['parts'][0]['text'] || '';\nraw = raw.replace(/```json\\s*/g,'').replace(/```\\s*/g,'').trim();\nlet title = prev.title, body = raw, hashtags = prev.hashtags_draft;\ntry {\n  const p = JSON.parse(raw);\n  title = p.title || prev.title;\n  body = p.body || raw;\n  hashtags = p.hashtags || prev.hashtags_draft;\n} catch(e) {}\nconst MAX = 1900;\nconst bodyChunks = [];\nfor (let i = 0; i < body.length; i += MAX) bodyChunks.push(body.slice(i, i + MAX));\nreturn [{ json: { ...prev, title_final: title, body_final: body, bodyChunks_final: bodyChunks, hashtags_final: hashtags } }];"
+        }
+      },
+      {
+        "id": "node-notion-update",
+        "name": "노션 제목+상태 업데이트",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2464,
+          304
+        ],
+        "parameters": {
+          "method": "PATCH",
+          "url": "=https://api.notion.com/v1/pages/{{ $json.notion_page_id }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer ntn_MASKED"
+              },
+              {
+                "name": "Notion-Version",
+                "value": "2022-06-28"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify({ properties: { '제목': { title: [{ text: { content: $json.title_final } }] }, '해시태그': { rich_text: [{ text: { content: $json.hashtags_final } }] }, '상태': { select: { name: '수정중' } } } }) }}",
+          "options": {}
+        }
+      },
+      {
+        "id": "node-notion-blocks",
+        "name": "노션 심화본문 블록 추가",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2688,
+          304
+        ],
+        "parameters": {
+          "method": "PATCH",
+          "url": "=https://api.notion.com/v1/blocks/{{ $('2차 블로그 추출').first().json.notion_page_id }}/children",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer ntn_MASKED"
+              },
+              {
+                "name": "Notion-Version",
+                "value": "2022-06-28"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify({ children: [ { object: 'block', type: 'divider', divider: {} }, { object: 'block', type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: '✨ 2차 심화본문 (gemma-27b)' } }] } }, ...$('2차 블로그 추출').first().json.bodyChunks_final.map(chunk => ({ object: 'block', type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: chunk } }] } })), { object: 'block', type: 'heading_2', heading_2: { rich_text: [{ type: 'text', text: { content: '🏷️ 해시태그' } }] } }, { object: 'block', type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: $('2차 블로그 추출').first().json.hashtags_final } }] } } ] }) }}",
+          "options": {}
+        }
+      },
+      {
+        "id": "node-complete",
+        "name": "완료",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          2912,
+          304
+        ],
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "r1",
+                "name": "result",
+                "value": "={{ '🎉 [' + $('2차 블로그 추출').first().json.title_final + '] 2차 심화 작성 완료! 노션에 저장됐어요.' }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "status-success",
+        "name": "✅ 상태 업데이트 (성공)",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          3136,
+          304
+        ],
+        "parameters": {
+          "workflowId": "eOopB5bbEEO9rjrg",
+          "options": {}
+        }
+      },
+      {
+        "id": "error-trigger",
+        "name": "❌ 에러 감지",
+        "type": "n8n-nodes-base.errorTrigger",
+        "typeVersion": 1,
+        "position": [
+          880,
+          520
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "status-error",
+        "name": "❌ 상태 업데이트 (에러)",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          1100,
+          520
+        ],
+        "parameters": {
+          "workflowId": "eOopB5bbEEO9rjrg",
+          "options": {}
+        }
+      },
+      {
+        "id": "manual-note-main",
+        "name": "📋 워크플로우 메뉴얼",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          -240,
+          160
+        ],
+        "parameters": {
+          "content": "## 📋 DCT 트렌드 블로그 자동작성 메뉴얼\n\n### 🔗 메뉴얼 노션에서 보기\nhttps://www.notion.so/323c6a06e17e818ba6d1f28ccacaeed0\n\n---\n\n### ⚙️ 워크플로우 개요\n- **실행 주기**: 매주 일요일 09:00\n- **1차 AI**: gemma-3-12b-it (초안 1000~1500자)\n- **2차 AI**: gemma-3-27b-it (심화 2000~2500자)\n- **저장**: Notion DB (초안 저장 후 심화본문 추가)\n\n### 🔧 수정이 필요할 때\n1. **키워드 변경** → `현재 시기 정보` 노드\n2. **1차 프롬프트** → `1차 프롬프트 조립` 노드\n3. **2차 프롬프트** → `2차 프롬프트 조립` 노드\n4. **저장 DB 변경** → `노션 초안 저장` 노드\n\n### ⚠️ 주의사항\n- 네이버 API 일일 호출 한도 확인\n- 2차 AI(27b) timeout 90초로 설정됨",
+          "height": 420,
+          "width": 380,
+          "color": 4
+        }
+      }
+    ],
+    "connections": {
+      "매주 일요일 9시": {
+        "main": [
+          [
+            {
+              "node": "현재 시기 정보",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "현재 시기 정보": {
+        "main": [
+          [
+            {
+              "node": "네이버 트렌드 수집",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "네이버 트렌드 수집": {
+        "main": [
+          [
+            {
+              "node": "시기+트렌드 합치기",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "시기+트렌드 합치기": {
+        "main": [
+          [
+            {
+              "node": "1차 프롬프트 조립",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "1차 프롬프트 조립": {
+        "main": [
+          [
+            {
+              "node": "1차 AI 호출 (gemma-12b)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "1차 AI 호출 (gemma-12b)": {
+        "main": [
+          [
+            {
+              "node": "1차 블로그 추출",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "1차 블로그 추출": {
+        "main": [
+          [
+            {
+              "node": "노션 초안 저장",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "노션 초안 저장": {
+        "main": [
+          [
+            {
+              "node": "2차 프롬프트 조립",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "2차 프롬프트 조립": {
+        "main": [
+          [
+            {
+              "node": "2차 AI 호출 (gemma-27b)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "2차 AI 호출 (gemma-27b)": {
+        "main": [
+          [
+            {
+              "node": "2차 블로그 추출",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "2차 블로그 추출": {
+        "main": [
+          [
+            {
+              "node": "노션 제목+상태 업데이트",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "노션 제목+상태 업데이트": {
+        "main": [
+          [
+            {
+              "node": "노션 심화본문 블록 추가",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "노션 심화본문 블록 추가": {
+        "main": [
+          [
+            {
+              "node": "완료",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "완료": {
+        "main": [
+          [
+            {
+              "node": "✅ 상태 업데이트 (성공)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "❌ 에러 감지": {
+        "main": [
+          [
+            {
+              "node": "❌ 상태 업데이트 (에러)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Seung Hyeon Kim",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-06T10:57:45.281Z",
+        "id": 474,
+        "workflowId": "ovShsLWKGcrOOgnE",
+        "versionId": "09be8dab-da25-411a-ae15-0a844cd26123",
+        "event": "activated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      },
+      {
+        "createdAt": "2026-04-06T10:57:45.215Z",
+        "id": 473,
+        "workflowId": "ovShsLWKGcrOOgnE",
+        "versionId": "09be8dab-da25-411a-ae15-0a844cd26123",
+        "event": "deactivated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
+    ]
+  }
+}
