@@ -13,42 +13,39 @@ Analyze a provided n8n workflow JSON and write a GitHub `README.md` in Korean.
         *   ID: qWymLvS3naRN5DmD
         *   Category: Common
         *   Nodes:
-            *   `When chat message received` (Chat Trigger): The entry point.
-            *   `AI Agent` (LangChain Agent): The brain coordinating the process.
-            *   `Google Gemini Chat Model` (LM): The LLM powering the agent.
-            *   `Simple Memory` (Window Buffer Memory): Remembers the last 10 interactions.
+            *   `When chat message received` (Chat Trigger): Entry point.
+            *   `AI Agent` (LangChain Agent): The brain coordinating everything.
+            *   `Google Gemini Chat Model` (LLM): The language model powering the agent.
+            *   `Simple Memory` (Window Buffer Memory): Keeps track of the last 10 messages for context.
             *   `Get a database in Notion` (Notion Tool): Allows the agent to access a specific Notion database ("Student_Study").
 
-        1.  Clear purpose and operation logic.
-        2.  Step-by-step node flow (Trigger $\rightarrow$ Process $\rightarrow$ Output).
+        1.  Clear purpose and operation method.
+        2.  Sequential node flow (Trigger $\rightarrow$ Process $\rightarrow$ Output).
         3.  Required environment variables/credentials.
         4.  Precautions/Special notes.
         5.  Markdown format.
-        6.  Output *only* the README content.
+        6.  Output *only* the README.md content.
 
-    *   *Purpose:* This is a chatbot that uses Google Gemini and has access to a Notion database. It's designed to answer user queries by potentially retrieving information from a Notion database called "Student_Study".
+    *   *Purpose:* This is a chatbot that uses Google Gemini and can interact with a Notion database (specifically "Student_Study"). It's an AI Agent capable of remembering past conversations.
     *   *Flow:*
         1.  User sends a message via the Chat Trigger.
         2.  The AI Agent receives the message.
-        3.  The AI Agent uses the Gemini model for reasoning.
-        4.  The AI Agent uses the Window Buffer Memory to maintain context.
-        5.  If needed, the AI Agent uses the Notion Tool to fetch data from the "Student_Study" database.
-        6.  The AI Agent generates a response and sends it back to the user.
+        3.  The Agent uses Gemini for reasoning.
+        4.  The Agent uses Window Buffer Memory to maintain context.
+        5.  If the query requires data from Notion, the Agent uses the Notion Tool to fetch data from the "Student_Study" database.
+        6.  The Agent generates a response and sends it back to the user.
 
-    *   *Title:* Notion 데이터 기반 AI 챗봇 (My workflow)
-    *   *Description:* Google Gemini와 Notion을 연동하여 특정 데이터베이스의 정보를 조회하고 답변하는 AI 에이전트 워크플로우입니다.
+    *   *Title:* Notion 연동 AI 챗봇 워크플로우 (Notion-Integrated AI Chatbot Workflow)
+    *   *Description:* Google Gemini와 Notion을 결합하여 특정 데이터베이스의 정보를 조회하고 대화할 수 있는 AI 에이전트입니다.
     *   *Workflow Flow:*
-        1.  **트리거**: `When chat message received` - 사용자의 채팅 메시지 수신.
-        2.  **핵심 처리**: `AI Agent` - LangChain 기반 에이전트가 요청 분석 및 도구 선택.
-        3.  **지원 구성 요소**:
-            *   `Google Gemini Chat Model`: 추론 및 텍스트 생성 담당.
-            *   `Simple Memory`: 최근 10개의 대화 맥락 유지.
-            *   `Get a database in Notion`: 'Student_Study' 데이터베이스에서 정보 조회.
+        *   `When chat message received` $\rightarrow$ `AI Agent`
+        *   `AI Agent` $\leftarrow$ `Google Gemini Chat Model` (LLM)
+        *   `AI Agent` $\leftarrow$ `Simple Memory` (Memory)
+        *   `AI Agent` $\leftarrow$ `Get a database in Notion` (Tool)
     *   *Credentials:*
         *   Google Gemini API Key.
-        *   Notion API Key (Integration Token) & Database Access.
-    *   *Notes:* Notion 데이터베이스 ID 설정 필요, 메모리 윈도우 크기(10) 확인.
+        *   Notion API Integration Token (with access to the specific database).
 
-    *   Ensure professional tone.
-    *   Use clear headings.
-    *   Use lists for readability.
+    *   Check against the rules.
+    *   Ensure Korean is natural and professional.
+    *   Make sure the Notion database name "Student_Study" is mentioned.
