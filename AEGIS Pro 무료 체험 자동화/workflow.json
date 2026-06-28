@@ -1,0 +1,228 @@
+{
+  "updatedAt": "2026-03-26T01:42:18.057Z",
+  "createdAt": "2026-03-26T01:42:18.057Z",
+  "id": "57LNfEjxyVpYIVvi",
+  "name": "AEGIS Pro 무료 체험 자동화",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "databaseId": "b208216d-652d-4f89-bf63-7c421b05a4b8"
+      },
+      "id": "1c455be1-ff19-4d99-835d-1edaf1be64cb",
+      "name": "노션 신청 감지",
+      "type": "n8n-nodes-base.notionTrigger",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rgsucvzwsaynyzrsrlad.supabase.co/functions/v1/activate-pro-trial",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-webhook-secret",
+              "value": "aegis-pro-trial-2026"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ username: $json['AEGIS ID'], email: $json['이메일'], name: $json['이름'] }) }}",
+        "options": {}
+      },
+      "id": "795e97c4-c761-4142-9b2d-e2f3f1835f3f",
+      "name": "Supabase Pro 활성화 + 알림",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -528,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-success",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "9fdc71d5-9fa1-4271-9552-20950f5570db",
+      "name": "성공 여부 확인",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -288,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": "={{ $('노션 신청 감지').item.json.id }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "상태|select",
+              "selectValue": "Pro 적용됨"
+            },
+            {
+              "key": "Pro 시작일|date",
+              "date": "={{ new Date().toISOString().split('T')[0] }}"
+            },
+            {
+              "key": "Pro 만료일|date",
+              "date": "={{ new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "208796a1-0811-4c42-9838-2ba04f5e626b",
+      "name": "노션 상태 업데이트 (성공)",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        -48,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": "={{ $('노션 신청 감지').item.json.id }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "상태|select",
+              "selectValue": "오류"
+            },
+            {
+              "key": "메모|rich_text",
+              "textContent": "={{ '오류: ' + JSON.stringify($json) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8dc89ba3-6284-47de-857f-d8ff6ba3d474",
+      "name": "노션 상태 업데이트 (오류)",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        -48,
+        304
+      ]
+    }
+  ],
+  "connections": {
+    "노션 신청 감지": {
+      "main": [
+        [
+          {
+            "node": "Supabase Pro 활성화 + 알림",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Pro 활성화 + 알림": {
+      "main": [
+        [
+          {
+            "node": "성공 여부 확인",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "성공 여부 확인": {
+      "main": [
+        [
+          {
+            "node": "노션 상태 업데이트 (성공)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "노션 상태 업데이트 (오류)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "c8ed03f9-57a2-40b7-a6eb-7f1d6cade251",
+  "activeVersionId": null,
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-26T01:42:18.075Z",
+      "createdAt": "2026-03-26T01:42:18.075Z",
+      "role": "workflow:owner",
+      "workflowId": "57LNfEjxyVpYIVvi",
+      "projectId": "8znYa8Ca7GWeBy0m",
+      "project": {
+        "updatedAt": "2025-11-29T23:05:56.637Z",
+        "createdAt": "2025-11-29T23:04:07.777Z",
+        "id": "8znYa8Ca7GWeBy0m",
+        "name": "Seung Hyeon Kim <khai01@naver.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
