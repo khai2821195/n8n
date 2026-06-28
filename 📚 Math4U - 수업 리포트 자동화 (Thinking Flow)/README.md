@@ -8,37 +8,41 @@
 
 n8n Workflow Expert.
 Analyze a provided n8n workflow JSON and write a GitHub `README.md` in Korean.
-`📚 Math4U - 수업 리포트 자동화 (Thinking Flow)` (ID: `fLXAn8mq5xsr5GNE`).
+"📚 Math4U - 수업 리포트 자동화 (Thinking Flow)".
+A JSON object containing nodes (Webhook, Set, Notion, HTTP Request/Gemini, etc.).
 
-        *   *Sticky Note:* Explains the purpose (Instructor submits form $\rightarrow$ n8n generates AI report $\rightarrow$ Kakao Notification sent to parents).
-        *   *Webhook Trigger:* `math4u-lesson-report` (POST).
-        *   *Set Node (Data Parsing):* Extracts `studentName`, `lessonDate`, `subjectUnit`, `discovery`, `generalization`, `concentration`, `eureka`, `weakness`, `presetMessage`.
-        *   *Notion Node (Student Lookup):* Searches for student info/parent contact in a specific Notion DB.
-        *   *HTTP Request (Gemini AI):* Uses Gemini 1.5 Flash Lite to generate a "VIP tone" report based on the parsed data.
-        *   *Implicit/Missing Nodes (but mentioned in Sticky Note):* The JSON provided is truncated (it ends at the Gemini request), but the Sticky Note explicitly lists:
-            *   Kakao Notification (알림톡 발송)
-            *   Notion Record (발송 이력 저장)
-            *   Slack Notification (강사 알림)
-        *   *Note:* I must describe the *entire* flow as intended by the manual note, even if the JSON snippet is incomplete, while acknowledging the logic present in the JSON.
+        *   Clear purpose and operation method.
+        *   Step-by-step node flow (Trigger $\rightarrow$ Process $\rightarrow$ Output).
+        *   Required environment variables/credentials.
+        *   Precautions/Special notes.
+        *   Markdown format.
+        *   *Output only the README.md content.*
+
+    *   *Name:* Math4U - Lesson Report Automation (Thinking Flow).
+    *   *Trigger:* Webhook (`/math4u-lesson-report`). Likely triggered by Google Forms or Tally.
+    *   *Data Parsing (Set Node):* Extracts `studentName`, `lessonDate`, `subjectUnit`, `discovery`, `generalization`, `concentration`, `eureka`, `weakness`, `presetMessage`.
+    *   *Notion Lookup:* Searches for student info in a Notion database (ID: `229c6a06...`) using the student's name.
+    *   *AI Generation (HTTP Request):* Calls Gemini API (`gemini-3.1-flash-lite`).
+        *   *Prompt:* Acts as a premium math academy expert. Creates a "The Thinking Flow" report. Focuses on "Generalization of basic concepts" and "Intellectual growth."
+        *   *Structure:* Core principle $\rightarrow$ Flow of thought $\rightarrow$ Growth point $\rightarrow$ Next step.
+    *   *Downstream (Implied by Sticky Note but partially cut off in JSON):*
+        *   Kakao Alimtalk (Notification).
+        *   Notion Log (Saving history).
+        *   Slack Notification (Alerting the instructor).
 
     *   *Title:* 📚 Math4U - 수업 리포트 자동화 (Thinking Flow)
-    *   *Introduction:* Automated system for premium math academy reports.
-    *   *Key Features:* Form $\rightarrow$ AI $\rightarrow$ Notification.
+    *   *Overview:* Automating the process from instructor form submission to parent notification via AI-generated reports.
     *   *Workflow Steps:*
-        1.  Webhook (Google Forms/Tally).
-        2.  Data Parsing (Set node).
-        3.  Student Search (Notion).
-        4.  AI Report Generation (Gemini).
-        5.  Notification (KakaoTalk - *based on manual*).
-        6.  Logging (Notion - *based on manual*).
-        7.  Alert (Slack - *based on manual*).
-    *   *Requirements:* Gemini API Key, Notion API, KakaoTalk API (likely via a third-party gateway), Slack Webhook.
-    *   *Configuration:* Webhook URL setup.
+        1.  Webhook $\rightarrow$ 2. Data Parsing $\rightarrow$ 3. Notion Lookup $\rightarrow$ 4. Gemini AI Generation $\rightarrow$ 5. Notification/Logging.
+    *   *Key Features:*
+        *   AI-driven "VIP tone" reports.
+        *   Integration with Notion for student management.
+        *   Multi-channel output (Kakao, Notion, Slack).
+    *   *Requirements:*
+        *   n8n instance.
+        *   Gemini API Key.
+        *   Notion API Token & Database ID.
+        *   (Implied) Kakao Alimtalk API / Slack Webhook.
 
-    *   *Tone:* Professional, clear, and structured.
-    *   *Sections:*
-        *   Project Name & Description.
-        *   Workflow Diagram/Flow (Textual).
-        *   Detailed Node Explanation.
-        *   Prerequisites (Credentials/Env).
-        *   Setup Guide.
+    *   Ensure professional terminology (e.g., "사고의 궤적", "VIP 톤앤매너").
+    *   Structure with clear headings and lists.
