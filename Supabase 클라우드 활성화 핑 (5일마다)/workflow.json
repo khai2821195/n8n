@@ -1,0 +1,513 @@
+{
+  "updatedAt": "2026-06-25T10:01:21.477Z",
+  "createdAt": "2026-06-25T00:04:02.482Z",
+  "id": "eiDJtQcixL9dancS",
+  "name": "Supabase 클라우드 활성화 핑 (5일마다)",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "daysInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        256,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://tbshojvgghpyjpqxldxq.supabase.co/rest/v1/groups?select=id&limit=1",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRic2hvanZnZ2hweWpwcXhsZHhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2ODIxNjYsImV4cCI6MjA4NzI1ODE2Nn0.bBlwnPmCMns3FSz7Que8qpSqSYuQlG3oytzAw3n0sNY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRic2hvanZnZ2hweWpwcXhsZHhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2ODIxNjYsImV4cCI6MjA4NzI1ODE2Nn0.bBlwnPmCMns3FSz7Que8qpSqSYuQlG3oytzAw3n0sNY"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ping-attendance",
+      "name": "Ping AttendanceApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        512,
+        208
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "url": "https://rgsucvzwsaynyzrsrlad.supabase.co/rest/v1/profiles?select=id&limit=1",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnc3Vjdnp3c2F5bnl6cnNybGFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MTY5NjgsImV4cCI6MjA4OTM5Mjk2OH0.iHZzh5hnu_KZ-xpUv44FZBJb1Yg32lv1Rcp6C_76dFc"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnc3Vjdnp3c2F5bnl6cnNybGFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MTY5NjgsImV4cCI6MjA4OTM5Mjk2OH0.iHZzh5hnu_KZ-xpUv44FZBJb1Yg32lv1Rcp6C_76dFc"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ping-aegis",
+      "name": "Ping Aegis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        512,
+        400
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {},
+      "id": "error-trigger",
+      "name": "에러 감지",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        512,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "38ac6a06e17e81028050e5094f76c1e2",
+          "__regex": "^([0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12})"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Status|select",
+              "selectValue": "✅ 정상"
+            },
+            {
+              "key": "Last Run|date",
+              "date": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        752,
+        304
+      ],
+      "id": "91ee3392-c8c2-4ecf-b3a1-0dbcf8f7b750",
+      "name": "Notion 상태 업데이트 (성공)"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "38ac6a06e17e81028050e5094f76c1e2",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Status|select",
+              "selectValue": "❌ 에러"
+            },
+            {
+              "key": "Last Run|date",
+              "date": "={{ $now.toISO() }}",
+              "timezone": "Asia/Seoul"
+            },
+            {
+              "key": "Error Message|rich_text",
+              "richText": "={{ $json.message }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        752,
+        608
+      ],
+      "id": "50587270-2de0-4150-8272-e8db7ddb3151",
+      "name": "Notion 상태 업데이트 (에러)"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Ping AttendanceApp",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Ping Aegis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ping AttendanceApp": {
+      "main": [
+        [
+          {
+            "node": "Notion 상태 업데이트 (성공)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ping Aegis": {
+      "main": [
+        [
+          {
+            "node": "Notion 상태 업데이트 (성공)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "에러 감지": {
+      "main": [
+        [
+          {
+            "node": "Notion 상태 업데이트 (에러)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion 상태 업데이트 (성공)": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true,
+    "saveExecutionProgress": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Schedule Trigger": {
+      "recurrenceRules": [
+        177
+      ]
+    }
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "4af1bd0c-0b56-4002-a093-207c1027267d",
+  "activeVersionId": "4af1bd0c-0b56-4002-a093-207c1027267d",
+  "versionCounter": 115,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-06-25T00:04:02.535Z",
+      "createdAt": "2026-06-25T00:04:02.535Z",
+      "role": "workflow:owner",
+      "workflowId": "eiDJtQcixL9dancS",
+      "projectId": "8znYa8Ca7GWeBy0m",
+      "project": {
+        "updatedAt": "2025-11-29T23:05:56.637Z",
+        "createdAt": "2025-11-29T23:04:07.777Z",
+        "id": "8znYa8Ca7GWeBy0m",
+        "name": "Seung Hyeon Kim <khai01@naver.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-06-25T10:03:30.000Z",
+    "createdAt": "2026-06-25T10:01:21.478Z",
+    "versionId": "4af1bd0c-0b56-4002-a093-207c1027267d",
+    "workflowId": "eiDJtQcixL9dancS",
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "daysInterval": 5
+              }
+            ]
+          }
+        },
+        "id": "schedule-trigger",
+        "name": "Schedule Trigger",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          256,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "url": "https://tbshojvgghpyjpqxldxq.supabase.co/rest/v1/groups?select=id&limit=1",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRic2hvanZnZ2hweWpwcXhsZHhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2ODIxNjYsImV4cCI6MjA4NzI1ODE2Nn0.bBlwnPmCMns3FSz7Que8qpSqSYuQlG3oytzAw3n0sNY"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRic2hvanZnZ2hweWpwcXhsZHhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2ODIxNjYsImV4cCI6MjA4NzI1ODE2Nn0.bBlwnPmCMns3FSz7Que8qpSqSYuQlG3oytzAw3n0sNY"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "ping-attendance",
+        "name": "Ping AttendanceApp",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          512,
+          208
+        ],
+        "alwaysOutputData": true
+      },
+      {
+        "parameters": {
+          "url": "https://rgsucvzwsaynyzrsrlad.supabase.co/rest/v1/profiles?select=id&limit=1",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnc3Vjdnp3c2F5bnl6cnNybGFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MTY5NjgsImV4cCI6MjA4OTM5Mjk2OH0.iHZzh5hnu_KZ-xpUv44FZBJb1Yg32lv1Rcp6C_76dFc"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnc3Vjdnp3c2F5bnl6cnNybGFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MTY5NjgsImV4cCI6MjA4OTM5Mjk2OH0.iHZzh5hnu_KZ-xpUv44FZBJb1Yg32lv1Rcp6C_76dFc"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "ping-aegis",
+        "name": "Ping Aegis",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          512,
+          400
+        ],
+        "alwaysOutputData": true
+      },
+      {
+        "parameters": {},
+        "id": "error-trigger",
+        "name": "에러 감지",
+        "type": "n8n-nodes-base.errorTrigger",
+        "typeVersion": 1,
+        "position": [
+          512,
+          608
+        ]
+      },
+      {
+        "parameters": {
+          "resource": "databasePage",
+          "operation": "update",
+          "pageId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "38ac6a06e17e81028050e5094f76c1e2",
+            "__regex": "^([0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12})"
+          },
+          "propertiesUi": {
+            "propertyValues": [
+              {
+                "key": "Status|select",
+                "selectValue": "✅ 정상"
+              },
+              {
+                "key": "Last Run|date",
+                "date": "={{ $now.toISO() }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2,
+        "position": [
+          752,
+          304
+        ],
+        "id": "91ee3392-c8c2-4ecf-b3a1-0dbcf8f7b750",
+        "name": "Notion 상태 업데이트 (성공)",
+        "credentials": {
+          "notionApi": {
+            "id": "7dcYpjMvCFa9wenU",
+            "name": "n8n-DCT"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "resource": "databasePage",
+          "operation": "update",
+          "pageId": {
+            "__rl": true,
+            "value": "38ac6a06e17e81028050e5094f76c1e2",
+            "mode": "id"
+          },
+          "propertiesUi": {
+            "propertyValues": [
+              {
+                "key": "Status|select",
+                "selectValue": "❌ 에러"
+              },
+              {
+                "key": "Last Run|date",
+                "date": "={{ $now.toISO() }}",
+                "timezone": "Asia/Seoul"
+              },
+              {
+                "key": "Error Message|rich_text",
+                "richText": "={{ $json.message }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2,
+        "position": [
+          752,
+          608
+        ],
+        "id": "50587270-2de0-4150-8272-e8db7ddb3151",
+        "name": "Notion 상태 업데이트 (에러)",
+        "credentials": {
+          "notionApi": {
+            "id": "7dcYpjMvCFa9wenU",
+            "name": "n8n-DCT"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Schedule Trigger": {
+        "main": [
+          [
+            {
+              "node": "Ping AttendanceApp",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Ping Aegis",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Ping AttendanceApp": {
+        "main": [
+          [
+            {
+              "node": "Notion 상태 업데이트 (성공)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Ping Aegis": {
+        "main": [
+          [
+            {
+              "node": "Notion 상태 업데이트 (성공)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "에러 감지": {
+        "main": [
+          [
+            {
+              "node": "Notion 상태 업데이트 (에러)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Notion 상태 업데이트 (성공)": {
+        "main": [
+          []
+        ]
+      }
+    },
+    "authors": "Seung Hyeon Kim",
+    "name": "Version 4af1bd0c",
+    "description": "",
+    "autosaved": true,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-06-25T10:03:30.372Z",
+        "id": 601,
+        "workflowId": "eiDJtQcixL9dancS",
+        "versionId": "4af1bd0c-0b56-4002-a093-207c1027267d",
+        "event": "activated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
+    ]
+  }
+}
