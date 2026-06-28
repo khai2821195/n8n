@@ -8,41 +8,37 @@
 ---
 
 n8n Workflow Expert.
-Analyze the provided JSON and create a GitHub `README.md` in Korean.
+Analyze a provided n8n workflow JSON and write a GitHub `README.md` in Korean.
 "등록일원부 자동생성 - 수업종료" (Automatic Generation of Registration Ledger - Class End).
 `BrZ88oo3KRKccX0g`.
 `Math4U`.
 
-        *   *Trigger:* `Notion Trigger` (Student_Study database, `pagedUpdatedInDatabase`, polls every 10 mins).
-        *   *Node 1 (Notion):* Gets the latest page data for the updated page.
-        *   *Node 2 (Code):* Logic check.
-            *   Checks if '수업완료' (Class Completed) is checked.
-            *   Checks if '등록일원부생성' (Ledger Created) is NOT checked (prevents duplicates).
-            *   Compares '수업회차' (Session Count) with '수업구분' (Class Category/Count) to ensure it's the final session.
-            *   Extracts IDs: `studentStudyPageId`, `studentPageId`, `classPageId`.
-            *   Extracts/Calculates date (`isoDate`) and year.
-        *   *Node 3 (HTTP Request):* Updates '등록일원부 생성' checkbox to `true` in Notion (marks as processed).
-        *   *Node 4 (Notion):* Gets '수업료' (Tuition Fee) from the `Class` database.
-        *   *Node 5 (Code):* Merges tuition fee into the data object.
-        *   *Node 6 (Notion):* Gets '이름' (Student Name) from the `Students` database.
-        *   *Node 7 (Code):* Merges student name into the data object.
-        *   *Node 8 (HTTP Request - partial in JSON):* Looks like it's starting to query payment sessions (납부회차 조회). *Note: The JSON is truncated at the end, but the intent is clear.*
+        *   `Notion Trigger`: Watches for updates in the `Student_Study` database (polls every 10 mins).
+        *   `Notion - Student_Study 최신 조회`: Gets the latest page data for the updated page.
+        *   `Code - 종료 체크 및 데이터 추출`:
+            *   Checks if `수업완료` (Class Completed) is checked.
+            *   Checks if `등록일원부생성` (Ledger Generated) is *not* checked.
+            *   Validates if the current session count matches the class count.
+            *   Extracts `studentStudyPageId`, `studentPageId`, `classPageId`, `isoDate`, and `year`.
+        *   `HTTP - 등록일원부생성 체크박스 업데이트`: Updates the `등록일원부 생성` checkbox to `true` to prevent duplicate runs.
+        *   `Notion - Class 수업료 조회`: Gets the tuition fee from the `Class` database.
+        *   `Code - 수업료 추출`: Merges the fee into the data object.
+        *   `Notion - Students 이름 조회`: Gets the student's name from the `Students` database.
+        *   `Code - 이름 병합`: Merges the student name into the data object.
+        *   `HTTP - 납부회차 조회`: (JSON is truncated, but the name suggests it queries payment rounds/history).
 
-    *   *Purpose:* Automate the creation of a registration ledger (billing/record) when a student's class session is marked as completed, specifically for the final session of a course.
-    *   *Flow:*
-        1.  Detect change in `Student_Study` DB.
-        2.  Verify if it's the final session and not yet processed.
-        3.  Mark as processed immediately.
-        4.  Fetch tuition fee from the `Class` DB.
-        5.  Fetch student name from the `Students` DB.
-        6.  (Implicitly) Prepare data for the ledger.
+    *   *Purpose:* Automatically generate a registration ledger (likely a record for payment or administrative tracking) when a student's class session ends.
+    *   *Trigger:* A change in the Notion `Student_Study` database.
+    *   *Condition:* Only runs if the class is marked as "Completed" and the ledger hasn't been created yet, and the session number matches the total class count.
+    *   *Data Flow:* Notion (Study) $\rightarrow$ Logic Check $\rightarrow$ Update Status $\rightarrow$ Notion (Class/Fee) $\rightarrow$ Notion (Student/Name) $\rightarrow$ (Payment Query).
 
-    *   *Title:* 등록일원부 자동생성 - 수업종료 (Automatic Registration Ledger Generation - Class End).
-    *   *Description:* A workflow that monitors Notion for completed class sessions and automatically prepares data for the registration ledger when the final session is reached.
+    *   *Title:* 등록일원부 자동생성 - 수업종료 (Automatic Registration Ledger Generation - Class End)
+    *   *Overview:* Explain that this workflow automates the administrative process of creating a ledger when a student completes their course.
     *   *Workflow Steps:*
-        1.  **Trigger**: Notion `Student_Study` database update.
-        2.  **Validation**: Code node checks for "Class Completed" and "Final Session" match.
-        3.  **Status Update**: Marks the record as "Ledger Created" to avoid loops.
-        4.  **Data Enrichment**: Fetches Tuition Fee (from Class DB) and Student Name (from Students DB).
+        1.  **Trigger:** Detect update in `Student_Study` database.
+        2.  **Validation:** Check if "Class Completed" is true and "Ledger Generated" is false. Verify session count.
+        3.  **Status Update:** Mark "Ledger Generated" as true.
+        4.  **Data Gathering:** Fetch tuition fee from `Class` and student name from `Students`.
+        5.  **Payment Check:** Query payment history (based on the final HTTP node).
     *   *Requirements:* Notion API Credentials.
-    *   *Key Logic:* The comparison between `sessionCount` and `classCount` is crucial.
+    *   *Key Databases:* `Student_Study`, `Class`, `Students`.
