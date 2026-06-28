@@ -14,50 +14,49 @@ Analyze a provided n8n workflow JSON and write a GitHub `README.md` in Korean.
         *   Category: Common
         *   Nodes:
             1.  `Webhook`: POST method, path `ai-meeting-archive`.
-            2.  `Format & Path Encoding` (Code Node):
+            2.  `Format & Path Encoding` (Code node):
                 *   Gets current date.
-                *   Extracts `text` from the webhook body.
-                *   Defines a folder path: `1. Projects (프로젝트)/AI Team Project/회의록`.
-                *   Encodes the path and filename (`YYYY-MM-DD_AI팀_회의록.md`).
-                *   Formats the content as a Markdown file with a header and participants (Kai, Cheryl, C-Levels).
+                *   Gets text from `body.text`.
+                *   Defines folder path: `1. Projects (프로젝트)/AI Team Project/회의록`.
+                *   Encodes path and filename (`YYYY-MM-DD_AI팀_회의록.md`).
+                *   Formats content as a Markdown header with participants (Kai, Cheryl, C-Levels).
                 *   Outputs `apiUrl` (pointing to a local Obsidian REST API: `http://127.0.0.1:27123/vault/...`) and `markdown` content.
-            3.  `Send to Obsidian` (HTTP Request Node):
+            3.  `Send to Obsidian` (HTTP Request node):
                 *   Method: PUT.
                 *   URL: `{{$json.apiUrl}}`.
                 *   Header: `Authorization: Bearer [token]`.
                 *   Body: `{{$json.markdown}}` (text/markdown).
 
-        1.  Clear purpose and behavior.
-        2.  Step-by-step node flow (Trigger $\rightarrow$ Process $\rightarrow$ Output).
-        3.  Environment variables/Credentials requirements.
+        1.  Purpose and operation logic.
+        2.  Node flow (Trigger $\rightarrow$ Process $\rightarrow$ Output).
+        3.  Environment variables/Credentials.
         4.  Precautions/Special notes.
         5.  Markdown format.
-        6.  Output *only* the README content.
+        6.  Output *only* the README.md content.
 
     *   *Title:* AI Meeting Minutes Auto-Archiving Workflow (AI 팀 회의록 자동 저장 워크플로우).
-    *   *Purpose:* Automatically receive meeting notes via Webhook and save them as Markdown files in a specific Obsidian vault folder.
+    *   *Purpose:* Automatically receive meeting notes via webhook and save them as formatted Markdown files in an Obsidian vault.
     *   *Flow:*
-        1.  **Webhook**: Receives the meeting text.
-        2.  **Code Node**: Formats the date, creates the file path, and structures the Markdown content.
-        3.  **HTTP Request**: Sends the data to the Obsidian Local REST API.
+        1.  Webhook (Entry point) $\rightarrow$ Receives meeting text.
+        2.  Code Node (Formatting) $\rightarrow$ Generates date, encodes path, formats Markdown.
+        3.  HTTP Request (Storage) $\rightarrow$ Sends data to Obsidian Local REST API.
     *   *Requirements:*
-        *   Obsidian Local REST API plugin installed and running.
-        *   API Token for authentication.
-        *   Local network access (since it uses `127.0.0.1`).
+        *   Obsidian Local REST API plugin installed.
+        *   API Token.
+        *   Specific folder structure in Obsidian.
 
-    *   *Header:* # AI 팀 회의록 자동 저장 워크플로우 (AI Meeting Archive)
-    *   *Description:* 이 워크플로우는 외부에서 전달받은 회의록 텍스트를 정해진 형식의 마크다운 파일로 변환하여 Obsidian(옵시디언) 보관소에 자동으로 저장하는 자동화 프로세스입니다.
+    *   *Header:* # AI 팀 회의록 자동 저장 워크플로우
+    *   *Description:* 이 워크플로우는 외부에서 전달된 회의록 텍스트를 받아 정해진 형식의 마크다운 파일로 변환한 뒤, Obsidian(옵시디언) 노트에 자동으로 저장하는 자동화 프로세스입니다.
     *   *Workflow Steps:*
-        1.  **Webhook (Trigger)**: `POST /ai-meeting-archive` 경로로 회의록 데이터 수신.
-        2.  **Format & Path Encoding (Processing)**:
-            *   현재 날짜 기반 파일명 생성 (`YYYY-MM-DD_AI팀_회의록.md`).
-            *   Obsidian 저장 경로 인코딩 (`1. Projects (프로젝트)/AI Team Project/회의록`).
-            *   마크다운 템플릿 적용 (참여자 정보 및 본문 구성).
-        3.  **Send to Obsidian (Output)**: Obsidian Local REST API를 통해 `PUT` 요청을 보내 파일 생성 및 저장.
-    *   *Setup/Requirements:*
-        *   **Obsidian Local REST API**: 옵시디언 내에 해당 플러그인이 설치되어 있어야 하며, 서버가 활성화 상태여야 합니다.
-        *   **API Token**: `Authorization` 헤더에 사용할 Bearer 토큰이 필요합니다.
-        *   **Network**: n8n 서버가 옵시디언이 설치된 로컬 PC(`127.0.0.1`)에 접근 가능해야 합니다. (Docker 사용 시 `host.docker.internal` 등으로 수정 필요할 수 있음).
+        1.  **Webhook**: `POST /ai-meeting-archive` 경로로 회의 내용(`text`)을 수신합니다.
+        2.  **Format & Path Encoding**:
+            *   현재 날짜를 기준으로 파일명을 생성합니다.
+            *   Obsidian 내 저장 경로(`1. Projects (프로젝트)/AI Team Project/회의록`)를 URL 인코딩합니다.
+            *   참여자 정보(카이, 셰릴, C-Levels)가 포함된 마크다운 템플릿을 적용합니다.
+        3.  **Send to Obsidian**: Obsidian Local REST API를 통해 생성된 파일을 지정된 경로에 `PUT` 요청으로 저장합니다.
+    *   *Setup/Credentials:*
+        *   `Authorization`: Bearer Token (Obsidian Local REST API 설정에서 발급).
+        *   `Obsidian API URL`: `http://127.0.0.1:27123` (로컬 환경 기준).
     *   *Notes:*
-        *   파일 경로에 한글 및 특수문자가 포함되어 있어 `encodeURIComponent`를 통해 처리되었습니다.
-        *   기본 저장 경로는 `1. Projects (프로젝트)/AI Team Project/회의록`으로 설정되어 있습니다.
+        *   Obsidian Local REST API 플러그인이 설치되어 있어야 합니다.
+        *   지정된 폴더 경로가 Obsidian 보관소(Vault) 내에 미리 존재해야 합니다.
