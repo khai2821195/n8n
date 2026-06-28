@@ -1,0 +1,960 @@
+{
+  "updatedAt": "2026-04-14T12:29:47.577Z",
+  "createdAt": "2025-11-29T23:12:37.874Z",
+  "id": "S1ObqqNJYt6Weh0b",
+  "name": "Alimtalk Sangdam 251201",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "074adda7-3fdf-4ec8-8d31-53abd0f62bc8",
+      "name": "Schedule Trigger",
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "position": [
+        -448,
+        -16
+      ],
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2
+    },
+    {
+      "id": "64c8efe7-c1e6-4b12-9e57-bd579f2261dd",
+      "name": "Notion 신규상담신청 확인",
+      "parameters": {
+        "databaseId": {
+          "__rl": true,
+          "cachedResultName": "Potential",
+          "cachedResultUrl": "https://www.notion.so/229c6a06e17e8083bf21ec602b6a3033",
+          "mode": "list",
+          "value": "229c6a06-e17e-8083-bf21-ec602b6a3033"
+        },
+        "filterType": "manual",
+        "filters": {
+          "conditions": [
+            {
+              "condition": "equals",
+              "key": "=알림톡 발송|checkbox"
+            }
+          ]
+        },
+        "operation": "getAll",
+        "options": {},
+        "resource": "databasePage",
+        "returnAll": true,
+        "simple": false
+      },
+      "position": [
+        -192,
+        -16
+      ],
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2
+    },
+    {
+      "id": "if-has-data",
+      "name": "If - 신규 상담 있는지",
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $input.all().length }}",
+              "operator": {
+                "operation": "gt",
+                "type": "number"
+              },
+              "rightValue": 0
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          }
+        },
+        "options": {}
+      },
+      "position": [
+        48,
+        -16
+      ],
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2
+    },
+    {
+      "id": "dfb54c69-c391-4a2f-8d9b-97bbaf0d7880",
+      "name": "Alimtalk Setting",
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json;charset=UTF-8"
+            },
+            {
+              "name": "X-Secret-Key",
+              "value": "BqbvtCkwuidB28H7cuoYGheQ8SyEWOWw"
+            },
+            {
+              "name": "X-App-Key",
+              "value": "YuIB1lEDj8vuqME2"
+            }
+          ]
+        },
+        "jsonBody": "={\n    \"senderKey\": \"7780249050d98477b04a1b589e4794c8ac1f7a78\",\n    \"templateCode\":\"Math4U-edu-2025001\",\n    \"recipientList\":[\n        {\n            \"recipientNo\":\"{{ $('Notion 신규상담신청 확인').item.json.properties['상담연락처S'].formula.string }}\"\n        }\n    ]\n}",
+        "method": "POST",
+        "options": {},
+        "sendBody": true,
+        "sendHeaders": true,
+        "specifyBody": "json",
+        "url": "https://api-alimtalk.cloud.toast.com/alimtalk/v2.0/appkeys/YuIB1lEDj8vuqME2/messages"
+      },
+      "position": [
+        288,
+        -120
+      ],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2
+    },
+    {
+      "id": "4219a07b-3070-4883-b597-6ee7448c76bc",
+      "name": "Send a message",
+      "parameters": {
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "=#상담신청"
+        },
+        "operation": "post",
+        "otherOptions": {},
+        "select": "channel",
+        "text": "=카이야 🔔신규 상담이 도착했어!\n\n신청일시: {{ $('Notion 신규상담신청 확인').item.json.properties['생성일'].formula.string }}\n연락처: {{ $('Notion 신규상담신청 확인').item.json.properties['상담연락처'].phone_number }}\n상담희망시간: {{ $('Notion 신규상담신청 확인').item.json.properties['상담 희망시간'].multi_select[0].name }}\n학생이름: {{ $('Notion 신규상담신청 확인').item.json.properties['학생이름'].title[0].plain_text }}\n학교: {{ $('Notion 신규상담신청 확인').item.json.properties['학교'].rich_text[0].plain_text }}\n학년: {{ $('Notion 신규상담신청 확인').item.json.properties['학년'].select.name }}\n상담내용: {{ $('Notion 신규상담신청 확인').item.json.properties['상담 내용'].rich_text[0].plain_text }}\n\n✨ Notion에서 자세한 정보를 확인하고 상담전화 진행할 것.\n"
+      },
+      "position": [
+        528,
+        -120
+      ],
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "webhookId": "805f268b-e5f2-4f6c-a77a-0eda2144d5a9"
+    },
+    {
+      "id": "eb3c5c33-7336-4912-82b9-3aa7d10c6b20",
+      "name": "Notion Update",
+      "parameters": {
+        "operation": "update",
+        "options": {},
+        "pageId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Notion 신규상담신청 확인').item.json.id }}"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "checkboxValue": true,
+              "key": "=알림톡 발송|checkbox"
+            }
+          ]
+        },
+        "resource": "databasePage"
+      },
+      "position": [
+        768,
+        -120
+      ],
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2
+    },
+    {
+      "id": "set-success",
+      "name": "Set - 성공 데이터",
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "workflowId",
+              "type": "string",
+              "value": "S1ObqqNJYt6Weh0b"
+            },
+            {
+              "id": "a2",
+              "name": "workflowName",
+              "type": "string",
+              "value": "Alimtalk Sangdam 251201"
+            },
+            {
+              "id": "a3",
+              "name": "notionPageId",
+              "type": "string",
+              "value": "323c6a06e17e815ca8a0eeba78761e16"
+            },
+            {
+              "id": "a4",
+              "name": "status",
+              "type": "string",
+              "value": "✅ 정상"
+            },
+            {
+              "id": "a5",
+              "name": "errorMessage",
+              "type": "string",
+              "value": ""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "position": [
+        1008,
+        -16
+      ],
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4
+    },
+    {
+      "id": "status-success",
+      "name": "✅ 상태 업데이트 (성공)",
+      "parameters": {
+        "options": {},
+        "workflowId": "eOopB5bbEEO9rjrg"
+      },
+      "position": [
+        1228,
+        -16
+      ],
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1
+    },
+    {
+      "id": "error-trigger",
+      "name": "❌ 에러 감지",
+      "parameters": {},
+      "position": [
+        48,
+        200
+      ],
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1
+    },
+    {
+      "id": "set-error",
+      "name": "Set - 에러 데이터",
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b1",
+              "name": "workflowId",
+              "type": "string",
+              "value": "S1ObqqNJYt6Weh0b"
+            },
+            {
+              "id": "b2",
+              "name": "workflowName",
+              "type": "string",
+              "value": "Alimtalk Sangdam 251201"
+            },
+            {
+              "id": "b3",
+              "name": "notionPageId",
+              "type": "string",
+              "value": "323c6a06e17e815ca8a0eeba78761e16"
+            },
+            {
+              "id": "b4",
+              "name": "status",
+              "type": "string",
+              "value": "❌ 에러"
+            },
+            {
+              "id": "b5",
+              "name": "errorMessage",
+              "type": "string",
+              "value": "={{ $json.execution.error.message }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "position": [
+        288,
+        200
+      ],
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4
+    },
+    {
+      "id": "status-error",
+      "name": "❌ 상태 업데이트 (에러)",
+      "parameters": {
+        "options": {},
+        "workflowId": "eOopB5bbEEO9rjrg"
+      },
+      "position": [
+        508,
+        200
+      ],
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1
+    },
+    {
+      "id": "manual-note",
+      "name": "📋 워크플로우 메뉴얼",
+      "parameters": {
+        "color": 4,
+        "content": "## 📋 Alimtalk Sangdam 메뉴얼\n\n### 🔗 노션 메뉴얼\nhttps://www.notion.so/323c6a06e17e815ca8a0eeba78761e16\n\n---\n\n- **트리거**: Schedule (매시간)\n- **목적**: 신규 상담 신청 자동 알림톡",
+        "height": 240,
+        "width": 320
+      },
+      "position": [
+        -720,
+        -160
+      ],
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Notion 신규상담신청 확인",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion 신규상담신청 확인": {
+      "main": [
+        [
+          {
+            "node": "If - 신규 상담 있는지",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If - 신규 상담 있는지": {
+      "main": [
+        [
+          {
+            "node": "Alimtalk Setting",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set - 성공 데이터",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alimtalk Setting": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Notion Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion Update": {
+      "main": [
+        [
+          {
+            "node": "Set - 성공 데이터",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - 성공 데이터": {
+      "main": [
+        [
+          {
+            "node": "✅ 상태 업데이트 (성공)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "❌ 에러 감지": {
+      "main": [
+        [
+          {
+            "node": "Set - 에러 데이터",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - 에러 데이터": {
+      "main": [
+        [
+          {
+            "node": "❌ 상태 업데이트 (에러)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "callerPolicy": "workflowsFromSameOwner",
+    "timezone": "Asia/Seoul"
+  },
+  "staticData": {
+    "node:Schedule Trigger": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "e558361e-c79e-43e2-8f7b-83671665c3f7",
+  "activeVersionId": "e558361e-c79e-43e2-8f7b-83671665c3f7",
+  "versionCounter": 87,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2025-11-29T23:12:37.879Z",
+      "createdAt": "2025-11-29T23:12:37.879Z",
+      "role": "workflow:owner",
+      "workflowId": "S1ObqqNJYt6Weh0b",
+      "projectId": "8znYa8Ca7GWeBy0m",
+      "project": {
+        "updatedAt": "2025-11-29T23:05:56.637Z",
+        "createdAt": "2025-11-29T23:04:07.777Z",
+        "id": "8znYa8Ca7GWeBy0m",
+        "name": "Seung Hyeon Kim <khai01@naver.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-04-14T12:29:47.579Z",
+    "createdAt": "2026-04-14T12:29:47.579Z",
+    "versionId": "e558361e-c79e-43e2-8f7b-83671665c3f7",
+    "workflowId": "S1ObqqNJYt6Weh0b",
+    "nodes": [
+      {
+        "id": "074adda7-3fdf-4ec8-8d31-53abd0f62bc8",
+        "name": "Schedule Trigger",
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "hours"
+              }
+            ]
+          }
+        },
+        "position": [
+          -448,
+          -16
+        ],
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2
+      },
+      {
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        },
+        "id": "64c8efe7-c1e6-4b12-9e57-bd579f2261dd",
+        "name": "Notion 신규상담신청 확인",
+        "parameters": {
+          "databaseId": {
+            "__rl": true,
+            "cachedResultName": "Potential",
+            "cachedResultUrl": "https://www.notion.so/229c6a06e17e8083bf21ec602b6a3033",
+            "mode": "list",
+            "value": "229c6a06-e17e-8083-bf21-ec602b6a3033"
+          },
+          "filterType": "manual",
+          "filters": {
+            "conditions": [
+              {
+                "condition": "equals",
+                "key": "=알림톡 발송|checkbox"
+              }
+            ]
+          },
+          "operation": "getAll",
+          "options": {},
+          "resource": "databasePage",
+          "returnAll": true,
+          "simple": false
+        },
+        "position": [
+          -192,
+          -16
+        ],
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2
+      },
+      {
+        "id": "if-has-data",
+        "name": "If - 신규 상담 있는지",
+        "parameters": {
+          "conditions": {
+            "combinator": "and",
+            "conditions": [
+              {
+                "id": "c1",
+                "leftValue": "={{ $input.all().length }}",
+                "operator": {
+                  "operation": "gt",
+                  "type": "number"
+                },
+                "rightValue": 0
+              }
+            ],
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            }
+          },
+          "options": {}
+        },
+        "position": [
+          48,
+          -16
+        ],
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2
+      },
+      {
+        "credentials": {
+          "httpCustomAuth": {
+            "id": "7IkET7kvzmFP3Vr7",
+            "name": "Custom Auth account"
+          }
+        },
+        "id": "dfb54c69-c391-4a2f-8d9b-97bbaf0d7880",
+        "name": "Alimtalk Setting",
+        "parameters": {
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpCustomAuth",
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json;charset=UTF-8"
+              },
+              {
+                "name": "X-Secret-Key",
+                "value": "BqbvtCkwuidB28H7cuoYGheQ8SyEWOWw"
+              },
+              {
+                "name": "X-App-Key",
+                "value": "YuIB1lEDj8vuqME2"
+              }
+            ]
+          },
+          "jsonBody": "={\n    \"senderKey\": \"7780249050d98477b04a1b589e4794c8ac1f7a78\",\n    \"templateCode\":\"Math4U-edu-2025001\",\n    \"recipientList\":[\n        {\n            \"recipientNo\":\"{{ $('Notion 신규상담신청 확인').item.json.properties['상담연락처S'].formula.string }}\"\n        }\n    ]\n}",
+          "method": "POST",
+          "options": {},
+          "sendBody": true,
+          "sendHeaders": true,
+          "specifyBody": "json",
+          "url": "https://api-alimtalk.cloud.toast.com/alimtalk/v2.0/appkeys/YuIB1lEDj8vuqME2/messages"
+        },
+        "position": [
+          288,
+          -120
+        ],
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2
+      },
+      {
+        "credentials": {
+          "slackApi": {
+            "id": "I1bk0oby0BsUZ87n",
+            "name": "Slack account"
+          }
+        },
+        "id": "4219a07b-3070-4883-b597-6ee7448c76bc",
+        "name": "Send a message",
+        "parameters": {
+          "channelId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "=#상담신청"
+          },
+          "operation": "post",
+          "otherOptions": {},
+          "select": "channel",
+          "text": "=카이야 🔔신규 상담이 도착했어!\n\n신청일시: {{ $('Notion 신규상담신청 확인').item.json.properties['생성일'].formula.string }}\n연락처: {{ $('Notion 신규상담신청 확인').item.json.properties['상담연락처'].phone_number }}\n상담희망시간: {{ $('Notion 신규상담신청 확인').item.json.properties['상담 희망시간'].multi_select[0].name }}\n학생이름: {{ $('Notion 신규상담신청 확인').item.json.properties['학생이름'].title[0].plain_text }}\n학교: {{ $('Notion 신규상담신청 확인').item.json.properties['학교'].rich_text[0].plain_text }}\n학년: {{ $('Notion 신규상담신청 확인').item.json.properties['학년'].select.name }}\n상담내용: {{ $('Notion 신규상담신청 확인').item.json.properties['상담 내용'].rich_text[0].plain_text }}\n\n✨ Notion에서 자세한 정보를 확인하고 상담전화 진행할 것.\n"
+        },
+        "position": [
+          528,
+          -120
+        ],
+        "type": "n8n-nodes-base.slack",
+        "typeVersion": 2.4,
+        "webhookId": "805f268b-e5f2-4f6c-a77a-0eda2144d5a9"
+      },
+      {
+        "credentials": {
+          "notionApi": {
+            "id": "MAYBu1lbKiMiquHV",
+            "name": "n8n-Math4U"
+          }
+        },
+        "id": "eb3c5c33-7336-4912-82b9-3aa7d10c6b20",
+        "name": "Notion Update",
+        "parameters": {
+          "operation": "update",
+          "options": {},
+          "pageId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "={{ $('Notion 신규상담신청 확인').item.json.id }}"
+          },
+          "propertiesUi": {
+            "propertyValues": [
+              {
+                "checkboxValue": true,
+                "key": "=알림톡 발송|checkbox"
+              }
+            ]
+          },
+          "resource": "databasePage"
+        },
+        "position": [
+          768,
+          -120
+        ],
+        "type": "n8n-nodes-base.notion",
+        "typeVersion": 2.2
+      },
+      {
+        "id": "set-success",
+        "name": "Set - 성공 데이터",
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "a1",
+                "name": "workflowId",
+                "type": "string",
+                "value": "S1ObqqNJYt6Weh0b"
+              },
+              {
+                "id": "a2",
+                "name": "workflowName",
+                "type": "string",
+                "value": "Alimtalk Sangdam 251201"
+              },
+              {
+                "id": "a3",
+                "name": "notionPageId",
+                "type": "string",
+                "value": "323c6a06e17e815ca8a0eeba78761e16"
+              },
+              {
+                "id": "a4",
+                "name": "status",
+                "type": "string",
+                "value": "✅ 정상"
+              },
+              {
+                "id": "a5",
+                "name": "errorMessage",
+                "type": "string",
+                "value": ""
+              }
+            ]
+          },
+          "options": {}
+        },
+        "position": [
+          1008,
+          -16
+        ],
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4
+      },
+      {
+        "id": "status-success",
+        "name": "✅ 상태 업데이트 (성공)",
+        "parameters": {
+          "options": {},
+          "workflowId": "eOopB5bbEEO9rjrg"
+        },
+        "position": [
+          1228,
+          -16
+        ],
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1
+      },
+      {
+        "id": "error-trigger",
+        "name": "❌ 에러 감지",
+        "parameters": {},
+        "position": [
+          48,
+          200
+        ],
+        "type": "n8n-nodes-base.errorTrigger",
+        "typeVersion": 1
+      },
+      {
+        "id": "set-error",
+        "name": "Set - 에러 데이터",
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "b1",
+                "name": "workflowId",
+                "type": "string",
+                "value": "S1ObqqNJYt6Weh0b"
+              },
+              {
+                "id": "b2",
+                "name": "workflowName",
+                "type": "string",
+                "value": "Alimtalk Sangdam 251201"
+              },
+              {
+                "id": "b3",
+                "name": "notionPageId",
+                "type": "string",
+                "value": "323c6a06e17e815ca8a0eeba78761e16"
+              },
+              {
+                "id": "b4",
+                "name": "status",
+                "type": "string",
+                "value": "❌ 에러"
+              },
+              {
+                "id": "b5",
+                "name": "errorMessage",
+                "type": "string",
+                "value": "={{ $json.execution.error.message }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "position": [
+          288,
+          200
+        ],
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4
+      },
+      {
+        "id": "status-error",
+        "name": "❌ 상태 업데이트 (에러)",
+        "parameters": {
+          "options": {},
+          "workflowId": "eOopB5bbEEO9rjrg"
+        },
+        "position": [
+          508,
+          200
+        ],
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1
+      },
+      {
+        "id": "manual-note",
+        "name": "📋 워크플로우 메뉴얼",
+        "parameters": {
+          "color": 4,
+          "content": "## 📋 Alimtalk Sangdam 메뉴얼\n\n### 🔗 노션 메뉴얼\nhttps://www.notion.so/323c6a06e17e815ca8a0eeba78761e16\n\n---\n\n- **트리거**: Schedule (매시간)\n- **목적**: 신규 상담 신청 자동 알림톡",
+          "height": 240,
+          "width": 320
+        },
+        "position": [
+          -720,
+          -160
+        ],
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1
+      }
+    ],
+    "connections": {
+      "Schedule Trigger": {
+        "main": [
+          [
+            {
+              "node": "Notion 신규상담신청 확인",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Notion 신규상담신청 확인": {
+        "main": [
+          [
+            {
+              "node": "If - 신규 상담 있는지",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If - 신규 상담 있는지": {
+        "main": [
+          [
+            {
+              "node": "Alimtalk Setting",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Set - 성공 데이터",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Alimtalk Setting": {
+        "main": [
+          [
+            {
+              "node": "Send a message",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send a message": {
+        "main": [
+          [
+            {
+              "node": "Notion Update",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Notion Update": {
+        "main": [
+          [
+            {
+              "node": "Set - 성공 데이터",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set - 성공 데이터": {
+        "main": [
+          [
+            {
+              "node": "✅ 상태 업데이트 (성공)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "❌ 에러 감지": {
+        "main": [
+          [
+            {
+              "node": "Set - 에러 데이터",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set - 에러 데이터": {
+        "main": [
+          [
+            {
+              "node": "❌ 상태 업데이트 (에러)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Seung Hyeon Kim",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-14T12:29:48.074Z",
+        "id": 499,
+        "workflowId": "S1ObqqNJYt6Weh0b",
+        "versionId": "e558361e-c79e-43e2-8f7b-83671665c3f7",
+        "event": "activated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      },
+      {
+        "createdAt": "2026-04-14T12:29:48.008Z",
+        "id": 498,
+        "workflowId": "S1ObqqNJYt6Weh0b",
+        "versionId": "e558361e-c79e-43e2-8f7b-83671665c3f7",
+        "event": "deactivated",
+        "userId": "908d862a-8cbe-4bae-b84d-739dcab4c3cb"
+      }
+    ]
+  }
+}
