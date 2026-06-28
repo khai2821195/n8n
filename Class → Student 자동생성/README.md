@@ -8,38 +8,33 @@
 ---
 
 n8n Workflow Expert.
-Analyze provided JSON and write a GitHub `README.md` in Korean.
+Analyze a provided n8n workflow JSON and write a GitHub `README.md` in Korean.
 "Class → Student 자동생성" (Automatic generation of Student records from Class).
 PNn3uKuzuOyjgFbu.
 Math4U.
 
-        *   `Webhook`: Trigger (POST).
+        *   `Webhook`: Receives a POST request.
         *   `Code - 입력 파싱`: Extracts `classStudyId` and `datetime` from the webhook body.
-        *   `Class_Study Get` (Notion): Fetches details of the class study page using the ID.
-        *   `Split Out - Student ID Split`: Splits the list of students (`property_students`) into individual items.
-        *   `Student ID` (Notion): Fetches details for each student page.
-        *   `Edit Fields` (Set): Creates a title for the new page: `Student Name | Class Name`.
+        *   `Class_Study Get` (Notion): Fetches details of the specific class study page.
+        *   `Split Out - Student ID Split`: Splits the `property_students` (likely a list of students in the class) into individual items.
+        *   `Student ID` (Notion): Fetches details for each individual student.
+        *   `Edit Fields` (Set): Creates a title for the new page: `[Student Name] | [Class Name]`.
         *   `Create Page Student_Study` (Notion): Creates a new page in the `Student_Study` database, linking it to the student, the class, and the class study record, and setting the date.
-        *   `Notion - 배정확인` (Notion): Updates the original `Class_Study` page to check the "배정확인" (Assignment Confirmation) checkbox.
+        *   `Notion - 배정확인` (Notion): Updates the original `Class_Study` page to check a "배정확인" (Assignment Confirmed) checkbox.
         *   `Set - 성공 데이터` (Set): Prepares a success response.
 
-    *   *Purpose:* When a class study is scheduled/triggered, automatically create individual study records for every student enrolled in that class.
-    *   *Flow:* Webhook $\rightarrow$ Parse $\rightarrow$ Get Class $\rightarrow$ Split Students $\rightarrow$ Get Student Info $\rightarrow$ Create Student Study Record $\rightarrow$ Mark Class as Processed.
+    *   *Purpose:* When a class is scheduled/created, this workflow automatically generates individual study records for every student enrolled in that class.
+    *   *Flow:* Webhook $\rightarrow$ Parse $\rightarrow$ Get Class Info $\rightarrow$ Split Students $\rightarrow$ Get Student Info $\rightarrow$ Format Title $\rightarrow$ Create Student Study Record $\rightarrow$ Mark Class as Processed.
 
     *   *Title:* # Class → Student 자동생성 (Math4U)
-    *   *Description:* Notion 기반의 수업 관리 시스템에서 '수업(Class Study)' 정보가 생성되었을 때, 해당 수업에 배정된 '학생(Student)'별로 개별 학습 기록을 자동으로 생성하는 워크플로우입니다.
-    *   *Workflow Diagram/Steps:*
-        1.  **Webhook**: 외부 신호 수신.
-        2.  **입력 파싱**: 필요한 ID와 날짜 추출.
-        3.  **수업 정보 조회**: Notion에서 수업 상세 데이터 가져오기.
-        4.  **학생 리스트 분리**: 다수의 학생을 개별 항목으로 분리.
-        5.  **학생 정보 조회**: 각 학생의 이름 등 상세 정보 가져오기.
-        6.  **데이터 가공**: 페이지 제목 생성 (`학생명 | 수업명`).
-        7.  **학생 학습 기록 생성**: `Student_Study` 데이터베이스에 새 페이지 생성 및 관계 설정.
-        8.  **처리 완료 표시**: 원본 수업 페이지의 '배정확인' 체크박스 업데이트.
+    *   *Overview:* Explain that it automates the creation of individual student study logs based on a class schedule.
+    *   *Workflow Steps:*
+        1.  **Webhook**: Trigger.
+        2.  **Parsing**: Extracting IDs and dates.
+        3.  **Class Data Retrieval**: Getting the class details from Notion.
+        4.  **Student Splitting**: Converting the list of students into separate items.
+        5.  **Student Data Retrieval**: Getting individual student names.
+        6.  **Page Creation**: Creating the `Student_Study` record.
+        7.  **Completion**: Updating the class record status.
     *   *Requirements:* Notion API Credentials, Database IDs.
-    *   *Notes:* Relation fields must be correctly mapped.
-
-    *   Ensure professional tone.
-    *   Use clear headings.
-    *   Check for technical accuracy based on the JSON.
+    *   *Notes:* Mention the specific database structure (Relations).
